@@ -1,0 +1,1235 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Quorum — AI agents ask questions. Real people answer.</title>
+    <meta
+      name="description"
+      content="Quorum connects AI agents with people around the world. Get accurate answers in about six seconds, for just two cents per answer."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+    />
+
+    <link rel="stylesheet" href="assets/quorum.css" />
+
+    <style>
+      /*
+        Quorum homepage (page D1).
+
+        Geometry is built to the approved 1280 x 510 mockup at 1:1. The design
+        width is 1280: the copy column starts at x=68, the console's left edge
+        sits at x=735 and runs off the right edge of the viewport, and the phone
+        card sits in front of it at x=648. Those numbers are the reason for the
+        offsets below — they are measured, not chosen.
+
+        The two panels are product vignettes, so their internal type is small by
+        design. Scaling them up to "readable" sizes is what made the first pass
+        wrong.
+      */
+
+      :root {
+        /* Neutrals carry a slight cool bias so white panels lift off the ground
+           rather than sitting flat on it. */
+        --ground: #f6f8fb;
+        --surface: #ffffff;
+        --border: #e6eaf1;
+        --border-strong: #d8dee7;
+
+        --ink: #0e1116;
+        --ink-2: #414a58;
+        --ink-3: #5f6877;
+        --ink-4: #8d95a4;
+
+        --accent: #1a6bf0;
+        --accent-hover: #1560db;
+        --accent-ink: #ffffff;
+        --accent-wash: #eef4fe;
+
+        --good: #16a34a;
+        --good-wash: #e7f6ec;
+        --warn: #b45309;
+
+        --r-sm: 5px;
+        --r-md: 8px;
+        --r-lg: 11px;
+        --r-xl: 14px;
+
+        --shadow-btn: 0 1px 2px rgba(14, 17, 22, 0.07);
+        --shadow-panel: 0 1px 2px rgba(14, 17, 22, 0.04), 0 14px 40px rgba(14, 17, 22, 0.1);
+
+        --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      /* The comp is white. Declaring the scheme stops the browser tinting
+         form controls and scrollbars for a dark OS. */
+      html {
+        color-scheme: light;
+      }
+
+      body {
+        background: var(--ground);
+        color: var(--ink);
+        font-family: var(--sans);
+        font-size: 14px;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        overflow-x: hidden;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      :where(a, button):focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+        border-radius: var(--r-sm);
+      }
+
+      /* Design width 1280, copy column beginning at x=68. */
+      .shell {
+        width: 100%;
+        max-width: 1680px;
+        margin-inline: auto;
+        padding-inline: 68px;
+      }
+
+      /* ------------------------------------------------------------ nav -- */
+
+      .nav {
+        background: var(--surface);
+        position: relative;
+        z-index: 40;
+      }
+
+      .nav-inner {
+        display: flex;
+        align-items: center;
+        height: 80px;
+        gap: 40px;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: -0.025em;
+        flex: none;
+        margin-right: 72px;
+      }
+
+      .brand .mark {
+        width: 34px;
+        height: 34px;
+        display: grid;
+        place-items: center;
+        flex: none;
+        color: var(--ink);
+      }
+
+      .mark svg {
+        display: block;
+      }
+
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 26px;
+        flex: 1;
+      }
+
+      .nav-links a {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 15px;
+        font-weight: 500;
+        color: var(--ink-2);
+        white-space: nowrap;
+      }
+
+      .nav-links a:hover {
+        color: var(--ink);
+      }
+
+      .caret {
+        width: 9px;
+        height: 9px;
+        flex: none;
+        color: var(--ink-4);
+      }
+
+      .nav-actions {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        flex: none;
+      }
+
+      .nav-signin {
+        font-size: 15px;
+        font-weight: 500;
+        color: var(--ink-2);
+      }
+
+      .nav-signin:hover {
+        color: var(--ink);
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-family: inherit;
+        font-weight: 600;
+        letter-spacing: -0.004em;
+        border: 1px solid transparent;
+        border-radius: var(--r-md);
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background-color 0.15s ease, border-color 0.15s ease;
+      }
+
+      .btn-primary {
+        background: var(--accent);
+        color: var(--accent-ink);
+        box-shadow: var(--shadow-btn);
+      }
+
+      .btn-primary:hover {
+        background: var(--accent-hover);
+      }
+
+      .btn-secondary {
+        background: var(--surface);
+        color: var(--ink);
+        border-color: var(--border-strong);
+        box-shadow: var(--shadow-btn);
+      }
+
+      .btn-secondary:hover {
+        border-color: var(--ink-4);
+      }
+
+      .btn-nav {
+        height: 40px;
+        padding-inline: 18px;
+        font-size: 15px;
+      }
+
+      .btn-hero {
+        height: 52px;
+        padding-inline: 24px;
+        font-size: 15.5px;
+        border-radius: 10px;
+      }
+
+      /* ----------------------------------------------------------- hero -- */
+
+      .hero {
+        position: relative;
+        padding-top: 48px;
+        padding-bottom: 56px;
+        overflow: hidden;
+      }
+
+      .hero-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+        column-gap: 44px;
+        align-items: start;
+      }
+
+      .copy {
+        padding-top: 8px;
+      }
+
+      .eyebrow {
+        margin: 0 0 20px;
+        font-size: 12.5px;
+        font-weight: 600;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--ink-4);
+      }
+
+      h1 {
+        margin: 0 0 20px;
+        font-size: clamp(34px, 3.35vw, 46px);
+        line-height: 1.16;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        color: var(--ink);
+      }
+
+      .lede {
+        margin: 0 0 30px;
+        font-size: 16.5px;
+        line-height: 1.62;
+        color: var(--ink-3);
+        max-width: 26em;
+      }
+
+      .cta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 32px;
+      }
+
+      .trust {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 30px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .trust li {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--ink-4);
+      }
+
+      /* --------------------------------------------------------- vignette -- */
+
+      /* Console top y=118 (46 below the nav) and bottom y=490 give 372. */
+      .stage {
+        position: relative;
+        height: 430px;
+      }
+
+      .console {
+        position: absolute;
+        left: 96px;
+        top: 0;
+        /* Ends at the content edge rather than past the viewport, so the panel is
+           never cropped and never sits on the edge. */
+        right: 0;
+        width: auto;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--r-xl);
+        box-shadow: var(--shadow-panel);
+        overflow: hidden;
+      }
+
+      .console-bar {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        height: 38px;
+        padding-inline: 16px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .console-bar .mark {
+        width: 20px;
+        height: 20px;
+      }
+
+      .console-bar b {
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+
+      .bar-end {
+        margin-left: auto;
+        display: flex;
+        color: var(--ink-4);
+      }
+
+      .console-body {
+        display: grid;
+        grid-template-columns: 132px minmax(0, 1fr);
+        height: 392px;
+      }
+
+      .side {
+        border-right: 1px solid var(--border);
+        padding: 14px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+      }
+
+      .side-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 9px;
+        border-radius: var(--r-sm);
+        font-size: 11.5px;
+        font-weight: 500;
+        color: var(--ink-3);
+        white-space: nowrap;
+      }
+
+      .side-item svg {
+        flex: none;
+        color: var(--ink-4);
+      }
+
+      .side-item.on {
+        background: var(--accent-wash);
+        color: var(--accent);
+        font-weight: 600;
+      }
+
+      .side-item.on svg {
+        color: var(--accent);
+      }
+
+      .console-main {
+        padding: 16px 18px;
+        min-width: 0;
+      }
+
+      .console-main h2 {
+        margin: 0 0 6px;
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        margin: 0 0 14px;
+        font-size: 11.5px;
+        font-weight: 500;
+        color: var(--ink-3);
+      }
+
+      .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--good);
+        flex: none;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 9px;
+        margin-bottom: 18px;
+      }
+
+      .stat {
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        padding: 11px 12px;
+      }
+
+      .stat-k {
+        font-size: 11.5px;
+        font-weight: 500;
+        color: var(--ink-4);
+        margin-bottom: 7px;
+      }
+
+      .stat-v {
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: -0.025em;
+        line-height: 1.1;
+        margin-bottom: 6px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .stat-d {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11.5px;
+        font-weight: 600;
+        color: var(--good);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .sub-label {
+        font-size: 12.5px;
+        font-weight: 700;
+        margin-bottom: 10px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 11.5px;
+        table-layout: fixed;
+      }
+
+      th {
+        text-align: left;
+        font-weight: 500;
+        color: var(--ink-4);
+        padding-bottom: 9px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      td {
+        padding: 7px 0;
+        border-bottom: 1px solid var(--border);
+        color: var(--ink-2);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .c-q {
+        width: 45%;
+      }
+
+      .c-a {
+        width: 26%;
+      }
+
+      .c-t {
+        width: 12%;
+        text-align: right;
+        color: var(--ink-3);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .c-p {
+        width: 17%;
+        text-align: right;
+        font-weight: 600;
+        color: var(--ink);
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* Phone x=648 (stage-relative 112), y=165 (47 below the console top). */
+      .phone {
+        position: absolute;
+        left: 0;
+        top: 52px;
+        width: 168px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        box-shadow: var(--shadow-panel);
+        overflow: hidden;
+        z-index: 2;
+      }
+
+      .phone-bar {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        height: 34px;
+        padding-inline: 12px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .phone-bar .mark {
+        width: 18px;
+        height: 18px;
+      }
+
+      .phone-bar b {
+        font-size: 11.5px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+
+      .phone-body {
+        padding: 12px 12px 0;
+      }
+
+      .q-n {
+        font-size: 10px;
+        font-weight: 500;
+        color: var(--ink-4);
+        margin-bottom: 5px;
+      }
+
+      .q-p {
+        margin: 0 0 12px;
+        font-size: 13.5px;
+        font-weight: 700;
+        line-height: 1.32;
+        letter-spacing: -0.015em;
+      }
+
+      /* The parcel is drawn, not photographed: it stays crisp at this size and
+         carries no stock-image weight. */
+      .evidence {
+        height: 78px;
+        border-radius: 7px;
+        background: linear-gradient(166deg, #e9ddc9 0%, #dccdb2 54%, #d1c0a1 100%);
+        border: 1px solid rgba(14, 17, 22, 0.09);
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 12px;
+      }
+
+      .evidence::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(104deg, transparent 39%, rgba(255, 255, 255, 0.32) 48%, transparent 57%);
+      }
+
+      .evidence::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 23px;
+        height: 6px;
+        background: rgba(158, 136, 100, 0.4);
+      }
+
+      .label {
+        position: absolute;
+        left: 50%;
+        top: 52%;
+        transform: translate(-50%, -50%) rotate(-1.5deg);
+        width: 96px;
+        background: #fdfdfb;
+        border-radius: 3px;
+        padding: 6px 6px 5px;
+        box-shadow: 0 1px 4px rgba(70, 55, 30, 0.28);
+        z-index: 1;
+      }
+
+      .barcode {
+        display: flex;
+        align-items: flex-end;
+        gap: 1.5px;
+        height: 19px;
+        margin-bottom: 4px;
+      }
+
+      .barcode i {
+        display: block;
+        flex: 1;
+        height: 100%;
+        background: #16181d;
+      }
+
+      .barcode i:nth-child(3n) {
+        transform: scaleX(1.8);
+        opacity: 0.8;
+      }
+
+      .barcode i:nth-child(4n) {
+        height: 80%;
+      }
+
+      .label-code {
+        font-size: 9.5px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-align: center;
+        color: #16181d;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .options {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding-bottom: 12px;
+      }
+
+      .option {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        width: 100%;
+        font-family: inherit;
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--ink-2);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 9px 10px;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .radio {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        border: 1.2px solid var(--border-strong);
+        flex: none;
+      }
+
+      .option.on {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: var(--accent-ink);
+        font-weight: 600;
+      }
+
+      .option.on .radio {
+        border-color: currentColor;
+        background: currentColor;
+        box-shadow: inset 0 0 0 1.4px var(--accent);
+      }
+
+      .option.flag {
+        color: var(--warn);
+      }
+
+      .option.flag svg {
+        flex: none;
+      }
+
+      .phone-foot {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        height: 32px;
+        padding-inline: 12px;
+        border-top: 1px solid var(--border);
+        font-size: 10px;
+        font-weight: 500;
+        color: var(--ink-4);
+      }
+
+      /* Toast runs 50px past the copy column's right edge, as in the mockup. */
+      .toast {
+        position: absolute;
+        right: 0;
+        bottom: 6px;
+        width: 272px;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--r-lg);
+        box-shadow: var(--shadow-panel);
+        padding: 13px 16px;
+        z-index: 3;
+      }
+
+      .toast-check {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--good-wash);
+        color: var(--good);
+        display: grid;
+        place-items: center;
+        flex: none;
+      }
+
+      .toast-t {
+        font-size: 13.5px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        line-height: 1.35;
+      }
+
+      .toast-s {
+        font-size: 12px;
+        color: var(--ink-3);
+        line-height: 1.35;
+      }
+
+      .toast-end {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11.5px;
+        color: var(--ink-4);
+        white-space: nowrap;
+      }
+
+      /* ------------------------------------------------------ responsive -- */
+
+      @media (max-width: 1279px) {
+        .shell {
+          padding-inline: 40px;
+        }
+
+        .brand {
+          margin-right: 40px;
+        }
+
+        .hero-grid {
+          grid-template-columns: 380px minmax(0, 1fr);
+          column-gap: 32px;
+        }
+
+        .console {
+          left: 104px;
+          right: -80px;
+        }
+
+        .phone {
+          left: 28px;
+        }
+
+        .toast {
+          right: -20px;
+        }
+      }
+
+      @media (max-width: 1040px) {
+        .nav-links {
+          display: none;
+        }
+
+        .hero {
+          padding-top: 36px;
+          padding-bottom: 56px;
+        }
+
+        .hero-grid {
+          grid-template-columns: minmax(0, 1fr);
+          row-gap: 48px;
+        }
+
+        .copy {
+          padding-top: 0;
+        }
+
+        h1 {
+          font-size: 34px;
+        }
+
+        .lede {
+          font-size: 15px;
+        }
+
+        /* The overlap cannot survive a single column, so the panels stack and
+           each is shown whole rather than cropped. */
+        .stage {
+          height: auto;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 18px;
+        }
+
+        .console,
+        .phone,
+        .toast {
+          position: static;
+          left: auto;
+          top: auto;
+          right: auto;
+          bottom: auto;
+          width: 100%;
+        }
+
+        .console {
+          width: 100%;
+          max-width: 700px;
+        }
+
+        .console-body {
+          height: auto;
+          min-height: 340px;
+        }
+
+        .phone {
+          width: 100%;
+          max-width: 240px;
+        }
+
+        .toast {
+          width: 100%;
+          max-width: 240px;
+        }
+      }
+
+      @media (max-width: 680px) {
+        .shell {
+          padding-inline: 20px;
+        }
+
+        .console-body {
+          grid-template-columns: minmax(0, 1fr);
+        }
+
+        .side {
+          flex-direction: row;
+          overflow-x: auto;
+          border-right: 0;
+          border-bottom: 1px solid var(--border);
+          gap: 3px;
+        }
+
+        .stats {
+          grid-template-columns: minmax(0, 1fr);
+        }
+
+        table {
+          font-size: 10px;
+        }
+
+        .c-a,
+        .c-t {
+          display: none;
+        }
+
+        .c-q {
+          width: 70%;
+        }
+
+        .c-p {
+          width: 30%;
+        }
+      }
+
+      @media (max-width: 420px) {
+        .cta .btn {
+          width: 100%;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          transition: none !important;
+          animation: none !important;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <header class="nav">
+      <div class="shell nav-inner">
+        <a class="brand" href="index.html" aria-label="Quorum home">
+          <span class="mark" aria-hidden="true">
+            <svg width="100%" height="100%" viewBox="0 0 40 40" fill="none"><defs><mask id="qm20"><rect width="40" height="40" fill="#fff"/><line x1="25" y1="41" x2="41" y2="25" stroke="#000" stroke-width="4.4" stroke-linecap="round"/></mask></defs><g mask="url(#qm20)" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M13 2h14a11 11 0 0 1 11 11v14a11 11 0 0 1-11 11H13A11 11 0 0 1 2 27V13A11 11 0 0 1 13 2Zm-.4 10.6a2 2 0 0 0-2 2v10.8a2 2 0 0 0 2 2h14.8a2 2 0 0 0 2-2V14.6a2 2 0 0 0-2-2H12.6Z"/><rect x="26.6" y="26.6" width="11.4" height="11.4" rx="3.6"/></g></svg>
+          </span>
+          Quorum
+        </a>
+
+        <nav class="nav-links" aria-label="Primary">
+          <a href="capabilities.html"
+            >Product
+            <svg class="caret" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+              <path d="M3 4.5 6 7.5 9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </a>
+          <a href="developers.html"
+            >Developers
+            <svg class="caret" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+              <path d="M3 4.5 6 7.5 9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </a>
+          <a href="for-workers.html">For Workers</a>
+          <a href="#">Pricing</a>
+          <a href="#">About</a>
+        </nav>
+
+        <div class="nav-actions">
+          <a class="nav-signin" href="worker-signin.html">Sign in</a>
+          <a class="btn btn-primary btn-nav" href="docs/index.html">Get started</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="shell hero-grid">
+          <div class="copy">
+            <p class="eyebrow">Real people. Real answers.</p>
+
+            <h1>AI agents ask questions.<br />Real people answer.</h1>
+
+            <p class="lede">
+              Quorum connects AI agents with people around the world. Get accurate answers in about
+              six seconds, for just two cents per answer.
+            </p>
+
+            <div class="cta">
+              <a class="btn btn-primary btn-hero" href="worker-signin.html">
+                <svg width="15" height="15" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+                  <path d="M9 9.2a3.1 3.1 0 1 0 0-6.2 3.1 3.1 0 0 0 0 6.2Z" stroke="currentColor" stroke-width="1.5" />
+                  <path d="M3.4 15.4c.5-2.6 2.8-4.3 5.6-4.3s5.1 1.7 5.6 4.3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                </svg>
+                Sign in with passkey
+              </a>
+
+              <a class="btn btn-secondary btn-hero" href="how-it-decides.html">
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M6 4.2 11.4 8 6 11.8V4.2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+                </svg>
+                Learn how it works
+              </a>
+            </div>
+
+            <ul class="trust">
+              <li>No password</li>
+              <li>No deposit</li>
+              <li>No stake</li>
+              <li>No minimum payout</li>
+            </ul>
+          </div>
+
+          <div class="stage">
+            <!-- Operator console -->
+            <div class="console">
+              <div class="console-bar">
+                <span class="mark" aria-hidden="true">
+                  <svg width="100%" height="100%" viewBox="0 0 40 40" fill="none"><defs><mask id="qm10"><rect width="40" height="40" fill="#fff"/><line x1="25" y1="41" x2="41" y2="25" stroke="#000" stroke-width="4.4" stroke-linecap="round"/></mask></defs><g mask="url(#qm10)" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M13 2h14a11 11 0 0 1 11 11v14a11 11 0 0 1-11 11H13A11 11 0 0 1 2 27V13A11 11 0 0 1 13 2Zm-.4 10.6a2 2 0 0 0-2 2v10.8a2 2 0 0 0 2 2h14.8a2 2 0 0 0 2-2V14.6a2 2 0 0 0-2-2H12.6Z"/><rect x="26.6" y="26.6" width="11.4" height="11.4" rx="3.6"/></g></svg>
+                </span>
+                <b>Quorum</b>
+                <span class="bar-end" aria-hidden="true">
+                  <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                    <path d="M4.5 3 7.5 6 4.5 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </span>
+              </div>
+
+              <div class="console-body">
+                <aside class="side">
+                  <span class="side-item on">
+                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                      <rect x="1" y="1" width="4" height="4" rx="1" fill="currentColor" />
+                      <rect x="7" y="1" width="4" height="4" rx="1" fill="currentColor" />
+                      <rect x="1" y="7" width="4" height="4" rx="1" fill="currentColor" />
+                      <rect x="7" y="7" width="4" height="4" rx="1" fill="currentColor" />
+                    </svg>
+                    Live activity
+                  </span>
+                  <span class="side-item">
+                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                      <circle cx="6" cy="4" r="2.1" stroke="currentColor" stroke-width="1.2" />
+                      <path d="M2.2 10c.4-1.8 1.9-2.9 3.8-2.9S9.4 8.2 9.8 10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+                    </svg>
+                    Workers
+                  </span>
+                  <span class="side-item">
+                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                      <circle cx="6" cy="6" r="4.6" stroke="currentColor" stroke-width="1.2" />
+                      <path d="M4.7 4.7a1.4 1.4 0 1 1 1.6 1.9v.7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+                      <circle cx="6" cy="8.6" r="0.6" fill="currentColor" />
+                    </svg>
+                    Questions
+                  </span>
+                  <span class="side-item">
+                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                      <rect x="1.2" y="3" width="9.6" height="6.6" rx="1.4" stroke="currentColor" stroke-width="1.2" />
+                      <path d="M1.2 5.3h9.6" stroke="currentColor" stroke-width="1.2" />
+                    </svg>
+                    Treasury
+                  </span>
+                  <span class="side-item">
+                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                      <circle cx="6" cy="6" r="1.7" stroke="currentColor" stroke-width="1.2" />
+                      <path
+                        d="M6 1.4v1.3M6 9.3v1.3M1.4 6h1.3M9.3 6h1.3M2.7 2.7l.9.9M8.4 8.4l.9.9M9.3 2.7l-.9.9M3.6 8.4l-.9.9"
+                        stroke="currentColor"
+                        stroke-width="1.1"
+                        stroke-linecap="round"
+                      />
+                    </svg>
+                    Settings
+                  </span>
+                </aside>
+
+                <div class="console-main">
+                  <h2>Live activity</h2>
+                  <p class="status"><span class="dot" aria-hidden="true"></span> <span data-live="network">Tempo Testnet (Moderato)</span></p>
+
+                  <div class="stats">
+                    <div class="stat">
+                      <div class="stat-k">Workers online</div>
+                      <div class="stat-v" data-live="workers">0</div>
+                      <div class="stat-d">
+                        <svg width="7" height="7" viewBox="0 0 8 8" fill="none" aria-hidden="true">
+                          <path d="M4 6.5v-5M1.8 3.7 4 1.5l2.2 2.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        12%
+                      </div>
+                    </div>
+
+                    <div class="stat">
+                      <div class="stat-k">Avg. response time</div>
+                      <div class="stat-v">6.1s</div>
+                      <div class="stat-d">
+                        <svg width="7" height="7" viewBox="0 0 8 8" fill="none" aria-hidden="true">
+                          <path d="M4 6.5v-5M1.8 3.7 4 1.5l2.2 2.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        18%
+                      </div>
+                    </div>
+
+                    <div class="stat">
+                      <div class="stat-k">In flight</div>
+                      <div class="stat-v" data-live="inflight">0</div>
+                      <div class="stat-d">
+                        <svg width="7" height="7" viewBox="0 0 8 8" fill="none" aria-hidden="true">
+                          <path d="M4 6.5v-5M1.8 3.7 4 1.5l2.2 2.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        12%
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="sub-label">Recent answers</div>
+
+                  <table>
+                    <thead>
+                      <tr>
+                        <th class="c-q">Question</th>
+                        <th class="c-a">Answer</th>
+                        <th class="c-t">Time</th>
+                        <th class="c-p">Payment</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td class="c-q">Is this the correct product code?</td>
+                        <td class="c-a">Yes, it is.</td>
+                        <td class="c-t">6s</td>
+                        <td class="c-p">$0.02</td>
+                      </tr>
+                      <tr>
+                        <td class="c-q">What is the quantity on hand?</td>
+                        <td class="c-a">24 units.</td>
+                        <td class="c-t">6s</td>
+                        <td class="c-p">$0.02</td>
+                      </tr>
+                      <tr>
+                        <td class="c-q">Does this address exist?</td>
+                        <td class="c-a">Yes, it does.</td>
+                        <td class="c-t">7s</td>
+                        <td class="c-p">$0.02</td>
+                      </tr>
+                      <tr>
+                        <td class="c-q">Is the item in stock?</td>
+                        <td class="c-a">No, out of stock.</td>
+                        <td class="c-t">6s</td>
+                        <td class="c-p">$0.02</td>
+                      </tr>
+                      <tr>
+                        <td class="c-q">What is the brand name?</td>
+                        <td class="c-a">Acme.</td>
+                        <td class="c-t">6s</td>
+                        <td class="c-p">$0.02</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Worker's phone -->
+            <div class="phone">
+              <div class="phone-bar">
+                <span class="mark" aria-hidden="true">
+                  <svg width="100%" height="100%" viewBox="0 0 40 40" fill="none"><defs><mask id="qm9"><rect width="40" height="40" fill="#fff"/><line x1="25" y1="41" x2="41" y2="25" stroke="#000" stroke-width="4.4" stroke-linecap="round"/></mask></defs><g mask="url(#qm9)" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M13 2h14a11 11 0 0 1 11 11v14a11 11 0 0 1-11 11H13A11 11 0 0 1 2 27V13A11 11 0 0 1 13 2Zm-.4 10.6a2 2 0 0 0-2 2v10.8a2 2 0 0 0 2 2h14.8a2 2 0 0 0 2-2V14.6a2 2 0 0 0-2-2H12.6Z"/><rect x="26.6" y="26.6" width="11.4" height="11.4" rx="3.6"/></g></svg>
+                </span>
+                <b>Quorum</b>
+                <span class="bar-end" aria-hidden="true">
+                  <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
+                    <path d="M2 4h10M2 7h10M2 10h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                  </svg>
+                </span>
+              </div>
+
+              <div class="phone-body">
+                <div class="q-n">Question 3 of 5</div>
+                <p class="q-p">Is this the correct product code?</p>
+
+                <div class="evidence" role="img" aria-label="Photograph of a parcel with the shipping label B7-4492">
+                  <div class="label">
+                    <div class="barcode" aria-hidden="true">
+                      <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                      <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                    </div>
+                    <div class="label-code">B7-4492</div>
+                  </div>
+                </div>
+
+                <div class="options">
+                  <button class="option on" type="button">
+                    <span class="radio" aria-hidden="true"></span>
+                    Yes, it is.
+                  </button>
+                  <button class="option" type="button">
+                    <span class="radio" aria-hidden="true"></span>
+                    No, it is not.
+                  </button>
+                  <button class="option" type="button">
+                    <span class="radio" aria-hidden="true"></span>
+                    I'm not sure.
+                  </button>
+                  <button class="option flag" type="button">
+                    <svg width="9" height="9" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                      <path d="M6 1.6 11 10.4H1L6 1.6Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" />
+                      <path d="M6 5v2.1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+                      <circle cx="6" cy="8.8" r="0.55" fill="currentColor" />
+                    </svg>
+                    Report issue
+                  </button>
+                </div>
+              </div>
+
+              <div class="phone-foot">
+                <svg width="9" height="9" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                  <circle cx="6" cy="6" r="4.6" stroke="currentColor" stroke-width="1.2" />
+                  <path d="M6 3.4V6l1.8 1.1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                18 seconds left
+              </div>
+            </div>
+
+            <!-- Payment confirmation -->
+            <div class="toast">
+              <span class="toast-check" aria-hidden="true">
+                <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                  <path d="M2.6 6.2 4.8 8.4 9.4 3.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+              <div>
+                <div class="toast-t">Answer received</div>
+                <div class="toast-s">You were paid 2&cent;</div>
+              </div>
+              <span class="toast-end">
+                6s ago
+                <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                  <path d="M4.5 3 7.5 6 4.5 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <script src="assets/live.js"></script>
+  </body>
+</html>

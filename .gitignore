@@ -1,0 +1,14 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.env
+.env.local
+data/
+.DS_Store
+.probe/
+dist-test/
+
+# Internal briefs. They stay on disk and out of the public repository: the build
+# brief carries the competitive analysis, the schedule and the list of things
+# still unverified, none of which belongs in a public repo before the deadline.
+docs/

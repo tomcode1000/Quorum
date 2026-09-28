@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b0c0e" />
+    <title>Quorum</title>
+    <!--
+      A worker's phone is the real deployment target, so this page is one file with no
+      framework and no build step beyond compiling the TypeScript. Every dependency is
+      another thing that can fail in someone's hand on a slow connection, and the
+      people this is for are the least able to absorb that failure.
+    -->
+    <style>
+      :root {
+        --bg: #ffffff;
+        --surface: #f4f5f7;
+        --surface-raised: #ffffff;
+        --border: #dcdfe4;
+        --text: #16181d;
+        --text-dim: #5c6270;
+        --accent: #1f6feb;
+        --accent-text: #ffffff;
+        --good: #17803d;
+        --warn: #9a5b00;
+        --radius: 14px;
+        --tap: 56px;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme='light']) {
+          --bg: #0b0c0e;
+          --surface: #15171b;
+          --surface-raised: #1c1f25;
+          --border: #2b2f37;
+          --text: #f2f4f8;
+          --text-dim: #9aa2b1;
+          --accent: #4c8dff;
+          --accent-text: #08111f;
+          --good: #3fb950;
+          --warn: #d29922;
+        }
+      }
+
+      :root[data-theme='dark'] {
+        --bg: #0b0c0e;
+        --surface: #15171b;
+        --surface-raised: #1c1f25;
+        --border: #2b2f37;
+        --text: #f2f4f8;
+        --text-dim: #9aa2b1;
+        --accent: #4c8dff;
+        --accent-text: #08111f;
+        --good: #3fb950;
+        --warn: #d29922;
+      }
+
+      * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font: 16px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
+        min-height: 100dvh;
+        padding: 0 16px env(safe-area-inset-bottom);
+        overflow-x: hidden;
+      }
+
+      main { max-width: 34rem; margin: 0 auto; padding-bottom: 96px; }
+
+      header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 20px 0 16px;
+      }
+      header h1 { font-size: 1.125rem; margin: 0; letter-spacing: -0.01em; }
+      header .net { font-size: 0.75rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 18px;
+        margin-bottom: 14px;
+      }
+
+      h2 { font-size: 1rem; margin: 0 0 10px; }
+      p { margin: 0 0 12px; }
+      .dim { color: var(--text-dim); font-size: 0.875rem; }
+
+      /* A question has to be readable before it is answerable. */
+      .prompt { font-size: 1.25rem; line-height: 1.35; font-weight: 600; margin: 0 0 16px; letter-spacing: -0.01em; }
+
+      .evidence {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px;
+        margin-bottom: 14px;
+        font-size: 0.875rem;
+      }
+      .evidence img { width: 100%; border-radius: 8px; display: block; }
+      .evidence pre {
+        margin: 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font: 0.8125rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+        color: var(--text-dim);
+      }
+      .evidence .cap { color: var(--text-dim); font-size: 0.75rem; margin-bottom: 6px; }
+
+      /* Answering is tapping, not typing. */
+      .options { display: grid; gap: 10px; }
+      button {
+        font: inherit;
+        min-height: var(--tap);
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: var(--surface-raised);
+        color: var(--text);
+        padding: 12px 16px;
+        cursor: pointer;
+        text-align: left;
+        width: 100%;
+      }
+      button:active { transform: scale(0.99); }
+      button.primary { background: var(--accent); color: var(--accent-text); border-color: transparent; font-weight: 600; text-align: center; }
+      button.ghost { background: transparent; }
+      button:disabled { opacity: 0.5; cursor: default; }
+
+      input[type='number'] {
+        font: inherit;
+        width: 100%;
+        min-height: var(--tap);
+        padding: 12px 16px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: var(--surface-raised);
+        color: var(--text);
+      }
+
+      .hedge { margin: 16px 0 4px; }
+      .hedge label { display: block; font-size: 0.8125rem; color: var(--text-dim); margin-bottom: 8px; }
+      .hedge input[type='range'] { width: 100%; }
+
+      .row { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+      .row:last-child { border-bottom: 0; }
+      .row .k { color: var(--text-dim); font-size: 0.875rem; }
+      .row .v { font-variant-numeric: tabular-nums; font-weight: 600; }
+
+      .balance { font-size: 2.25rem; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; margin: 4px 0 2px; }
+
+      ul.plain { list-style: none; padding: 0; margin: 0; }
+      ul.plain li { padding: 6px 0; font-size: 0.875rem; color: var(--text-dim); }
+      ul.plain li::before { content: '✓ '; color: var(--good); font-weight: 700; }
+
+      a { color: var(--accent); }
+
+      .waiting { text-align: center; padding: 32px 0; color: var(--text-dim); }
+      .pulse { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: pulse 1.4s ease-in-out infinite; }
+      @keyframes pulse { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+      @media (prefers-reduced-motion: reduce) { .pulse { animation: none; } button:active { transform: none; } }
+
+      .tabs { position: fixed; bottom: 0; left: 0; right: 0; display: flex; background: var(--surface); border-top: 1px solid var(--border); padding-bottom: env(safe-area-inset-bottom); }
+      .tabs button { border: 0; border-radius: 0; background: transparent; text-align: center; font-size: 0.8125rem; color: var(--text-dim); }
+      .tabs button[aria-current='page'] { color: var(--text); font-weight: 600; }
+
+      .banner { border-left: 3px solid var(--warn); padding-left: 12px; font-size: 0.8125rem; color: var(--text-dim); margin-bottom: 14px; }
+      .hidden { display: none; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Quorum</h1>
+        <span class="net" id="net"></span>
+      </header>
+
+      <!-- Sign in -->
+      <section id="view-signin" class="hidden">
+        <div class="card">
+          <h2>Answer questions, get paid per answer</h2>
+          <p class="dim">
+            Agents send questions they cannot answer themselves. You look, you tap, and the money
+            arrives in your own account seconds later.
+          </p>
+          <ul class="plain">
+            <li>No deposit and no stake</li>
+            <li>No minimum before you are paid</li>
+            <li>No pay day to wait for</li>
+            <li>No seed phrase to keep safe</li>
+            <li>Nothing to buy first</li>
+          </ul>
+          <p class="dim" style="margin-top: 14px">
+            Your earnings are never held by us. Each answer is paid straight to an account only you
+            control, and every payment is a record you keep even if you stop working here.
+          </p>
+          <button class="primary" id="signin">Sign in with a passkey</button>
+          <p class="dim" id="signin-note" style="margin-top: 10px"></p>
+          <p class="dim" id="signin-error" style="margin-top: 10px"></p>
+        </div>
+      </section>
+
+      <!-- Work -->
+      <section id="view-work" class="hidden">
+        <div id="waiting" class="card waiting">
+          <span class="pulse"></span>
+          <p style="margin-top: 12px">Waiting for a question…</p>
+          <p class="dim" id="waiting-note">You will be paid for each one you answer.</p>
+        </div>
+
+        <div id="question" class="card hidden">
+          <p class="dim" id="q-meta"></p>
+          <p class="prompt" id="q-prompt"></p>
+          <div id="q-evidence"></div>
+          <div class="options" id="q-options"></div>
+          <div class="hedge">
+            <label for="q-confidence">How sure are you? <span id="q-confidence-label">Sure</span></label>
+            <input type="range" id="q-confidence" min="20" max="100" step="10" value="100" />
+            <p class="dim" style="margin: 6px 0 0">
+              Saying you are unsure is not penalised. It gets a second opinion bought, and you are
+              paid either way.
+            </p>
+          </div>
+          <button class="ghost" id="q-skip">Skip this one</button>
+        </div>
+
+        <div id="paid" class="card hidden">
+          <h2 id="paid-title">Answer sent</h2>
+          <p class="dim" id="paid-note"></p>
+        </div>
+      </section>
+
+      <!-- Earnings -->
+      <section id="view-earnings" class="hidden">
+        <div class="card">
+          <p class="dim">In your account</p>
+          <p class="balance" id="balance">—</p>
+          <p class="dim" id="balance-note"></p>
+        </div>
+        <div class="card">
+          <h2>Your standing</h2>
+          <div id="reputation"></div>
+          <p class="dim" style="margin-top: 12px">
+            Standing comes only from whether your answers matched what was finally decided. A question
+            that turned out to be genuinely ambiguous counts against nobody.
+          </p>
+        </div>
+        <div class="card">
+          <h2>Your account</h2>
+          <div class="row"><span class="k">Address</span><span class="v" id="address" style="font-size: 0.75rem"></span></div>
+          <div class="row"><span class="k">Worker ID</span><span class="v" id="worker-id" style="font-size: 0.75rem"></span></div>
+          <div class="row"><span class="k">Answers given</span><span class="v" id="answered">0</span></div>
+          <p class="dim" style="margin-top: 12px">
+            This account is yours, not ours. Every payment to it is on the public ledger with the
+            question it paid for, so you can prove this work to anyone without our help.
+          </p>
+          <button class="ghost" id="signout" style="margin-top: 12px">Sign out</button>
+        </div>
+      </section>
+    </main>
+
+    <nav class="tabs hidden" id="tabs">
+      <button id="tab-work" aria-current="page">Work</button>
+      <button id="tab-earnings">Earnings</button>
+    </nav>
+
+    <script type="module" src="./dist/app.js"></script>
+  </body>
+</html>

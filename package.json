@@ -1,0 +1,33 @@
+{
+  "name": "quorum",
+  "private": true,
+  "version": "0.1.0",
+  "description": "A resolver for the A2A input-required state. Agents ask, people answer, Tempo settles.",
+  "license": "MIT",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "demo"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc --build packages/gateway demo && npm run build -w @quorum/worker-app",
+    "typecheck": "tsc --build --force",
+    "test": "npm run test -w @quorum/core && npm run test -w @quorum/gateway",
+    "resolver": "npm run start -w @quorum/gateway",
+    "worker": "npm run dev -w @quorum/worker-app",
+    "demo": "npm run demo -w @quorum/demo",
+    "clean": "tsc --build --clean",
+    "gateway": "npm run start -w @quorum/gateway",
+    "setup": "node scripts/setup.mjs",
+    "fund": "node --env-file-if-exists=.env scripts/fund.mjs",
+    "settle": "node --env-file-if-exists=.env scripts/settle.mjs",
+    "site": "npm run build -w @quorum/site && npm run dev -w @quorum/site"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  }
+}
