@@ -76,7 +76,7 @@ const integration = () => page({
   <div>
     <p class="eyebrow">Integration</p>
     <h1 class="h-xl">Build with Quorum.<br/>Integrate with confidence.</h1>
-    <p class="lede">Quorum fits into what you already run. One MCP tool, or one HTTP call \u2014 no SDK to adopt, no account to provision, and no change to your workflow.</p>
+    <p class="lede">Quorum fits into what you already run. One MCP tool, or one HTTP call. No SDK to adopt, no account to provision, and no change to your workflow.</p>
     <div style="display:flex;gap:12px;margin-top:28px;flex-wrap:wrap">
       <a class="btn btn-primary btn-lg" href="docs/index.html">View developer docs ${ic('arrow')}</a>
       <a class="btn btn-ghost btn-lg" href="#">Get started</a>
@@ -186,7 +186,7 @@ const quickstart = () => docsPage({
     <p class="muted" style="margin:8px 0 16px;font-size:14px">Your agent now has <code style="font-family:var(--mono);font-size:12.5px">ask_human</code>. Over plain HTTP the same call looks like this.</p>
     <div class="code"><div class="code-tabs">${['cURL', 'Python', 'Node.js'].map((t, x) => `<button role="tab" aria-selected="${x === 0}">${t}</button>`).join('')}<button class="code-copy">Copy</button></div>
     <pre><span class="ln">curl -X POST https://api.quorum.dev/v1/questions \\</span><span class="ln">  -H <span class="s">"Content-Type: application/json"</span> \\</span><span class="ln">  -d <span class="s">'{</span></span><span class="ln"><span class="s">    "capability": "checking_something_is_real",</span></span><span class="ln"><span class="s">    "question": "Is this a valid postal address?",</span></span><span class="ln"><span class="s">    "options": ["yes", "no"],</span></span><span class="ln"><span class="s">    "max_price": "0.25"</span></span><span class="ln"><span class="s">  }'</span></span></pre></div>
-    <div class="note-box" style="margin-top:20px">${ic('question')}<span>The first call returns <b>402</b> with a payment challenge and a claim URL. Pay it, then call the claim URL \u2014 that request blocks until a person answers.</span></div>`,
+    <div class="note-box" style="margin-top:20px">${ic('question')}<span>The first call returns <b>402</b> with a payment challenge and a claim URL. Pay it, then call the claim URL. That request blocks until a person answers.</span></div>`,
 })
 
 const firstRequest = () => docsPage({
@@ -237,13 +237,13 @@ const response = () => docsPage({
     </div>
     <h2 class="h-md" id="s2" style="margin-top:36px">Statuses</h2>
     <div class="card" style="padding:0;overflow:hidden;margin-top:12px"><table class="tbl"><thead><tr><th>Status</th><th>What it means</th><th>What to do</th></tr></thead><tbody>
-      ${[['resolved', 'good', 'The bar was cleared. The answer is trustworthy.', 'Continue your workflow.'], ['no_consensus', 'bad', 'People looked and disagreed. The question is ambiguous.', 'Surface it. You were refunded.'], ['timeout', 'bad', 'Nobody answered in time.', 'Retry or proceed, saying you are guessing.'], ['refused', 'bad', 'Not servable \u2014 wrong capability, or no supply.', 'Check the capability id.']]
+      ${[['resolved', 'good', 'The bar was cleared. The answer is trustworthy.', 'Continue your workflow.'], ['no_consensus', 'bad', 'People looked and disagreed. The question is ambiguous.', 'Surface it. You were refunded.'], ['timeout', 'bad', 'Nobody answered in time.', 'Retry or proceed, saying you are guessing.'], ['refused', 'bad', 'Not servable: wrong capability, or no supply.', 'Check the capability id.']]
         .map(([s, k, m, a]) => `<tr><td><span class="badge badge-${k}">${s}</span></td><td class="dim">${m}</td><td class="dim">${a}</td></tr>`).join('')}
     </tbody></table></div>
     <h2 class="h-md" id="s3" style="margin-top:36px">Handling it in your app</h2>
     <div class="code" style="margin-top:12px"><div class="code-tabs"><button role="tab" aria-selected="true">Python</button><button class="code-copy">Copy</button></div>
     <pre><span class="ln">result = q.<span class="f">ask</span>(...)</span><span class="ln"></span><span class="ln"><span class="k">if</span> result.status == <span class="s">"resolved"</span>:</span><span class="ln">    use(result.answer)</span><span class="ln"><span class="k">elif</span> result.status == <span class="s">"no_consensus"</span>:</span><span class="ln">    escalate_internally(result.evidence)   <span class="c"># genuinely ambiguous</span></span><span class="ln"><span class="k">else</span>:</span><span class="ln">    proceed_and_flag()                     <span class="c"># never a silent guess</span></span></pre></div>
-    <div class="note-box" style="margin-top:20px">${ic('warn')}<span>Do not threshold on <code style="font-family:var(--mono)">confidence</code> alone. Check <code style="font-family:var(--mono)">status</code> first \u2014 an unresolved question has no answer to be confident about.</span></div>`,
+    <div class="note-box" style="margin-top:20px">${ic('warn')}<span>Do not threshold on <code style="font-family:var(--mono)">confidence</code> alone. Check <code style="font-family:var(--mono)">status</code> first, because an unresolved question has no answer to be confident about.</span></div>`,
 })
 
 const nextSteps = () => docsPage({
@@ -268,7 +268,7 @@ const capabilityReference = () => docsPage({
   body: `<a class="back" href="index.html">${ic('arrow')} Capability reference</a>
     <p class="eyebrow">Capability reference</p>
     <h1 class="h-lg" id="s0">Telling readings apart</h1>
-    <p class="lede">Decides which of two readings of the same evidence is correct \u2014 even when they are formatted differently or come from different extractions.</p>
+    <p class="lede">Decides which of two readings of the same evidence is correct, even when they are formatted differently or come from different extractions.</p>
     <ul class="feats" style="margin-top:24px">
       ${[['target', 'High accuracy', 'With the evidence in front of the worker.'], ['file', 'Multiple formats', 'Text, numbers, codes and images.'], ['shield', 'Built for noisy data', 'Smudges, scans and bad OCR.']].map(([i, t, d]) => `<li class="feat"><span class="ico ico-sm">${ic(i)}</span><b>${t}</b><span>${d}</span></li>`).join('')}
     </ul>

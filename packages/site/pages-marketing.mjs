@@ -13,7 +13,7 @@ const foot = () => `<footer class="foot">${statsStrip()}</footer>`
 const capCard = (n, icon, name, desc, href, id) => `<a class="card" href="${href}" style="display:block" data-capability="${id}">
   <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
   <span class="ico">${ic(icon)}</span>
-  <span class="badge" data-cap-state>—</span></div>
+  <span class="badge" data-cap-state>Checking</span></div>
   <div class="dim" style="margin-top:14px;font-size:11px;letter-spacing:.09em">${n}</div>
   <b class="h-sm" style="display:block;margin:3px 0 6px">${name}</b>
   <span class="feat"><span>${desc}</span></span>
@@ -162,7 +162,7 @@ const capabilities = () => page({
       <span class="ico ico-sm" style="margin-left:auto;background:var(--accent);color:#fff">${ic('arrow')}</span>
     </div>
     <div style="display:flex;flex-direction:column;gap:12px;margin-top:16px">
-      ${[['Routing to workers with a record on this', true], ['Amara answered \u2014 confidence 0.93', true], ['Second opinion bought', true], ['Joel agreed \u2014 confidence 0.99', false]]
+      ${[['Routing to workers with a record on this', true], ['Amara answered, confidence 0.93', true], ['Second opinion bought', true], ['Joel agreed, confidence 0.99', false]]
         .map(([t, done]) => `<div style="display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--ink-2)"><span class="ico ico-sm ${done ? 'ico-good' : ''}" style="width:18px;height:18px;border-radius:50%">${ic('check')}</span>${t}</div>`).join('')}
     </div>
   </div></div>

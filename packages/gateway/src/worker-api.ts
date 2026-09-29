@@ -90,7 +90,7 @@ export function workerApi(services: {
       assessment: worker.assessmentFailed
         ? 'failed'
         : needsAssessment(worker.record)
-          ? { required: true, questions: ASSESSMENT_LENGTH, paid: true }
+          ? { required: true, questions: ASSESSMENT_LENGTH, paid: false }
           : 'passed',
     })
   })
@@ -121,7 +121,8 @@ export function workerApi(services: {
       status: 'in-progress',
       number: answered + 1,
       of: worker.assessment.questions.length,
-      paysCents: services.wageCents,
+      /* Stated so the app never has to guess, and never implies a wage. */
+      paid: false,
       question: { prompt: next.prompt, schema: next.schema, attachments: next.attachments ?? [], kind: next.kind },
     })
   })
@@ -151,19 +152,22 @@ export function workerApi(services: {
         },
       })
 
-    // Pay for the assessment either way. Refusing to pay for work already done is the
-    // behaviour this network exists to replace, and "a short unpaid test" is how that
-    // always starts. Failing ends the relationship, which is the actual protection.
-    const earned = state.results.length * services.wageCents
-    worker.earnedCents += earned
-    const payments = state.results.map((result, index) => ({
-      questionId: `assessment_${worker.workerId}`,
-      assignmentId: `${state.questions[index]?.id ?? index}`,
-      workerId: worker.workerId,
-      to: worker.address,
-      amountCents: services.wageCents,
-    }))
+    /*
+      The assessment is not paid.
 
+      Nothing here reaches a caller and nothing here is billed, so there is no
+      revenue behind these five answers to pay a wage out of: the questions have
+      known answers and exist only to calibrate, which makes them a sample of
+      the job rather than a delivery of it. Paying for them would mean paying
+      for every attempt by everybody who ever opens the app, which a network
+      earning cents per real answer cannot carry.
+
+      What the product still refuses to do is take *productive* work for
+      nothing. Every question that reaches a worker from a real caller is paid
+      the moment the answer is accepted, whether or not the caller is charged
+      and whether or not the crowd agreed. That is the commitment, and it is
+      untouched by this.
+    */
     if (outcome.status === 'passed') {
       worker.record = seedFromAssessment(state)
       worker.assessment = null
@@ -173,35 +177,12 @@ export function workerApi(services: {
     }
     void store.save()
 
-    // Settled after the response is decided so a slow chain does not hold the worker.
-    // Each one lands in their payment history either way, carrying its transaction
-    // hash if it settled and marked failed if it did not — a wage that vanished
-    // silently is indistinguishable, from the worker's side, from one never owed.
-    void Promise.allSettled(payments.map((p) => paymaster.payWorker(p))).then((settled) => {
-      settled.forEach((result, index) => {
-        const question = state.questions[index]
-        store.recordPayment(worker.workerId, {
-          at: Date.now(),
-          amountCents: services.wageCents,
-          txHash: result.status === 'fulfilled' ? result.value.txHash : null,
-          questionId: `assessment_${worker.workerId}`,
-          label: question?.prompt ?? 'Assessment question',
-          kind: question?.kind ?? 'disambiguate',
-          status: result.status === 'fulfilled' ? 'settled' : 'failed',
-        })
-      })
-      const failed = settled.filter((s) => s.status === 'rejected').length
-      if (failed > 0) console.error(`[quorum] ${failed} assessment payment(s) failed for ${worker.workerId}`)
-      void store.save()
-    })
-
     return c.json({
       status: outcome.status,
       correct: outcome.correct,
       of: outcome.of,
-      earnedCents: earned,
       ...(outcome.status === 'failed'
-        ? { reason: 'Too many of these were missed. You keep what you earned for the ones you answered.' }
+        ? { reason: 'Too many of these were missed, so questions will not be routed to you.' }
         : {}),
     })
   })
@@ -288,6 +269,20 @@ export function workerApi(services: {
       answered: worker.answerCount,
       network: paymaster.networkName,
       feesSponsored: paymaster.feesSponsored,
+      /*
+        Where onboarding stands.
+
+        The app rendered a "verified" badge from its own markup, which meant a
+        worker who had not answered a single assessment question was told on
+        their profile that they were verified and that work could reach them.
+        Neither was true, and both are exactly the kind of flattering falsehood
+        this product is built to avoid telling. The state is now read from here.
+      */
+      assessment: worker.assessmentFailed
+        ? 'failed'
+        : worker.assessment !== null || needsAssessment(worker.record)
+          ? 'required'
+          : 'passed',
       /**
        * Every wage, newest first, each with the link that proves it.
        *

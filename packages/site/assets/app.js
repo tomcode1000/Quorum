@@ -76,15 +76,15 @@ const esc = (value) =>
   meaning, so the ordinary case still looks like money rather than telemetry.
 */
 const money = (cents) => {
-  if (cents === null || cents === undefined || Number.isNaN(cents)) return '—'
+  if (cents === null || cents === undefined || Number.isNaN(cents)) return 'Unavailable'
   const dollars = cents / 100
   if (dollars !== 0 && Math.abs(dollars) < 0.1) return `$${dollars.toFixed(3)}`
   return `$${dollars.toFixed(2)}`
 }
 
-const shortHash = (hash) => (hash ? `${hash.slice(0, 6)}…${hash.slice(-4)}` : '—')
+const shortHash = (hash) => (hash ? `${hash.slice(0, 6)}…${hash.slice(-4)}` : 'Pending')
 
-const shortAddress = (address) => (address ? `${address.slice(0, 6)}…${address.slice(-4)}` : '—')
+const shortAddress = (address) => (address ? `${address.slice(0, 6)}…${address.slice(-4)}` : 'Unknown')
 
 /*
   A time, in words.
@@ -94,7 +94,7 @@ const shortAddress = (address) => (address ? `${address.slice(0, 6)}…${address
   day it switches to a date, because "31,100m ago" is not a unit of anything.
 */
 const ago = (at) => {
-  if (!at) return '—'
+  if (!at) return 'Never'
   const seconds = Math.round((Date.now() - at) / 1000)
   if (seconds < 10) return 'just now'
   if (seconds < 60) return `${seconds}s ago`
@@ -107,7 +107,7 @@ const clockTime = (at) =>
   new Date(at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false })
 
 const duration = (ms) => {
-  if (ms === null || ms === undefined) return '—'
+  if (ms === null || ms === undefined) return 'Not measured'
   if (ms < 1000) return `${Math.round(ms)}ms`
   if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`
   return `${Math.floor(ms / 60000)}m ${Math.round((ms % 60000) / 1000)}s`
@@ -129,7 +129,7 @@ const KIND_LABELS = {
   compare: 'Comparing',
 }
 
-const kindLabel = (kind) => KIND_LABELS[kind] ?? kind ?? '—'
+const kindLabel = (kind) => KIND_LABELS[kind] ?? kind ?? 'Unknown'
 
 /* ------------------------------------------------------------------ icons -- */
 
@@ -149,6 +149,8 @@ const ICONS = {
   users: '<circle cx="9" cy="6.2" r="3.1"/><path d="M3.2 15.2c.6-2.8 2.9-4.5 5.8-4.5s5.2 1.7 5.8 4.5"/>',
   clipboard:
     '<rect x="3.6" y="3.2" width="10.8" height="12.6" rx="2"/><path d="M6.6 3.2a1.6 1.6 0 0 1 1.6-1.6h1.6a1.6 1.6 0 0 1 1.6 1.6"/><path d="M6.6 8.4h4.8M6.6 11.6h3.2"/>',
+  key: '<circle cx="6" cy="10.4" r="3.4"/><path d="m8.5 8 6-6M12.4 4.1l1.7 1.7M10.9 5.6l1.7 1.7"/>',
+  download: '<path d="M9 2.4v8.4M5.6 7.8 9 11.2l3.4-3.4"/><path d="M2.8 12.8v1.6a1.6 1.6 0 0 0 1.6 1.6h9.2a1.6 1.6 0 0 0 1.6-1.6v-1.6"/>',
 }
 
 const icon = (name) =>
@@ -237,7 +239,7 @@ const initCopy = () => {
     button.addEventListener('click', async () => {
       const source = $(button.dataset.copy)
       const text = source?.dataset.full ?? source?.textContent?.trim()
-      if (!text || text === '—') return
+      if (!text || text === 'Loading' || text === 'Unavailable') return
       try {
         await navigator.clipboard.writeText(text)
         const was = button.innerHTML
@@ -476,7 +478,7 @@ const loadMe = async () => {
   fill('balance', money(me.balanceCents))
   fill('earned', money(me.earnedCents))
   fill('answered', String(me.answered))
-  fill('network', me.network ?? '—')
+  fill('network', me.network ?? 'Network unknown')
   fill('worker-id', me.workerId)
   fill('display-name', shortAddress(me.address))
   fill('initials', initials(me.address))
@@ -489,7 +491,7 @@ const loadMe = async () => {
 
   const last = me.payments?.[0]
   fill('last-when', last ? ago(last.at) : 'No payments yet')
-  fill('last-amount', last ? money(last.amountCents) : '—')
+  fill('last-amount', last ? money(last.amountCents) : 'Nothing yet')
 
   /*
     Standing.
@@ -502,11 +504,44 @@ const loadMe = async () => {
   const scores = Object.entries(me.reputation ?? {})
   const best = scores.sort(([, a], [, b]) => b.score - a.score)[0]
   const answered = best ? best[1].agreements + best[1].disagreements : 0
-  fill('standing', best && answered > 0 ? `${Math.round(best[1].score * 100)}% on ${kindLabel(best[0]).toLowerCase()}` : 'Building')
+  fill(
+    'standing',
+    me.assessment === 'failed'
+      ? 'Not active'
+      : me.assessment !== 'passed'
+        ? 'Assessment not finished'
+        : best && answered > 0
+          ? `${Math.round(best[1].score * 100)}% on ${kindLabel(best[0]).toLowerCase()}`
+          : 'New, no record yet',
+  )
 
-  for (const el of $$('status-pill')) {
-    el.innerHTML = pill('Work can reach you', 'good', 'check')
+  /*
+    Onboarding state, from the roster rather than from the markup.
+
+    Both of these badges used to be written into the page, so somebody who had
+    not answered a single assessment question was told on their own profile
+    that they were verified and that work could reach them. Neither was true.
+    A product whose entire argument is "we will not tell you a comfortable
+    number" cannot afford a comfortable badge either.
+  */
+  const STANDING = {
+    passed: [
+      ['Verified by passkey', 'good', 'check'],
+      ['Work can reach you', 'good', 'check'],
+    ],
+    required: [
+      ['Passkey set up', 'accent', 'key'],
+      ['Assessment not finished', 'warn', 'clock'],
+    ],
+    failed: [
+      ['Passkey set up', 'accent', 'key'],
+      ['Work is not being routed to you', 'bad', 'x'],
+    ],
   }
+  const [verified, reach] = STANDING[me.assessment] ?? STANDING.required
+
+  for (const el of $$('verified-pill')) el.innerHTML = pill(...verified)
+  for (const el of $$('status-pill')) el.innerHTML = pill(...reach)
 
   const explorer = last?.explorerUrl
   for (const el of $$('address-link')) {
@@ -965,7 +1000,7 @@ const initAssessment = async () => {
     const body = await get(`/v1/worker/assessment?workerId=${encodeURIComponent(current.workerId)}`)
     show(body)
   } catch {
-    fill('prompt', 'Could not reach Quorum. Your connection may have dropped — this page will work again when it is back.')
+    fill('prompt', 'Could not reach Quorum. Your connection may have dropped, and this page will work again when it is back.')
   }
 }
 
@@ -983,7 +1018,13 @@ const initAssessmentResult = () => {
   fill('assessment-correct', String(result.correct))
   fill('assessment-wrong', String(result.of - result.correct))
   fill('assessment-of', String(result.of))
-  fill('assessment-earned', money(result.earnedCents))
+  /*
+    No assessment wage to report. The five questions have known answers and
+    never reach a caller, so there is no revenue behind them to pay out of;
+    what the result screens now show is the wage waiting on the other side of
+    it, which is the number that actually matters to somebody deciding whether
+    to carry on.
+  */
 }
 
 /* ------------------------------------------------------------ home state -- */
@@ -1056,7 +1097,7 @@ const FEED_COPY = {
   'worker.paid': (e) => [`${shortAddress(e.workerId)} was paid`, `${money(e.amountCents)} · ${shortHash(e.txHash)}`, 'wallet', 'good'],
   'caller.refunded': (e) => ['The caller was refunded', `${money(e.amountCents)} · ${shortHash(e.txHash)}`, 'swap', 'warn'],
   'question.settled': (e) => [
-    e.status === 'resolved' ? 'Resolved' : `Not resolved — ${e.status.replace('_', ' ')}`,
+    e.status === 'resolved' ? 'Resolved' : `Not resolved: ${e.status.replace('_', ' ')}`,
     `Confidence ${(e.confidence ?? 0).toFixed(3)} · ${money(e.wagesCents)} in wages`,
     e.status === 'resolved' ? 'check' : 'warn',
     e.status === 'resolved' ? 'good' : 'warn',
@@ -1112,7 +1153,7 @@ const initConsole = async () => {
     fill('c-resolved-n', String(counts.questionsResolved))
     fill('c-refunded-n', String(counts.questionsSettled - counts.questionsResolved))
     fill('c-network', overview.network)
-    fill('c-fees', overview.feesSponsored ? 'Covered by the treasury' : 'Covered — workers only receive')
+    fill('c-fees', overview.feesSponsored ? 'Covered by the treasury' : 'Covered. Workers only receive')
 
     fill('c-wages', money(treasury.wagesPaidCents))
     fill('c-refunded', money(treasury.refundedCents))
@@ -1125,8 +1166,8 @@ const initConsole = async () => {
     fill('c-pipe-settled', String(pipeline.settled))
 
     fill('c-latency', duration(performance.medianLatencyMs))
-    fill('c-resolved', performance.resolutionRate === null ? '—' : `${Math.round(performance.resolutionRate * 100)}%`)
-    fill('c-responders', performance.meanResponders === null ? '—' : performance.meanResponders.toFixed(2))
+    fill('c-resolved', performance.resolutionRate === null ? 'No data yet' : `${Math.round(performance.resolutionRate * 100)}%`)
+    fill('c-responders', performance.meanResponders === null ? 'No data yet' : performance.meanResponders.toFixed(2))
 
     html(
       'c-feed',
@@ -1296,7 +1337,7 @@ const refreshQuestions = async () => {
   const settledRows = body.settled.map(
     (question) => `<tr>
       <td><a href="console-question.html?id=${encodeURIComponent(question.questionId)}"><b class="ap-mono">${esc(question.questionId.slice(0, 18))}</b><small>${esc(question.agreement)}</small></a></td>
-      <td>—</td>
+      <td>Not settled</td>
       <td>${
         question.status === 'resolved'
           ? pill('Resolved', 'good', 'check')
@@ -1360,7 +1401,7 @@ const refreshTreasury = async () => {
       <td>${esc(kindLabel(payment.kind))}</td>
       <td class="ap-num">${money(payment.amountCents)}</td>
       <td>${paymentPill(payment.status)}</td>
-      <td>${payment.explorerUrl ? `<a class="ap-more" href="${esc(payment.explorerUrl)}" target="_blank" rel="noopener">${shortHash(payment.txHash)} ${icon('out')}</a>` : '<span style="color:var(--ink-4)">—</span>'}</td>
+      <td>${payment.explorerUrl ? `<a class="ap-more" href="${esc(payment.explorerUrl)}" target="_blank" rel="noopener">${shortHash(payment.txHash)} ${icon('out')}</a>` : '<span style="color:var(--ink-4)">No record</span>'}</td>
     </tr>`,
           )
           .join('')}</tbody></table>`
@@ -1704,7 +1745,7 @@ const initWorkerDetail = async () => {
     fill('w-initials', initials(worker.address))
     fill('w-answered', String(worker.answered))
     fill('w-earned', money(worker.earnedCents))
-    fill('w-balance', '—')
+    fill('w-balance', 'Not read')
     fill('w-reliability', worker.reliability === null ? 'No record yet' : worker.reliability.toFixed(3))
     fill('w-toofast', String(worker.tooFastCount))
     fill('w-lastseen', ago(worker.lastSeenAt))
@@ -1732,7 +1773,7 @@ const initWorkerDetail = async () => {
         <td><b>${esc(kindLabel(payment.kind))}</b><small>${esc((payment.label ?? '').slice(0, 44))}</small></td>
         <td class="ap-num">${money(payment.amountCents)}</td>
         <td>${paymentPill(payment.status)}</td>
-        <td>${payment.explorerUrl ? `<a class="ap-more" href="${esc(payment.explorerUrl)}" target="_blank" rel="noopener">${shortHash(payment.txHash)} ${icon('out')}</a>` : '<span style="color:var(--ink-4)">—</span>'}</td>
+        <td>${payment.explorerUrl ? `<a class="ap-more" href="${esc(payment.explorerUrl)}" target="_blank" rel="noopener">${shortHash(payment.txHash)} ${icon('out')}</a>` : '<span style="color:var(--ink-4)">No record</span>'}</td>
       </tr>`,
             )
             .join('')}</tbody></table>`
@@ -1780,12 +1821,87 @@ const initWorkerDetail = async () => {
   setInterval(render, 5000)
 }
 
+/* ----------------------------------------------------------------- export -- */
+
+/*
+  Taking the account details away with you.
+
+  The point of this button is that it works when we do not. The account is on
+  Tempo and belongs to the person holding the passkey, so what they need in
+  order to reach it without Quorum is the address, the network and where to look
+  it up. That is what this writes out.
+
+  It deliberately does not offer to export a private key, and not because we are
+  withholding one: there is no key here to give. The account is controlled by
+  the passkey on their device, which is what makes it unphishable and is also
+  why it cannot be copied into a text file. The note in the download says so,
+  rather than leaving somebody hunting for a key that does not exist.
+*/
+const initExport = () => {
+  const buttons = $$('export')
+  if (!buttons.length) return
+
+  for (const button of buttons) {
+    button.addEventListener('click', async () => {
+      const current = session()
+      if (!current) return
+
+      let me = null
+      try {
+        me = await get(`/v1/worker/me?workerId=${encodeURIComponent(current.workerId)}`)
+      } catch {
+        // Offline is fine: the address is the part that matters and we have it.
+      }
+
+      const address = me?.address ?? current.address
+      const lines = [
+        'Your Quorum account',
+        '',
+        `Account address   ${address}`,
+        `Network           ${me?.network ?? 'Tempo'}`,
+        `Saved             ${new Date().toISOString()}`,
+        '',
+        'This account is yours. Quorum cannot move, hold or freeze what is in it,',
+        'and does not need to be running for you to reach it.',
+        '',
+        'It is controlled by the passkey on your device, so there is no private key',
+        'or seed phrase to write down here. Keep the passkey and you keep the',
+        'account. Your device can add the same passkey to another phone or computer',
+        'if you want a second way in.',
+        '',
+        'Every payment into this account is public and can be looked up by anyone,',
+        'including you, at any time:',
+        me?.payments?.[0]?.explorerUrl
+          ? `  ${me.payments[0].explorerUrl.split('/tx/')[0]}/address/${address}`
+          : `  search for ${address} on the Tempo explorer`,
+      ]
+
+      const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `quorum-account-${address.slice(0, 10)}.txt`
+      document.body.append(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+
+      const was = button.innerHTML
+      button.innerHTML = `${icon('check')} Saved`
+      setTimeout(() => {
+        button.innerHTML = was
+      }, 2000)
+    })
+  }
+}
+
 /* ------------------------------------------------------------------- boot -- */
 
 initTheme()
 initCopy()
 initClock()
 initSignIn()
+initExport()
 
 void (async () => {
   await Promise.allSettled([

@@ -501,7 +501,18 @@
   padding: 16px 20px;
 }
 
+/*
+  A panel title, which may carry an icon tile.
+
+  Flex, because a 30px inline-grid tile inside a plain heading sits on the text
+  baseline rather than centring on it: the tile hangs below the words and reads
+  as an icon that has come loose of its title. Centring them together is what
+  the comps show.
+*/
 .ap-card-head .ap-h2 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
   margin-right: auto;
 }
 

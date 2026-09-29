@@ -97,7 +97,7 @@ const whyJoinSection = () => `<section class="w-band w-band-alt"><div class="she
   <div class="w-copy">
     <p class="w-eyebrow">Why join Quorum</p>
     <h2 class="w-h">Simple work.<em>Real benefits.</em></h2>
-    <p class="w-lede">Answering a Quorum question takes seconds and needs nothing but your judgment. There is no deposit, no stake, no bond and no minimum payout — not now, not ever.</p>
+    <p class="w-lede">Answering a Quorum question takes seconds and needs nothing but your judgment. There is no deposit, no stake, no bond and no minimum payout. Not now, not ever.</p>
     <ul class="w-feats">
       ${WHY.map(([i, t, d]) => `<li class="w-feat"><span class="w-tile">${ic(i)}</span><b>${t}</b><p>${d}</p></li>`).join('')}
     </ul>
@@ -117,7 +117,7 @@ const whyJoinSection = () => `<section class="w-band w-band-alt"><div class="she
 */
 const STEPS = [
   ['user', 'Sign in with a passkey', 'Your device makes one for you. There is no password to choose, nothing to confirm by email, and nothing to write down and keep safe.'],
-  ['gear', 'Take a short assessment', 'A handful of questions whose answers are already known, so your judgment can be measured. You are paid for these too.'],
+  ['gear', 'Take a short assessment', 'A handful of questions whose answers are already known, so your judgment can be measured. It is short, it is not paid, and every real question after it is.'],
   ['chat', 'Answer questions', 'Work reaches you based on your record for that kind of judgment. Every question is a few seconds of reading and one decision.'],
   ['wallet', 'Get paid per answer', '$0.02 lands in your own account for each accepted answer, with no fee taken out of it and nothing to claim.'],
 ]
@@ -218,7 +218,7 @@ ${joinSection()}
 const WHY_PASSKEY = [
   ['shield', 'More secure', 'A passkey cannot be phished or leaked in a breach, because there is no secret you could be tricked into typing.'],
   ['bolt', 'Faster', 'Nothing to remember and nothing to type. It is the same gesture you already use to unlock the device.'],
-  ['phone', 'Already on your device', 'Face, fingerprint or device PIN — whichever your phone or computer already uses.'],
+  ['phone', 'Already on your device', 'Face, fingerprint or device PIN, whichever your phone or computer already uses.'],
 ]
 
 const workerSignIn = () => page({
@@ -248,7 +248,7 @@ const workerSignIn = () => page({
     </a>
     <div class="w-or">OR</div>
     <a class="btn btn-ghost" style="width:100%;height:50px" href="${WORKER_APP}">${ic('key')} Use another device</a>
-    <p class="dim" style="margin:22px 0 0;font-size:12.5px;line-height:1.6">First time here? The same button makes your passkey — there is no separate sign-up.</p>
+    <p class="dim" style="margin:22px 0 0;font-size:12.5px;line-height:1.6">First time here? The same button makes your passkey, so there is no separate sign-up.</p>
   </div>
 </div></section>
 </main>`,

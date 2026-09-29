@@ -70,7 +70,7 @@ const verdict = (title, sub) =>
 const readings = () => capabilityPage({
   n: '01', slug: 'readings', tag: 'Telling readings apart',
   title: 'Telling readings apart.',
-  lede: 'Two readings of the same evidence, and your extraction cannot choose. A person looks at what you looked at and says which it is — in seconds, for cents.',
+  lede: 'Two readings of the same evidence, and your extraction cannot choose. A person looks at what you looked at and says which it is, in seconds, for cents.',
   feats: [['target', 'High accuracy', 'Settles the reading, not the closest match.'], ['eye', 'Sees the evidence', 'The image travels with the question.'], ['shield', 'Reduces errors', 'Stops a wrong figure entering your ledger.'], ['spark', 'Works across formats', 'Text, numbers, codes and images.']],
   input: `<span class="tag">Input</span><p style="font-size:12.5px;color:var(--ink-2);margin:12px 0 10px">The printed line reads &ldquo;TOTAL 4S.00&rdquo;. Is the total 45.00 or 4.50?</p>
     <div class="card card-flat" style="padding:10px;margin-bottom:8px"><div class="dim" style="font-size:10.5px;margin-bottom:3px">Option A</div><b style="font-size:13px">45.00</b></div>
@@ -82,7 +82,7 @@ const readings = () => capabilityPage({
     intro: 'Quorum shows the worker exactly what your extraction saw, and asks the one question that decides it.',
     title: 'A supplier invoice for the wrong amount.',
     body: 'An accounts-payable agent reads a smudged total as 4.50 at 0.41 confidence. Without a resolver it pays 4.50 against a 45.00 invoice and nothing flags it. With one, the question reaches a person and the correct figure comes back before the payment is scheduled.',
-    panel: `${row('Agent’s reading — 4.50', 'Rejected', 'bad')}${row('Resolved reading — 45.00', 'Accepted', 'good')}`,
+    panel: `${row('Agent reading: 4.50', 'Rejected', 'bad')}${row('Resolved reading: 45.00', 'Accepted', 'good')}`,
     tags: ['Accounts payable', 'Document extraction', 'Finance'],
   },
 })
@@ -99,7 +99,7 @@ const real = () => capabilityPage({
   example: {
     intro: 'The worker sees the document itself, not a description of it, which is what makes the check worth anything.',
     title: 'Spotting a fake in onboarding.',
-    body: 'A bank receives a passport for KYC. Quorum routes it to a person who checks the format, the security features and the issuer, and flags it as altered in seconds with a clear reason — not a probability with nothing behind it.',
+    body: 'A bank receives a passport for KYC. Quorum routes it to a person who checks the format, the security features and the issuer, and flags it as altered in seconds with a clear reason, not a probability with nothing behind it.',
     panel: `${row('Security feature missing', 'Flagged', 'bad')}${row('Document format incorrect', 'Flagged', 'bad')}${row('Issuer details do not match', 'Flagged', 'bad')}`,
     tags: ['KYC', 'Onboarding', 'Fraud'],
   },
@@ -108,7 +108,7 @@ const real = () => capabilityPage({
 const matching = () => capabilityPage({
   n: '03', slug: 'matching', tag: 'Matching records',
   title: 'Matching records.',
-  lede: 'Decide whether records from different systems are the same thing — even when the names, formats and identifiers do not line up.',
+  lede: 'Decide whether records from different systems are the same thing, even when the names, formats and identifiers do not line up.',
   feats: [['db', 'Finds related data', 'Across different sources and systems.'], ['link', 'Handles variations', 'Different formats and naming styles.'], ['file', 'Reduces duplicates', 'Identifies and merges near-identical records.'], ['shield', 'Improves accuracy', 'Builds one clear, complete picture.']],
   input: `<span class="tag">Input</span>
     ${[['db', 'Hospital system', 'John A. Smith · 12/04/1982'], ['file', 'Insurance claim', 'J. Smith · 12/04/1982'], ['globe', 'National registry', 'John Smith · 12/04/1982']].map(([i, s, v]) => `<div class="card card-flat" style="padding:10px;margin-top:8px"><div style="display:flex;gap:9px;align-items:center"><span class="ico ico-sm">${ic(i)}</span><div><b style="font-size:12px;display:block">${s}</b><span class="dim" style="font-size:11px">${v}</span></div></div></div>`).join('')}`,
@@ -131,7 +131,7 @@ const categorising = () => capabilityPage({
   lede: 'Put an item in the right bucket when your classifier is between two, or when the item does not obviously fit the taxonomy you gave it.',
   feats: [['db', 'Finds the pattern', 'Reads content and structure, not keywords.'], ['grid', 'Applies your rules', 'Uses the taxonomy you send.'], ['tag', 'Reduces manual work', 'Handles only the items that need a person.'], ['bolt', 'Stays consistent', 'The same judgment across the batch.']],
   input: `<span class="tag">Uncategorised</span>
-    ${[['file', 'Invoice #INV-48231', '£1,250.00'], ['mail', 'john@company.com', 'Subject: Partnership'], ['image', 'IMG_2048.jpg', '1.2 MB'], ['file', 'Contract_v3.pdf', '—']].map(([i, t, s]) => `<div class="card card-flat" style="padding:9px;margin-top:7px"><div style="display:flex;gap:9px;align-items:center"><span class="ico ico-sm">${ic(i)}</span><div style="min-width:0"><b style="font-size:11.5px;display:block">${t}</b><span class="dim" style="font-size:10.5px">${s}</span></div></div></div>`).join('')}`,
+    ${[['file', 'Invoice #INV-48231', '£1,250.00'], ['mail', 'john@company.com', 'Subject: Partnership'], ['image', 'IMG_2048.jpg', '1.2 MB'], ['file', 'Contract_v3.pdf', '480 KB']].map(([i, t, s]) => `<div class="card card-flat" style="padding:9px;margin-top:7px"><div style="display:flex;gap:9px;align-items:center"><span class="ico ico-sm">${ic(i)}</span><div style="min-width:0"><b style="font-size:11.5px;display:block">${t}</b><span class="dim" style="font-size:10.5px">${s}</span></div></div></div>`).join('')}`,
   analysis: `<p style="font-size:12.5px;color:var(--ink-2);margin:0 0 12px">Sorted into your taxonomy</p>
     ${[['file', 'Invoices', 'Financial documents', '12'], ['mail', 'Emails', 'Communication', '8'], ['image', 'Images', 'Media files', '4'], ['file', 'Contracts', 'Legal documents', '6']].map(([i, n, d, c]) => `<div style="display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid var(--border)"><span class="ico ico-sm">${ic(i)}</span><div><b style="font-size:12px;display:block">${n}</b><span class="dim" style="font-size:11px">${d}</span></div><span class="badge badge-accent" style="margin-left:auto">${c} items</span></div>`).join('')}`,
   result: verdict('Sorted and ready.', 'Every item is in a bucket you named, with the ambiguous ones decided by a person.'),
@@ -159,7 +159,7 @@ const comparing = () => capabilityPage({
   example: {
     intro: 'A difference a person notices in two seconds is often one a diff cannot express at all.',
     title: 'Two versions of a contract.',
-    body: 'A legal team sends two versions of the same agreement. Quorum returns what was added, removed and modified, and flags the one change that actually matters — so nothing is missed in a file nobody has time to read twice.',
+    body: 'A legal team sends two versions of the same agreement. Quorum returns what was added, removed and modified, and flags the one change that actually matters, so nothing is missed in a file nobody has time to read twice.',
     panel: `${row('Payment terms', 'Changed', 'bad')}${row('Parties', 'Unchanged', 'good')}${row('Governing law', 'Unchanged', 'good')}`,
     tags: ['Legal', 'Contracts', 'Review'],
   },

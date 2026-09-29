@@ -75,10 +75,10 @@ const liveActivity = () =>
     main: `${consoleTop(`<div>${chip('Operator console')}<h1 class="ap-h1">Live activity</h1><p class="ap-sub" style="margin-bottom:0">Questions, workers, answers and payments across Quorum, as they happen.</p></div>`)}
 
 <div class="ap-stats">
-  ${stat('clipboard', 'Questions in flight', '—', 'being routed or answered now', 'c-inflight')}
-  ${stat('users', 'Workers online', '—', 'polled in the last minute', 'c-online')}
-  ${stat('check', 'Answers received', '—', 'across every worker, all time', 'c-answers')}
-  ${stat('wallet', 'Wages paid', '—', 'to workers, all time', 'c-wages')}
+  ${stat('clipboard', 'Questions in flight', 'Loading', 'being routed or answered now', 'c-inflight')}
+  ${stat('users', 'Workers online', 'Loading', 'polled in the last minute', 'c-online')}
+  ${stat('check', 'Answers received', 'Loading', 'across every worker, all time', 'c-answers')}
+  ${stat('wallet', 'Wages paid', 'Loading', 'to workers, all time', 'c-wages')}
 </div>
 
 <div class="ap-cols-3">
@@ -98,11 +98,11 @@ const liveActivity = () =>
     ${card(`
       ${cardHead('Where questions are', more('See all', 'console-questions.html'))}
       <div class="ap-pad" style="padding-top:0"><ul class="ap-legend">
-        <li><i style="background:var(--ink-4)"></i>Quoted, not yet paid for<b data-app="c-pipe-quoted">—</b></li>
-        <li><i style="background:var(--warn)"></i>Waiting for a person<b data-app="c-pipe-awaiting">—</b></li>
-        <li><i style="background:var(--accent)"></i>Being answered<b data-app="c-pipe-answering">—</b></li>
-        <li><i style="background:var(--good)"></i>Answers in, deciding<b data-app="c-pipe-answers">—</b></li>
-        <li><i style="background:var(--ink-5)"></i>Settled<b data-app="c-pipe-settled">—</b></li>
+        <li><i style="background:var(--ink-4)"></i>Quoted, not yet paid for<b data-app="c-pipe-quoted">Loading</b></li>
+        <li><i style="background:var(--warn)"></i>Waiting for a person<b data-app="c-pipe-awaiting">Loading</b></li>
+        <li><i style="background:var(--accent)"></i>Being answered<b data-app="c-pipe-answering">Loading</b></li>
+        <li><i style="background:var(--good)"></i>Answers in, deciding<b data-app="c-pipe-answers">Loading</b></li>
+        <li><i style="background:var(--ink-5)"></i>Settled<b data-app="c-pipe-settled">Loading</b></li>
       </ul></div>
     `)}
 
@@ -126,10 +126,10 @@ const liveActivity = () =>
     ${card(`
       ${cardHead('How it is going')}
       <div class="ap-rows ap-rows-inset">
-        ${row({ icon: 'clock', title: 'Median time to resolve', note: 'From arrival to a settled answer', value: '—', key: 'c-latency' })}
-        ${row({ icon: 'check', title: 'Resolved', note: 'The rest were refunded', value: '—', key: 'c-resolved' })}
-        ${row({ icon: 'users', title: 'People per question', note: 'One unless the first answer was not sure enough', value: '—', key: 'c-responders' })}
-        ${row({ icon: 'swap', title: 'Refunded to callers', note: 'Workers were paid regardless', value: '—', key: 'c-refunded' })}
+        ${row({ icon: 'clock', title: 'Median time to resolve', note: 'From arrival to a settled answer', value: 'Loading', key: 'c-latency' })}
+        ${row({ icon: 'check', title: 'Resolved', note: 'The rest were refunded', value: 'Loading', key: 'c-resolved' })}
+        ${row({ icon: 'users', title: 'People per question', note: 'One unless the first answer was not sure enough', value: 'Loading', key: 'c-responders' })}
+        ${row({ icon: 'swap', title: 'Refunded to callers', note: 'Workers were paid regardless', value: 'Loading', key: 'c-refunded' })}
       </div>
     `)}
 
@@ -143,7 +143,7 @@ const liveActivity = () =>
     ${card(`
       ${cardHead('Network')}
       <div class="ap-rows ap-rows-inset">
-        ${row({ icon: 'cube', title: 'Chain', value: '—', key: 'c-network' })}
+        ${row({ icon: 'cube', title: 'Chain', value: 'Loading', key: 'c-network' })}
         ${row({ icon: 'bolt', title: 'Worker fees', note: 'Workers only ever receive, so no fee reaches them', value: 'Covered', key: 'c-fees' })}
       </div>
     `)}
@@ -161,10 +161,10 @@ const questions = () =>
     main: `${consoleTop(`<div>${chip('Operator console')}<h1 class="ap-h1">Questions</h1><p class="ap-sub" style="margin-bottom:0">What was asked, who answered, where confidence landed and what it cost.</p></div>`)}
 
 <div class="ap-stats">
-  ${stat('clipboard', 'In flight', '—', 'right now', 'c-inflight')}
-  ${stat('check', 'Resolved', '—', 'reached the confidence bar', 'c-resolved-n')}
-  ${stat('swap', 'Refunded', '—', 'could not be resolved', 'c-refunded-n')}
-  ${stat('clock', 'Median time', '—', 'arrival to settled', 'c-latency')}
+  ${stat('clipboard', 'In flight', 'Loading', 'right now', 'c-inflight')}
+  ${stat('check', 'Resolved', 'Loading', 'reached the confidence bar', 'c-resolved-n')}
+  ${stat('swap', 'Refunded', 'Loading', 'could not be resolved', 'c-refunded-n')}
+  ${stat('clock', 'Median time', 'Loading', 'arrival to settled', 'c-latency')}
 </div>
 
 ${card(`
@@ -199,9 +199,9 @@ const questionDetail = () =>
     main: `${consoleTop(back('Back to questions', 'console-questions.html'))}
 
 <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:22px">
-  <h1 class="ap-h1 ap-mono" style="margin:0;font-size:30px" data-app="q-id">—</h1>
+  <h1 class="ap-h1 ap-mono" style="margin:0;font-size:30px" data-app="q-id">Loading</h1>
   <span data-app="q-status">${pill('Loading', '')}</span>
-  <span style="font-size:12.5px;color:var(--ink-4)" data-app="q-meta">—</span>
+  <span style="font-size:12.5px;color:var(--ink-4)" data-app="q-meta">Loading</span>
 </div>
 
 <div class="ap-cols">
@@ -209,13 +209,13 @@ const questionDetail = () =>
     ${card(`
       ${cardHead(`${tile('clipboard', '', 'sm')} The question`)}
       <div class="ap-pad" style="padding-top:0">
-        <p style="margin:0 0 14px;font-size:17px;line-height:1.45;font-weight:600;letter-spacing:-0.02em;color:var(--ink)" data-app="q-prompt">—</p>
+        <p style="margin:0 0 14px;font-size:17px;line-height:1.45;font-weight:600;letter-spacing:-0.02em;color:var(--ink)" data-app="q-prompt">Loading</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap" data-app="q-tags"></div>
       </div>
       <div class="ap-kv">
-        <div>${ic('layers')}<div><span>Kind</span><b data-app="q-kind">—</b></div></div>
-        <div>${ic('money')}<div><span>Caller paid</span><b data-app="q-price">—</b></div></div>
-        <div>${ic('clock')}<div><span>Time to resolve</span><b data-app="q-latency">—</b></div></div>
+        <div>${ic('layers')}<div><span>Kind</span><b data-app="q-kind">Loading</b></div></div>
+        <div>${ic('money')}<div><span>Caller paid</span><b data-app="q-price">Loading</b></div></div>
+        <div>${ic('clock')}<div><span>Time to resolve</span><b data-app="q-latency">Loading</b></div></div>
       </div>
     `)}
 
@@ -236,9 +236,9 @@ const questionDetail = () =>
     ${card(`
       ${cardHead(`${tile('wallet', '', 'sm')} Money`)}
       <div class="ap-rows ap-rows-inset">
-        ${row({ icon: 'money', title: 'Caller paid', value: '—', key: 'q-price' })}
-        ${row({ icon: 'db', title: 'Wages out', note: 'Paid whether or not the caller was', value: '—', key: 'q-wages' })}
-        ${row({ icon: 'swap', title: 'Refunded', note: 'Only when we could not answer', value: '—', key: 'q-refund' })}
+        ${row({ icon: 'money', title: 'Caller paid', value: 'Loading', key: 'q-price' })}
+        ${row({ icon: 'db', title: 'Wages out', note: 'Paid whether or not the caller was', value: 'Loading', key: 'q-wages' })}
+        ${row({ icon: 'swap', title: 'Refunded', note: 'Only when we could not answer', value: 'Loading', key: 'q-refund' })}
       </div>
       <div class="ap-pad" data-app="q-receipts"></div>
     `)}
@@ -273,10 +273,10 @@ const workers = () =>
     main: `${consoleTop(`<div>${chip('Operator console')}<h1 class="ap-h1">Workers</h1><p class="ap-sub" style="margin-bottom:0">Who is on the network, what they are good at, and everything they have been paid.</p></div>`)}
 
 <div class="ap-stats">
-  ${stat('users', 'Registered', '—', 'have signed in at least once', 'c-registered')}
-  ${stat('bolt', 'Online', '—', 'polled in the last minute', 'c-online', 'good')}
-  ${stat('clipboard', 'In assessment', '—', 'not yet reachable by work', 'c-assessing', 'warn')}
-  ${stat('ban', 'Blocked', '—', 'did not pass; keep what they earned', 'c-blocked', 'bad')}
+  ${stat('users', 'Registered', 'Loading', 'have signed in at least once', 'c-registered')}
+  ${stat('bolt', 'Online', 'Loading', 'polled in the last minute', 'c-online', 'good')}
+  ${stat('clipboard', 'In assessment', 'Loading', 'not yet reachable by work', 'c-assessing', 'warn')}
+  ${stat('ban', 'Blocked', 'Loading', 'did not pass; keep what they earned', 'c-blocked', 'bad')}
 </div>
 
 <div class="ap-cols">
@@ -297,13 +297,13 @@ const workers = () =>
       <div class="ap-pad" style="padding-top:0">
         <div class="ap-donut" data-app="c-donut">
           <svg viewBox="0 0 132 132" aria-hidden="true"><circle cx="66" cy="66" r="52" fill="none" stroke="var(--border)" stroke-width="16"/></svg>
-          <div><b data-app="c-registered">—</b><span>registered</span></div>
+          <div><b data-app="c-registered">Loading</b><span>registered</span></div>
         </div>
         <ul class="ap-legend" style="margin-top:20px">
-          <li><i style="background:var(--good)"></i>Online<b data-app="c-online">—</b></li>
-          <li><i style="background:var(--accent)"></i>Answering now<b data-app="c-answering">—</b></li>
-          <li><i style="background:var(--warn)"></i>In assessment<b data-app="c-assessing">—</b></li>
-          <li><i style="background:var(--bad)"></i>Blocked<b data-app="c-blocked">—</b></li>
+          <li><i style="background:var(--good)"></i>Online<b data-app="c-online">Loading</b></li>
+          <li><i style="background:var(--accent)"></i>Answering now<b data-app="c-answering">Loading</b></li>
+          <li><i style="background:var(--warn)"></i>In assessment<b data-app="c-assessing">Loading</b></li>
+          <li><i style="background:var(--bad)"></i>Blocked<b data-app="c-blocked">Loading</b></li>
         </ul>
       </div>
     `)}
@@ -332,19 +332,19 @@ const workerDetail = () =>
     main: `${consoleTop(back('Back to workers', 'console-workers.html'))}
 
 <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:24px">
-  ${av('—', 'lg').replace('>—<', ' data-app="w-initials">—<')}
+  ${av('Loading', 'lg').replace('>Loading<', ' data-app="w-initials">Loading<')}
   <div style="flex:1;min-width:240px">
-    <h1 class="ap-h1" style="margin:0;font-size:28px" data-app="w-id">—</h1>
-    <span class="ap-mono" data-app="w-address" style="display:block;margin-top:4px">—</span>
+    <h1 class="ap-h1" style="margin:0;font-size:28px" data-app="w-id">Loading</h1>
+    <span class="ap-mono" data-app="w-address" style="display:block;margin-top:4px">Loading</span>
   </div>
   <span data-app="w-status">${pill('Loading', '')}</span>
 </div>
 
 <div class="ap-stats">
-  ${stat('check', 'Answers given', '—', 'all time', 'w-answered')}
-  ${stat('db', 'Paid to them', '—', 'sent to their own account', 'w-earned')}
-  ${stat('wallet', 'In their account', '—', 'read from the ledger', 'w-balance')}
-  ${stat('gauge', 'Best reliability', '—', 'their strongest kind of judgment', 'w-reliability')}
+  ${stat('check', 'Answers given', 'Loading', 'all time', 'w-answered')}
+  ${stat('db', 'Paid to them', 'Loading', 'sent to their own account', 'w-earned')}
+  ${stat('wallet', 'In their account', 'Loading', 'read from the ledger', 'w-balance')}
+  ${stat('gauge', 'Best reliability', 'Loading', 'their strongest kind of judgment', 'w-reliability')}
 </div>
 
 <div class="ap-cols">
@@ -371,9 +371,9 @@ const workerDetail = () =>
     ${card(`
       ${cardHead('Signals')}
       <div class="ap-rows ap-rows-inset">
-        ${row({ icon: 'clipboard', title: 'Assessment', value: '—', key: 'w-assessment' })}
-        ${row({ icon: 'bolt', title: 'Answered too fast to have read it', note: 'Counted, never acted on alone', value: '—', key: 'w-toofast' })}
-        ${row({ icon: 'clock', title: 'Last seen', value: '—', key: 'w-lastseen' })}
+        ${row({ icon: 'clipboard', title: 'Assessment', value: 'Loading', key: 'w-assessment' })}
+        ${row({ icon: 'bolt', title: 'Answered too fast to have read it', note: 'Counted, never acted on alone', value: 'Loading', key: 'w-toofast' })}
+        ${row({ icon: 'clock', title: 'Last seen', value: 'Loading', key: 'w-lastseen' })}
       </div>
     `)}
   </div>
@@ -397,10 +397,10 @@ const paymentsPage = () =>
     main: `${consoleTop(`<div>${chip('Operator console')}<h1 class="ap-h1">Payments</h1><p class="ap-sub" style="margin-bottom:0">Wages out, refunds issued, and anything that did not settle.</p></div>`)}
 
 <div class="ap-stats">
-  ${stat('db', 'Wages paid', '—', 'to workers, all time', 'c-wages')}
-  ${stat('swap', 'Refunded to callers', '—', 'questions we could not answer', 'c-refunded')}
-  ${stat('warn', 'Did not settle', '—', 'owed, and being retried', 'c-failed', 'warn')}
-  ${stat('users', 'Workers paid', '—', 'have received at least one wage', 'c-paid-workers')}
+  ${stat('db', 'Wages paid', 'Loading', 'to workers, all time', 'c-wages')}
+  ${stat('swap', 'Refunded to callers', 'Loading', 'questions we could not answer', 'c-refunded')}
+  ${stat('warn', 'Did not settle', 'Loading', 'owed, and being retried', 'c-failed', 'warn')}
+  ${stat('users', 'Workers paid', 'Loading', 'have received at least one wage', 'c-paid-workers')}
 </div>
 
 <div class="ap-cols">
@@ -477,10 +477,10 @@ const analytics = () =>
     main: `${consoleTop(`<div>${chip('Operator console')}<h1 class="ap-h1">Analytics</h1><p class="ap-sub" style="margin-bottom:0">How the network is performing, from the questions it has actually handled.</p></div>`)}
 
 <div class="ap-stats">
-  ${stat('clock', 'Median time to resolve', '—', 'arrival to settled answer', 'c-latency')}
-  ${stat('check', 'Resolved', '—', 'the rest were refunded in full', 'c-resolved')}
-  ${stat('users', 'People per question', '—', 'a second is bought only when needed', 'c-responders')}
-  ${stat('clipboard', 'Questions handled', '—', 'since this gateway started', 'c-settled')}
+  ${stat('clock', 'Median time to resolve', 'Loading', 'arrival to settled answer', 'c-latency')}
+  ${stat('check', 'Resolved', 'Loading', 'the rest were refunded in full', 'c-resolved')}
+  ${stat('users', 'People per question', 'Loading', 'a second is bought only when needed', 'c-responders')}
+  ${stat('clipboard', 'Questions handled', 'Loading', 'since this gateway started', 'c-settled')}
 </div>
 
 <div class="ap-cols">
@@ -518,10 +518,10 @@ const consoleSettings = () =>
     ${card(`
       ${cardHead('Gateway')}
       <div class="ap-rows">
-        ${row({ title: 'Address', note: 'Override with ?gateway= in the URL', value: '<span class="ap-mono" data-app="c-gateway">—</span>' })}
-        ${row({ title: 'Reachable', value: '—', key: 'c-reachable' })}
-        ${row({ title: 'Chain', value: '—', key: 'c-network' })}
-        ${row({ title: 'Wage per answer', value: '—', key: 'wage' })}
+        ${row({ title: 'Address', note: 'Override with ?gateway= in the URL', value: '<span class="ap-mono" data-app="c-gateway">Loading</span>' })}
+        ${row({ title: 'Reachable', value: 'Loading', key: 'c-reachable' })}
+        ${row({ title: 'Chain', value: 'Loading', key: 'c-network' })}
+        ${row({ title: 'Wage per answer', value: 'Loading', key: 'wage' })}
       </div>
     `)}
 
@@ -592,7 +592,7 @@ const escalations = () =>
       <div class="ap-rows ap-rows-inset">
         ${row({ icon: 'clock', title: 'It does not block the caller', note: 'The agent is given an id and comes back for the result' })}
         ${row({ icon: 'pin', title: 'It can need a place', note: 'Some of this work is somebody being somewhere specific' })}
-        ${row({ icon: 'file', title: 'It returns evidence', note: 'Not a single value — photographs, readings, observations' })}
+        ${row({ icon: 'file', title: 'It returns evidence', note: 'Not a single value: photographs, readings, observations' })}
         ${row({ icon: 'db', title: 'Wages work the same way', note: 'Paid per worker, each with its own public record' })}
       </div>
     `)}

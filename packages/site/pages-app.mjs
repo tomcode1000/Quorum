@@ -73,15 +73,15 @@ const earningsRail = () => card(`
   <div class="ap-rows ap-rows-inset">
     <a class="ap-row ap-row-lead" href="app-earnings.html">
       ${tile('wallet')}
-      <div><span>In your own account</span><b data-app="balance">—</b></div>
+      <div><span>In your own account</span><b data-app="balance">Loading</b></div>
       ${caret}
     </a>
-    ${row({ icon: 'db', title: 'Last payment', note: '—', value: '—', key: 'last-amount', href: 'app-payments.html' }).replace('<span>—</span>', '<span data-app="last-when">—</span>')}
-    ${row({ icon: 'check', title: 'Questions answered', value: '—', key: 'answered', href: 'app-payments.html' })}
-    ${row({ icon: 'clock', title: 'Paid to you, all time', value: '—', key: 'earned', href: 'app-earnings.html' })}
+    ${row({ icon: 'db', title: 'Last payment', note: 'Loading', value: 'Loading', key: 'last-amount', href: 'app-payments.html' }).replace('<span>Loading</span>', '<span data-app="last-when">Loading</span>')}
+    ${row({ icon: 'check', title: 'Questions answered', value: 'Loading', key: 'answered', href: 'app-payments.html' })}
+    ${row({ icon: 'clock', title: 'Paid to you, all time', value: 'Loading', key: 'earned', href: 'app-earnings.html' })}
   </div>
   <div class="ap-pad">
-    ${info('link', 'Every payment has a public record', 'A wage is sent the moment your answer is accepted. Open any payment to see it on the public ledger — you never have to take our word for the number.')}
+    ${info('link', 'Every payment has a public record', 'A wage is sent the moment your answer is accepted. Open any payment to see it on the public ledger, so you never have to take our word for the number.')}
   </div>
 `)
 
@@ -120,9 +120,9 @@ const home = () =>
     ${info('clock', 'You are paid for each one you answer', 'A question can arrive at any moment. Nothing is lost by waiting, and nothing is lost by closing this and coming back.')}
 
     ${card(`<div class="ap-split">
-      ${metric('db', 'Paid to you, all time', '—', 'in your own account', 'earned')}
-      ${metric('check', 'Questions answered', '—', '', 'answered')}
-      ${metric('clock', 'Last payment', '—', '', 'last-when')}
+      ${metric('db', 'Paid to you, all time', 'Loading', 'in your own account', 'earned')}
+      ${metric('check', 'Questions answered', 'Loading', '', 'answered')}
+      ${metric('clock', 'Last payment', 'Loading', '', 'last-when')}
     </div>`)}
   </div>
 
@@ -172,14 +172,14 @@ const question = () =>
     <div>
       ${chip('Real question')}
       <h1 class="ap-h1">Your question</h1>
-      <p class="ap-sub" style="margin-bottom:18px"><span class="ap-pill ap-pill-accent ap-pill-icon">${ic('db')}<span data-app="wage">—</span></span> <span style="margin-left:8px">for this answer</span></p>
+      <p class="ap-sub" style="margin-bottom:18px"><span class="ap-pill ap-pill-accent ap-pill-icon">${ic('db')}<span data-app="wage">Loading</span></span> <span style="margin-left:8px">for this answer</span></p>
     </div>
 
     <hr class="ap-divide"/>
 
     <div>
       <h2 class="ap-h3" data-app="prompt" style="font-size:24px;line-height:1.3">Waiting for a question…</h2>
-      <p class="ap-sub" style="margin-bottom:20px">Choose the option that answers it. If none of them does, skip — that costs you nothing.</p>
+      <p class="ap-sub" style="margin-bottom:20px">Choose the option that answers it. If none of them does, skip. That costs you nothing.</p>
 
       <div data-app="evidence" hidden style="margin-bottom:20px"></div>
 
@@ -205,9 +205,9 @@ const question = () =>
     ${card(`
       ${cardHead(`${tile('clipboard', '', 'sm')} Question details`)}
       <div class="ap-rows ap-rows-inset">
-        ${row({ icon: 'layers', title: 'Kind', note: 'What is being asked of you', value: '—', key: 'kind' })}
-        ${row({ icon: 'db', title: 'You are paid', note: 'When your answer is accepted', value: '—', key: 'wage' })}
-        ${row({ icon: 'clock', title: 'Unhurried reading time', note: 'Not a limit — take longer if you need it', value: '—', key: 'reading' })}
+        ${row({ icon: 'layers', title: 'Kind', note: 'What is being asked of you', value: 'Loading', key: 'kind' })}
+        ${row({ icon: 'db', title: 'You are paid', note: 'When your answer is accepted', value: 'Loading', key: 'wage' })}
+        ${row({ icon: 'clock', title: 'Unhurried reading time', note: 'Not a limit. Take longer if you need it', value: 'Loading', key: 'reading' })}
       </div>
       <div class="ap-pad">
         ${info('question', 'Read it carefully', 'There is a deadline on the question, but no clock is counting down at you. A careful answer is worth more to everyone than a fast one.')}
@@ -245,9 +245,9 @@ const submitted = () =>
     </div>
 
     ${card(`<div class="ap-split">
-      ${metric('db', 'You earned', '—', 'for this answer', 'wage')}
+      ${metric('db', 'You earned', 'Loading', 'for this answer', 'wage')}
       ${metric('clock', 'Payment', 'Sending', 'Straight to your own account', 'pay-state')}
-      ${metric('wallet', 'Paid to you, all time', '—', '', 'earned')}
+      ${metric('wallet', 'Paid to you, all time', 'Loading', '', 'earned')}
     </div>`)}
 
     ${card(`<div class="ap-pad" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
@@ -294,7 +294,7 @@ const closed = () =>
         <span class="ap-ok-badge">${ic('clock')}</span>
       </div>
       <h1 class="ap-h1 ap-h1-lg">That one closed</h1>
-      <p class="ap-sub" style="margin-inline:auto">Enough people answered it before you finished reading. Nothing was lost and nothing was counted against you — the next question is on its way.</p>
+      <p class="ap-sub" style="margin-inline:auto">Enough people answered it before you finished reading. Nothing was lost and nothing was counted against you. The next question is on its way.</p>
     </div>
 
     ${info('check', 'This is normal', 'Questions resolve in about six seconds, so a careful reader loses one regularly. It has no effect on your record, your standing or what you are paid.', 'plain')}
@@ -339,19 +339,20 @@ const earnings = () =>
     ${card(`<div class="ap-pad" style="display:flex;gap:22px;flex-wrap:wrap;align-items:center">
       <div style="flex:1;min-width:220px">
         <span style="display:flex;align-items:center;gap:9px;font-size:13px;color:var(--ink-3)">${tile('wallet', '', 'sm')} In your own account</span>
-        <b style="display:block;margin:12px 0 6px;font-size:40px;font-weight:700;letter-spacing:-0.035em;font-variant-numeric:tabular-nums" data-app="balance">—</b>
-        <span style="font-size:12.5px;color:var(--ink-4)">Read from the public ledger, not from our records. <span data-app="network">—</span>.</span>
+        <b style="display:block;margin:12px 0 6px;font-size:40px;font-weight:700;letter-spacing:-0.035em;font-variant-numeric:tabular-nums" data-app="balance">Loading</b>
+        <span style="font-size:12.5px;color:var(--ink-4)">Read from the public ledger, not from our records. <span data-app="network">Loading</span>.</span>
       </div>
       <div style="display:flex;gap:12px;flex-wrap:wrap">
         <a class="ap-second" data-app="address-link" href="#" target="_blank" rel="noopener">${ic('out')} Open the public record</a>
+        <button class="ap-second" type="button" data-app="export">${ic('download')} Export account details</button>
       </div>
     </div>
-    ${info('shield', 'There is no withdraw button, and there never will be', 'That is not a missing feature. Your wages are already in an account only you control — there is nothing of yours sitting with us to release.').replace('<div class="ap-info"', '<div class="ap-info" style="margin:0 22px 22px"')}`)}
+    ${info('shield', 'Your money, and you can move it whenever you like', 'Quorum has no access to this account and cannot hold, freeze or delay what is in it. There is no withdrawal to request and no approval to wait for, because nothing of yours is ever sitting with us. Spend or transfer it on Tempo whenever you want, using the passkey on your device.').replace('<div class="ap-info"', '<div class="ap-info" style="margin:0 22px 22px"')}`)}
 
     <div class="ap-stats" style="margin-bottom:0">
-      ${stat('db', 'Paid to you, all time', '—', 'across every answer', 'earned')}
-      ${stat('check', 'Questions answered', '—', '', 'answered')}
-      ${stat('clock', 'Per answer', '—', 'the same for every question', 'wage')}
+      ${stat('db', 'Paid to you, all time', 'Loading', 'across every answer', 'earned')}
+      ${stat('check', 'Questions answered', 'Loading', '', 'answered')}
+      ${stat('clock', 'Per answer', 'Loading', 'the same for every question', 'wage')}
     </div>
 
     ${card(`
@@ -371,7 +372,7 @@ const earnings = () =>
       <div class="ap-pad" style="padding-top:0">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
           ${tile('id')}
-          <div style="min-width:0"><b style="display:block;font-size:13.5px">Your own account</b><span class="ap-mono" data-app="address" style="display:block;overflow:hidden;text-overflow:ellipsis">—</span></div>
+          <div style="min-width:0"><b style="display:block;font-size:13.5px">Your own account</b><span class="ap-mono" data-app="address" style="display:block;overflow:hidden;text-overflow:ellipsis">Loading</span></div>
           <button class="ap-copy" type="button" data-copy="address" aria-label="Copy your account">${ic('copy')}</button>
         </div>
         ${info('link', 'Anyone can check it', 'Your account and every payment into it are public. That is deliberate: it is how you can prove what you were paid without our help.')}
@@ -382,8 +383,9 @@ const earnings = () =>
       ${cardHead('How you get paid')}
       <div class="ap-rows ap-rows-inset">
         ${row({ icon: 'bolt', title: 'Each answer, on its own', note: 'Not batched, not weekly, no threshold to reach' })}
-        ${row({ icon: 'slash', title: 'Nothing taken out', note: 'No platform cut and no transfer fee — the fee is ours, not yours' })}
+        ${row({ icon: 'slash', title: 'Nothing taken out', note: 'No platform cut and no transfer fee. The fee is ours, not yours' })}
         ${row({ icon: 'lock', title: 'Nothing held back', note: 'There is no balance with us, so there is nothing we could withhold' })}
+        ${row({ icon: 'out', title: 'Yours to move, any time', note: 'Transfer or spend it on Tempo with your passkey. No request, no approval, no waiting' })}
       </div>
     `)}
   </div>
@@ -414,7 +416,7 @@ const payments = () =>
   ${card(`<div class="ap-pad" style="display:flex;align-items:center;gap:14px">
     ${tile('wallet')}
     <div><span style="display:block;font-size:12px;color:var(--ink-3)">Paid to you, all time</span>
-    <b style="display:block;font-size:26px;font-weight:700;letter-spacing:-0.03em;font-variant-numeric:tabular-nums" data-app="earned">—</b>
+    <b style="display:block;font-size:26px;font-weight:700;letter-spacing:-0.03em;font-variant-numeric:tabular-nums" data-app="earned">Loading</b>
     <span style="display:block;font-size:11.5px;color:var(--ink-4)"><span data-app="payment-count">0</span> payments</span></div>
   </div>`)}
 </div>
@@ -436,15 +438,15 @@ const payments = () =>
     ${card(`
       ${cardHead(`${tile('chart', '', 'sm')} Your numbers`)}
       <div class="ap-rows ap-rows-inset">
-        ${row({ icon: 'db', title: 'Paid to you, all time', value: '—', key: 'earned' })}
-        ${row({ icon: 'check', title: 'Questions answered', value: '—', key: 'answered' })}
-        ${row({ icon: 'clock', title: 'Per answer', value: '—', key: 'wage' })}
-        ${row({ icon: 'calendar', title: 'Last payment', value: '—', key: 'last-when' })}
+        ${row({ icon: 'db', title: 'Paid to you, all time', value: 'Loading', key: 'earned' })}
+        ${row({ icon: 'check', title: 'Questions answered', value: 'Loading', key: 'answered' })}
+        ${row({ icon: 'clock', title: 'Per answer', value: 'Loading', key: 'wage' })}
+        ${row({ icon: 'calendar', title: 'Last payment', value: 'Loading', key: 'last-when' })}
       </div>
     `)}
 
     ${card(`<div class="ap-pad">
-      ${info('shield', 'Every payment is public', 'Each row links to the record of that transfer. You can open it, show it to somebody else, or check it years from now — it does not depend on us still being here.')}
+      ${info('shield', 'Every payment is public', 'Each row links to the record of that transfer. You can open it, show it to somebody else, or check it years from now. It does not depend on us still being here.')}
       <a class="ap-more" style="margin-top:14px" href="app-help.html">How payment works ${ic('arrow')}</a>
     </div>`)}
   </div>
@@ -478,17 +480,17 @@ const profile = () =>
     ${card(`
       ${cardHead('Account', `<a class="ap-more" href="app-settings.html">${ic('pencil')} Edit</a>`)}
       <div class="ap-pad" style="padding-top:0;display:flex;align-items:center;gap:16px">
-        ${av('—', 'lg').replace('>—<', ' data-app="initials">—<')}
+        ${av('Loading', 'lg').replace('>Loading<', ' data-app="initials">Loading<')}
         <div style="min-width:0">
           <b style="display:block;font-size:19px;font-weight:700;letter-spacing:-0.025em" data-app="display-name">Not signed in</b>
-          <span class="ap-mono" data-app="worker-id" style="display:block;margin:3px 0 7px">—</span>
-          ${pill('Verified by passkey', 'good', 'check')}
+          <span class="ap-mono" data-app="worker-id" style="display:block;margin:3px 0 7px">Loading</span>
+          <span data-app="verified-pill">${pill('Checking your account', '', 'clock')}</span>
         </div>
       </div>
       <div class="ap-kv">
         <div>${ic('key')}<div><span>How you sign in</span><b>A passkey on this device</b></div></div>
-        <div>${ic('id')}<div><span>Your account</span><b class="ap-mono" data-app="address">—</b></div></div>
-        <div>${ic('calendar')}<div><span>Standing</span><b data-app="standing">—</b></div></div>
+        <div>${ic('id')}<div><span>Your account</span><b class="ap-mono" data-app="address">Loading</b></div></div>
+        <div>${ic('calendar')}<div><span>Standing</span><b data-app="standing">Loading</b></div></div>
       </div>
     `)}
 
@@ -496,7 +498,7 @@ const profile = () =>
       ${row({ icon: 'shield', title: 'Sign-in and security', note: 'Your passkey, and the devices you use', href: 'app-settings.html' })}
       ${row({ icon: 'wallet', title: 'Where wages are sent', note: 'The account your passkey made', href: 'app-settings.html' })}
       ${row({ icon: 'lock', title: 'Privacy', note: 'What is kept about you, and what is not', href: 'app-settings.html' })}
-      ${row({ icon: 'check', title: 'Account status', note: 'Your assessment and whether work can reach you', tag: `<span data-app="status-pill">${pill('—')}</span>`, href: 'app-settings.html' })}
+      ${row({ icon: 'check', title: 'Account status', note: 'Your assessment and whether work can reach you', tag: `<span data-app="status-pill">${pill('Loading')}</span>`, href: 'app-settings.html' })}
       ${row({ icon: 'exit', title: 'Sign out', note: 'You can sign back in with the same passkey', href: 'app-signin.html' })}
     </div>`)}
   </div>
@@ -509,7 +511,7 @@ const profile = () =>
           ${tile('id')}
           <div style="flex:1;min-width:0">
             <b style="display:block;font-size:13.5px">Your own account</b>
-            <span class="ap-mono" data-app="address" style="display:block;overflow:hidden;text-overflow:ellipsis">—</span>
+            <span class="ap-mono" data-app="address" style="display:block;overflow:hidden;text-overflow:ellipsis">Loading</span>
           </div>
           ${pill('Active', 'good', 'check')}
         </div>
@@ -520,10 +522,10 @@ const profile = () =>
     ${card(`
       ${cardHead('Your numbers')}
       <div class="ap-grid2" style="padding:0 20px 20px">
-        <div class="ap-metric" style="display:block"><span>Paid to you</span><b data-app="earned">—</b></div>
-        <div class="ap-metric" style="display:block"><span>Answered</span><b data-app="answered">—</b></div>
-        <div class="ap-metric" style="display:block"><span>Per answer</span><b data-app="wage">—</b></div>
-        <div class="ap-metric" style="display:block"><span>In your account</span><b data-app="balance">—</b></div>
+        <div class="ap-metric" style="display:block"><span>Paid to you</span><b data-app="earned">Loading</b></div>
+        <div class="ap-metric" style="display:block"><span>Answered</span><b data-app="answered">Loading</b></div>
+        <div class="ap-metric" style="display:block"><span>Per answer</span><b data-app="wage">Loading</b></div>
+        <div class="ap-metric" style="display:block"><span>In your account</span><b data-app="balance">Loading</b></div>
       </div>
     `)}
 
@@ -567,7 +569,7 @@ const help = () =>
 
 <div class="ap-cols">
   <div class="ap-stack">
-    <div class="ap-field ap-field-lg">${ic('search')}<input type="search" placeholder="Search help — payment, assessment, account…" aria-label="Search help"/></div>
+    <div class="ap-field ap-field-lg">${ic('search')}<input type="search" placeholder="Search help: payment, assessment, account…" aria-label="Search help"/></div>
     <div class="ap-list">
       ${HELP_CARDS.map(([icon, title, body]) => `<a class="ap-hcard" href="#">${tile(icon)}<div><b>${title}</b><p>${body}</p></div>${caret}</a>`).join('')}
     </div>
@@ -582,7 +584,7 @@ const help = () =>
     `)}
 
     ${card(`<div class="ap-pad">
-      ${info('wallet', 'A payment has not arrived?', 'Open it in your payment history first — the public record shows whether it settled, and when. If it says failed, we are already retrying it and you do not need to do anything.')}
+      ${info('wallet', 'A payment has not arrived?', 'Open it in your payment history first. The public record shows whether it settled, and when. If it says failed, we are already retrying it and you do not need to do anything.')}
       <a class="ap-more" style="margin-top:14px" href="app-payments.html">Open payment history ${ic('arrow')}</a>
     </div>`)}
 
@@ -626,14 +628,14 @@ const settings = () =>
 <div class="ap-cols">
   <div class="ap-stack">
     ${settingRow('user', 'Account', 'Your details and how you sign in.', [
-      row({ title: 'Your name', note: 'Shown only to you', value: '—', key: 'display-name' }),
-      row({ title: 'Sign-in', note: 'A passkey on this device — there is no password to change' }),
+      row({ title: 'Your name', note: 'Shown only to you', value: 'Loading', key: 'display-name' }),
+      row({ title: 'Sign-in', note: 'A passkey on this device, so there is no password to change' }),
       row({ title: 'Other devices', note: 'Add a passkey on a second phone or computer' }),
     ])}
 
     ${settingRow('wallet', 'Where wages are sent', 'The account your passkey made. It is yours.', [
-      row({ title: 'Your account', note: 'Wages arrive here the moment an answer is accepted', value: '<span class="ap-mono" data-app="address">—</span>' }),
-      row({ title: 'Save your account details', note: 'Download them so you can reach the account without us' }),
+      row({ title: 'Your account', note: 'Wages arrive here the moment an answer is accepted', value: '<span class="ap-mono" data-app="address">Loading</span>' }),
+      row({ title: 'Save your account details', note: 'Download the address and network so you can reach the account without us' }),
     ])}
 
     ${settingRow('shield', 'Security', 'What protects the account.', [
@@ -649,7 +651,7 @@ const settings = () =>
 
     ${settingRow('power', 'Account', 'Leaving, and what happens to what you earned.', [
       row({ title: 'Sign out', note: 'You can sign back in with the same passkey', href: 'app-signin.html' }),
-      row({ title: 'Close your account', note: 'Work stops reaching you. What you have already been paid stays yours — it is in your account, not ours, so closing this changes nothing about it' }),
+      row({ title: 'Close your account', note: 'Work stops reaching you. What you have already been paid stays yours. It is in your account, not ours, so closing this changes nothing about it' }),
     ])}
   </div>
 
@@ -659,10 +661,10 @@ const settings = () =>
       <div class="ap-pad" style="padding-top:0">
         <span style="display:block;font-size:11.5px;color:var(--ink-4)">Where wages are sent</span>
         <div style="display:flex;align-items:center;gap:8px;margin:5px 0 14px">
-          <span class="ap-mono" data-app="address" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">—</span>
+          <span class="ap-mono" data-app="address" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">Loading</span>
           <button class="ap-copy" type="button" data-copy="address" aria-label="Copy your account">${ic('copy')}</button>
         </div>
-        <button class="ap-second" type="button" style="width:100%">${ic('download')} Save your account details</button>
+        <button class="ap-second" type="button" style="width:100%" data-app="export">${ic('download')} Save your account details</button>
         <p style="margin:12px 0 0;font-size:11.5px;line-height:1.55;color:var(--ink-4)">Keep this somewhere safe. It is how you reach the account if Quorum is ever gone.</p>
       </div>
     `)}
@@ -686,7 +688,7 @@ const ASSESS_POINTS = [
   ['user', 'Be yourself', 'Use your own judgment. There is no trick and no preferred answer.'],
   ['clipboard', 'Five questions', 'The same kind you will be answering for real, in the same format.'],
   ['clock', 'About two minutes', 'At your own pace. Nothing is timing you.'],
-  ['db', 'You are paid for them', 'Every one of the five, whether you pass or not.'],
+  ['db', 'Then you are paid per answer', 'The assessment itself is not paid. Every real question after it is.'],
 ]
 
 /*
@@ -712,14 +714,14 @@ const assessment = () =>
     <div>
       ${chip('Assessment')}
       <h1 class="ap-h1 ap-h1-lg">Welcome to your<em>assessment.</em></h1>
-      <p class="ap-sub">Five short questions before any real work reaches you. They are the same kind of question you will be answering, and you are paid for all five.</p>
+      <p class="ap-sub">Five short questions before any real work reaches you. They are the same kind of question you will be answering, and once you pass, every real question that reaches you is paid.</p>
     </div>
 
     <div class="ap-list" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
       ${ASSESS_POINTS.map(([icon, title, body]) => `<div>${tile(icon)}<b style="display:block;margin:14px 0 5px;font-size:14.5px;font-weight:700;letter-spacing:-0.02em">${title}</b><p style="margin:0;font-size:12.5px;line-height:1.55;color:var(--ink-3)">${body}</p></div>`).join('')}
     </div>
 
-    ${info('db', 'Finish it and work starts reaching you', 'You need four of the five. Pass or fail, you keep what the five questions paid.')}
+    ${info('db', 'Finish it and work starts reaching you', 'You need four of the five. The assessment is not paid, because none of it reaches a customer; every question after it is paid the moment your answer is accepted.')}
 
     <a class="ap-primary" href="app-assessment-question.html">Start the assessment ${ic('arrow')}</a>
   </div>
@@ -728,7 +730,7 @@ const assessment = () =>
     ${card(`
       ${cardHead(`${tile('shield', '', 'sm')} What happens`)}
       <div class="ap-rows ap-rows-inset">
-        ${['Answer five questions', 'Four of five passes', 'Work starts reaching you'].map((t, i) => `<div class="ap-row"><span class="ap-av ap-av-sm">${i + 1}</span><div><b>${t}</b><span>${['Choose the option that answers each one.', 'You are paid for all five either way.', 'Questions are routed by what you are good at.'][i]}</span></div></div>`).join('')}
+        ${['Answer five questions', 'Four of five passes', 'Work starts reaching you'].map((t, i) => `<div class="ap-row"><span class="ap-av ap-av-sm">${i + 1}</span><div><b>${t}</b><span>${['Choose the option that answers each one.', 'Take as long as you need on each.', 'Questions are routed by what you are good at, and every one is paid.'][i]}</span></div></div>`).join('')}
       </div>
       <div class="ap-pad">
         ${info('lock', 'There is no password to leak', 'You sign in with your device. We hold nothing about you that a breach could take, because there is nothing of that sort to hold.')}
@@ -786,7 +788,7 @@ const assessmentQuestion = () =>
       </div>
       <div class="ap-rows ap-rows-inset">
         ${row({ icon: 'check', title: 'No trick questions', note: 'Anyone paying attention can answer these' })}
-        ${row({ icon: 'db', title: 'Paid either way', note: 'All five, pass or fail' })}
+        ${row({ icon: 'db', title: 'Not paid', note: 'These five do not reach a customer. Real questions do, and those are paid' })}
         ${row({ icon: 'clock', title: 'No clock', note: 'Take as long as you need on each one' })}
       </div>
     `)}
@@ -811,14 +813,14 @@ const assessmentPassed = () =>
         </div>
         <div style="flex:1;min-width:240px">
           <h1 class="ap-h1 ap-h1-lg">You passed.</h1>
-          <p class="ap-sub" style="margin-bottom:0">Real questions can reach you now, and you have been paid for the five you just answered.</p>
+          <p class="ap-sub" style="margin-bottom:0">Real questions can reach you now, and every one of them is paid the moment your answer is accepted.</p>
         </div>
       </div>
     </div>
 
     ${card(`<div class="ap-split">
-      ${metric('check', 'Your score', '—', 'four of five passes', 'score')}
-      ${metric('db', 'You earned', '—', 'paid to your own account', 'assessment-earned')}
+      ${metric('check', 'Your score', 'Loading', 'four of five passes', 'score')}
+      ${metric('db', 'From here on', 'Loading', 'for every answer accepted', 'wage')}
     </div>`)}
 
     ${info('bolt', 'Work can reach you now', 'Questions are routed by what each person tends to be good at, so the kinds you did well on will find you first.')}
@@ -830,13 +832,13 @@ const assessmentPassed = () =>
     ${card(`
       ${cardHead('Your assessment')}
       <div class="ap-rows ap-rows-inset">
-        ${row({ icon: 'clipboard', title: 'Questions', value: '—', key: 'assessment-of' })}
-        ${row({ icon: 'check', title: 'Right', value: '—', key: 'assessment-correct', tone: 'good' })}
-        ${row({ icon: 'x', title: 'Wrong', value: '—', key: 'assessment-wrong', tone: 'plain' })}
-        ${row({ icon: 'db', title: 'Paid for them', value: '—', key: 'assessment-earned' })}
+        ${row({ icon: 'clipboard', title: 'Questions', value: 'Loading', key: 'assessment-of' })}
+        ${row({ icon: 'check', title: 'Right', value: 'Loading', key: 'assessment-correct', tone: 'good' })}
+        ${row({ icon: 'x', title: 'Wrong', value: 'Loading', key: 'assessment-wrong', tone: 'plain' })}
+        ${row({ icon: 'db', title: 'Per answer from now on', value: 'Loading', key: 'wage' })}
       </div>
       <div class="ap-pad">
-        ${info('wallet', 'Already sent', 'The assessment wages are in your own account. There is nothing to claim and nothing waiting on a threshold.')}
+        ${info('wallet', 'Straight to your own account', 'Every wage from here goes to the account your passkey made. There is nothing to claim, no threshold to reach and no pay day to wait for.')}
         ${script(['Real people.', 'Real work.'])}
       </div>
     `)}
@@ -862,17 +864,17 @@ const assessmentFailed = () =>
     <div>
       ${chip('Assessment complete')}
       <h1 class="ap-h1 ap-h1-lg">This did not work out.</h1>
-      <p class="ap-sub">Too many of the five were missed, so questions will not be routed to you. You keep everything the assessment paid — it is already in your own account and nothing about this changes that.</p>
+      <p class="ap-sub">Too many of the five were missed, so questions will not be routed to you. The assessment is not paid, so nothing is owed either way, and anything you had already earned stays in your own account where we cannot reach it.</p>
     </div>
 
     ${card(`<div class="ap-split">
-      ${metric('clipboard', 'Your score', '—', '', 'score')}
-      ${metric('db', 'You earned, and keep', '—', 'in your own account', 'assessment-earned')}
+      ${metric('clipboard', 'Your score', 'Loading', 'four of five was needed', 'score')}
+      ${metric('wallet', 'In your own account', 'Loading', 'yours, and unaffected by this', 'balance')}
     </div>`)}
 
-    ${info('shield', 'Nothing is being withheld', 'The wages for those five answers were sent as you gave them, before this was decided. You can open each one and check it.', 'plain')}
+    ${info('shield', 'Nothing is being withheld', 'Anything you earned on a real question was sent the moment it was accepted, and it is in an account only you control. You can open every payment and check it.', 'plain')}
 
-    <a class="ap-primary" href="app-payments.html">See what you were paid ${ic('arrow')}</a>
+    <a class="ap-primary" href="app-payments.html">See your payments ${ic('arrow')}</a>
   </div>
 
   <div class="ap-stack">
@@ -933,7 +935,7 @@ const signIn = () =>
       <h2 class="ap-h3" style="margin:20px 0 6px">Sign in with a passkey</h2>
       <p style="margin:0 0 20px;font-size:13px;line-height:1.6;color:var(--ink-3)">Use your fingerprint, face or device PIN to continue.</p>
       <button class="ap-primary" type="button" data-app="passkey">${ic('faceid')} Use this device</button>
-      <p style="margin:14px 0 0;font-size:12px;line-height:1.6;color:var(--ink-4)">First time here? The same button makes your passkey — there is no separate sign-up.</p>
+      <p style="margin:14px 0 0;font-size:12px;line-height:1.6;color:var(--ink-4)">First time here? The same button makes your passkey, so there is no separate sign-up.</p>
       <p data-app="signin-error" class="ap-info ap-info-bad" style="margin-top:14px;text-align:left" hidden></p>
     </div>`)}
 

@@ -32,14 +32,14 @@ import { MARK, caret, ic } from './build.mjs'
  * dime — so the common case still looks like money rather than like telemetry.
  */
 const money = (cents) => {
-  if (cents === null || cents === undefined) return '—'
+  if (cents === null || cents === undefined) return 'Loading'
   const dollars = cents / 100
   if (dollars !== 0 && Math.abs(dollars) < 0.1) return `$${dollars.toFixed(3)}`
   return `$${dollars.toFixed(2)}`
 }
 
 /** A hash, shortened the way every explorer shortens one. Never invented. */
-const shortHash = (hash) => (hash ? `${hash.slice(0, 6)}…${hash.slice(-4)}` : '—')
+const shortHash = (hash) => (hash ? `${hash.slice(0, 6)}…${hash.slice(-4)}` : 'Loading')
 
 /* ------------------------------------------------------------------ chips -- */
 
@@ -200,7 +200,7 @@ const consoleTop = (left) => `<div class="ap-top">
   ${left}
   <div class="ap-top-end">
     ${bell()}
-    <div class="ap-clock"><b data-app="clock-date">—</b><span data-app="clock-time">—</span></div>
+    <div class="ap-clock"><b data-app="clock-date">Loading</b><span data-app="clock-time">Loading</span></div>
     <span class="ap-pill ap-pill-lg" data-app="system-pill">Checking…</span>
   </div>
 </div>`
@@ -221,7 +221,7 @@ const appPage = ({ title, side, main, script = false, body = '' }) => `<!doctype
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-<title>${title} — Quorum</title>
+<title>${title} · Quorum</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500${script ? '&family=Caveat:wght@600;700' : ''}&display=swap"/>
