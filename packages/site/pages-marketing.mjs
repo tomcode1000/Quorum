@@ -22,11 +22,11 @@ const capCard = (n, icon, name, desc, href, id) => `<a class="card" href="${href
 
 /* ids match the gateway catalog, so live.js can price each card from it. */
 const CAPS = [
-  ['01', 'swap', 'Telling readings apart', 'Decide which of two readings of the same evidence is right.', 'capability-readings.html', 'disambiguate'],
-  ['02', 'shield', 'Checking something is real', 'Confirm a document, address or listing is genuine.', 'capability-real.html', 'verify'],
-  ['03', 'link', 'Matching records', 'Decide whether records from different sources are the same thing.', 'capability-matching.html', 'match_entity'],
-  ['04', 'tag', 'Categorising', 'Put an item in the right bucket when the classifier cannot.', 'capability-categorising.html', 'categorise'],
-  ['05', 'list', 'Comparing', 'Say which of two candidates is better, and why.', 'capability-comparing.html', 'compare_outputs'],
+  ['01', 'swap', 'Telling readings apart', 'When the OCR misread it, every model after it reads the same mistake.', 'capability-readings.html', 'disambiguate'],
+  ['02', 'shield', 'Checking something is real', 'A lookalike is built to pass the checks a model can run.', 'capability-real.html', 'verify'],
+  ['03', 'link', 'Matching records', 'A 0.93 score does not say which side of &ldquo;the same&rdquo; it is on.', 'capability-matching.html', 'match_entity'],
+  ['04', 'tag', 'Categorising', 'Where a category ends is a rule people agreed, not a fact in the data.', 'capability-categorising.html', 'categorise'],
+  ['05', 'list', 'Comparing', 'Your agent wrote both drafts. It is the worst judge of which is better.', 'capability-comparing.html', 'compare_outputs'],
 ]
 
 /* ------------------------------------------------------- how it decides -- */
@@ -55,7 +55,7 @@ const decidesSection = () => `<section class="section"><div class="shell split">
       </div>
       <div class="card card-flat" style="padding:14px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px"><b style="font-size:12.5px">Your request</b><span style="font-size:11.5px;color:var(--accent);font-weight:500">Copy</span></div>
-        <div class="code code-light"><pre><span class="ln">{</span><span class="ln">  <span class="k">"capability"</span>: <span class="s">"telling_readings_apart"</span>,</span><span class="ln">  <span class="k">"question"</span>: <span class="s">"Is the total 45.00 or 4.50?"</span>,</span><span class="ln">  <span class="k">"options"</span>: [<span class="s">"45.00"</span>, <span class="s">"4.50"</span>],</span><span class="ln">  <span class="k">"max_price"</span>: <span class="s">"0.25"</span></span><span class="ln">}</span></pre></div>
+        <div class="code code-light"><pre><span class="ln">{</span><span class="ln">  <span class="k">"kind"</span>: <span class="s">"disambiguate"</span>,</span><span class="ln">  <span class="k">"question"</span>: <span class="s">"Is the total 45.00 or 4.50?"</span>,</span><span class="ln">  <span class="k">"answer_schema"</span>: { <span class="k">"type"</span>: <span class="s">"enum"</span>, <span class="k">"options"</span>: [<span class="s">"45.00"</span>, <span class="s">"4.50"</span>] },</span><span class="ln">  <span class="k">"cost_of_error"</span>: <span class="s">"40.50"</span>,</span><span class="ln">  <span class="k">"caller_confidence"</span>: <span class="n">0.41</span></span><span class="ln">}</span></pre></div>
       </div>
       <div class="card card-flat" style="padding:14px;margin-top:12px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px"><b style="font-size:12.5px">Quorum response</b><span class="badge badge-good">${ic('check')} Resolved · 2 of 2</span></div>
@@ -67,10 +67,10 @@ const decidesSection = () => `<section class="section"><div class="shell split">
       <b class="h-md">Why it works</b>
       <div style="display:flex;flex-direction:column;gap:20px;margin-top:20px">
         ${[
-          ['shield', 'More accurate', 'Independent answers cancel out one person having a bad moment.'],
-          ['link', 'More reliable', 'A worker who hedges gets a second opinion bought rather than trusted.'],
-          ['bolt', 'More transparent', 'Every answer carries its confidence, its responders and their standing.'],
-          ['target', 'Built for real apps', 'Structured responses and an automatic refund when nothing resolves.'],
+          ['users', 'An uncorrelated check', 'Retries and bigger models share your agent&rsquo;s blind spot. A person looking at the evidence does not.'],
+          ['target', 'Priced by the mistake', 'Send what being wrong would cost. The price, and the certainty it buys, follow from it.'],
+          ['shield', 'Only as many people as it takes', 'A proven worker can settle it alone. A second is bought only when the first cannot.'],
+          ['spark', 'No answer is an answer', 'If people disagree, the question is genuinely ambiguous. You are told so, and refunded.'],
         ].map(([i, t, d]) => `<div style="display:flex;gap:12px"><span class="ico ico-sm">${ic(i)}</span><div><b class="h-sm" style="display:block">${t}</b><span class="feat"><span style="margin-top:3px">${d}</span></span></div></div>`).join('')}
       </div>
     </div>
@@ -90,9 +90,9 @@ const devSection = () => `<section class="section"><div class="shell split">
   <div>
     <p class="eyebrow">Developer experience</p>
     <h1 class="h-xl">One tool call.<br/>Real people. Real answers.</h1>
-    <p class="lede">Add Quorum to your agent in minutes. Here is a complete example: ask a question, get a verified answer from a real person, and handle the response in your application.</p>
+    <p class="lede">Call it at the moment your agent is about to act on something it cannot check: forward the <code>input-required</code> status it already emits, or send the question directly. Say what a mistake would cost, and the price follows.</p>
     <ul class="feats">
-      ${[['bolt', 'Single API call', 'No orchestration. No queue to manage.'], ['clock', '~6 second average', 'From question to verified answer.'], ['money', '$0.02 per answer', 'Paid straight to the worker\u2019s own account.'], ['check', 'Verified response', 'With a confidence score and an audit trail.']]
+      ${[['bolt', 'A2A, MCP or HTTP', 'Forward input-required, call a tool, or POST.'], ['clock', 'About six seconds', 'Blocking, like any other call your agent makes.'], ['money', 'From 5\u00a2 a question', 'Set by what being wrong would cost, up to 50\u00a2.'], ['check', 'Confidence you can check', 'Who answered, how they agreed, and every payment on chain.']]
         .map(([i, t, d]) => `<li class="feat"><span class="ico ico-sm">${ic(i)}</span><b>${t}</b><span>${d}</span></li>`).join('')}
     </ul>
   </div>
@@ -104,12 +104,12 @@ const devSection = () => `<section class="section"><div class="shell split">
           ${['cURL', 'Node.js', 'Python', 'Go'].map((t, x) => `<button role="tab" aria-selected="${x === 0}">${t}</button>`).join('')}
           <button class="code-copy">${ic('file')} Copy</button>
         </div>
-        <pre><span class="ln"><span class="f">curl</span> https://api.quorum.dev/v1/ask \\</span><span class="ln">  -X POST \\</span><span class="ln">  -H <span class="s">"Authorization: Payment &lt;credential&gt;"</span> \\</span><span class="ln">  -H <span class="s">"Content-Type: application/json"</span> \\</span><span class="ln">  -d <span class="s">'{</span></span><span class="ln"><span class="s">    "capability": "checking_something_is_real",</span></span><span class="ln"><span class="s">    "question": "Is this a valid postal address?",</span></span><span class="ln"><span class="s">    "options": ["yes", "no"],</span></span><span class="ln"><span class="s">    "context": { "text": "123 Main St, Austin, TX 78701" },</span></span><span class="ln"><span class="s">    "max_price": "0.25"</span></span><span class="ln"><span class="s">  }'</span></span></pre>
+        <pre><span class="ln"><span class="f">curl</span> $QUORUM_URL/v1/questions \\</span><span class="ln">  -X POST \\</span><span class="ln">  -H <span class="s">"Content-Type: application/json"</span> \\</span><span class="ln">  -d <span class="s">'{</span></span><span class="ln"><span class="s">    "kind": "verify",</span></span><span class="ln"><span class="s">    "question": "Is this the brand\u2019s own store?",</span></span><span class="ln"><span class="s">    "answer_schema": { "type": "boolean" },</span></span><span class="ln"><span class="s">    "context": { "text": "Nike Official Store, nike-outlet-sale.shop" },</span></span><span class="ln"><span class="s">    "cost_of_error": "180.00",</span></span><span class="ln"><span class="s">    "caller_confidence": 0.9</span></span><span class="ln"><span class="s">  }'</span></span><span class="ln"><span class="c"># 402 with a quote; pay it over MPP on Tempo, then claim.</span></span></pre>
       </div>
 
       <div class="card card-lg">
         <div style="display:flex;align-items:center;gap:7px;margin-bottom:14px"><span class="dot" style="width:7px;height:7px;border-radius:50%;background:var(--good);display:inline-block"></span><b style="font-size:13px">Response</b><span class="badge badge-good" style="margin-left:auto">200 OK</span></div>
-        <div class="code code-light"><pre><span class="ln">{</span><span class="ln"> <span class="k">"answer"</span>: <span class="s">"yes"</span>,</span><span class="ln"> <span class="k">"confidence"</span>: <span class="n">0.98</span>,</span><span class="ln"> <span class="k">"responders"</span>: <span class="n">2</span>,</span><span class="ln"> <span class="k">"agreement"</span>: <span class="s">"unanimous"</span>,</span><span class="ln"> <span class="k">"latency_ms"</span>: <span class="n">6120</span>,</span><span class="ln"> <span class="k">"receipts"</span>: [<span class="s">"0x5555c6…"</span>]</span><span class="ln">}</span></pre></div>
+        <div class="code code-light"><pre><span class="ln">{</span><span class="ln"> <span class="k">"answer"</span>: <span class="s">"no"</span>,</span><span class="ln"> <span class="k">"confidence"</span>: <span class="n">0.98</span>,</span><span class="ln"> <span class="k">"responders"</span>: <span class="n">2</span>,</span><span class="ln"> <span class="k">"agreement"</span>: <span class="s">"unanimous"</span>,</span><span class="ln"> <span class="k">"latency_ms"</span>: <span class="n">6120</span>,</span><span class="ln"> <span class="k">"receipts"</span>: [<span class="s">"0x5555c6…"</span>]</span><span class="ln">}</span></pre></div>
         <a href="#" style="display:inline-flex;align-items:center;gap:6px;color:var(--accent);font-size:12.5px;font-weight:600;margin-top:14px">View transaction ${ic('arrow')}</a>
         <p class="dim" style="margin:6px 0 0">Inspect the wage payment and the worker record.</p>
       </div>
@@ -118,7 +118,7 @@ const devSection = () => `<section class="section"><div class="shell split">
     <div class="card card-lg" style="margin-top:18px">
       <p class="eyebrow" style="margin-bottom:8px">Real example</p>
       <div style="display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap">
-        <div><b class="h-md">Validate an address</b><p class="dim" style="margin:6px 0 0;max-width:62ch">A verification question. Quorum routes it to workers with a record on that kind of judgment, gets an answer in about six seconds, and returns a structured response.</p></div>
+        <div><b class="h-md">Before a shopping agent pays a lookalike store</b><p class="dim" style="margin:6px 0 0;max-width:62ch">Every signal the agent can compute says the store is real, because that is what it was built to make them say. The question goes to people proven at spotting fakes, and the order is held on their answer.</p></div>
         <a class="btn btn-ghost" href="docs/index.html">${ic('book')} View full API reference</a>
       </div>
     </div>
@@ -137,7 +137,7 @@ ${foot()}</main>`,
 const capsGridSection = () => `<section class="section-tight" style="background:var(--surface);border-block:1px solid var(--border)"><div class="shell">
   <p class="eyebrow">The five capabilities</p>
   <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap">
-    <div><h2 class="h-lg">What Quorum can do.</h2><p class="lede">Each one is a question a person answers in seconds from what you send. None of them needs access to your systems.</p></div>
+    <div><h2 class="h-lg">What Quorum can do.</h2><p class="lede">Each one is a kind of mistake an agent cannot catch in itself, because every check it could run makes the same mistake. A person answers from what you send, in seconds, and nothing else leaves your system.</p></div>
   </div>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-top:34px">
     ${CAPS.map((c) => capCard(...c)).join('')}
@@ -151,8 +151,8 @@ const capabilities = () => page({
   <div>
     <p class="eyebrow">Capabilities</p>
     <h1 class="h-xl"><span data-live="capabilities">Five</span> capabilities.<br/>One call each.</h1>
-    <p class="lede">Every capability is a kind of judgment a person can make from evidence you already hold. Each routes to the workers with the best record on that kind, and each returns a structured answer with its confidence.</p>
-    <ul class="checks">${['More accurate', 'More transparent', 'More reliable', 'Less friction', 'Built for real use'].map((t) => `<li>${ic('check')}${t}</li>`).join('')}</ul>
+    <p class="lede">Each is a place where an agent&rsquo;s own checks share its blind spot. The question goes only to people who passed an assessment in that capability, and the answer comes back as one of the options you sent, with its confidence.</p>
+    <ul class="checks">${['Priced by the cost of error', 'Answered by people assessed in it', 'One of your options, never free text', 'Refunded when people disagree'].map((t) => `<li>${ic('check')}${t}</li>`).join('')}</ul>
   </div>
 
   <div class="panel"><div class="panel-body">

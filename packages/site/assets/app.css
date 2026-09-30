@@ -1,4 +1,12 @@
 /*
+  The hidden attribute has to win. Components that set their own display, like
+  .ap-info, otherwise override it, and an empty error box shows as a bar of colour.
+*/
+[hidden] {
+  display: none !important;
+}
+
+/*
   The app shell.
 
   Two product surfaces share everything in this file: the worker app and the
@@ -18,49 +26,7 @@
   is 56px rather than 44, and nothing celebrates a payment.
 */
 
-/*
-  Dark mode.
-
-  Required rather than optional. A worker answers at night on a phone whose
-  battery has to last the evening, and the console gets projected in rooms with
-  the lights off. It is opt-in per surface — the marketing site stays light,
-  because its comps are white — so the tokens are redefined under an attribute
-  only the app pages carry, set by the control the comps drew at the foot of the
-  rail.
-*/
-[data-theme='dark'] {
-  color-scheme: dark;
-
-  --ground: #0c1017;
-  --ground-2: #151b25;
-  --surface: #131923;
-  --surface-2: #171e29;
-  --border: #232c3a;
-  --border-2: #2d3849;
-
-  --ink: #eef2f9;
-  --ink-2: #c6d0df;
-  --ink-3: #96a3b8;
-  --ink-4: #74829a;
-  --ink-5: #5d6b83;
-
-  --accent: #4c8dff;
-  --accent-2: #6ba0ff;
-  --accent-ink: #06101f;
-  --accent-wash: #16243c;
-  --accent-wash-2: #1c2d4a;
-
-  --good: #41c97a;
-  --good-wash: #102a1d;
-  --warn: #e0a940;
-  --warn-wash: #2a2011;
-  --bad: #f0605a;
-  --bad-wash: #2c1414;
-
-  --sh-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --sh-md: 0 1px 2px rgba(0, 0, 0, 0.35), 0 6px 18px rgba(0, 0, 0, 0.32);
-  --sh-lg: 0 1px 2px rgba(0, 0, 0, 0.35), 0 14px 40px rgba(0, 0, 0, 0.45);
-}
+/* Dark mode is defined in quorum.css, with the tokens, so every page shares one palette. */
 
 /* ------------------------------------------------------------------ shell -- */
 
@@ -775,6 +741,18 @@ button.ap-row {
   font-size: 12px;
   line-height: 1.5;
   color: var(--ink-4);
+}
+
+/*
+  A numbered badge inside a row. `.ap-row span` above is more specific than
+  `.ap-av`, so without this the badge became a small grey block with its digit
+  in the corner.
+*/
+.ap-row .ap-av {
+  display: grid;
+  color: var(--accent-ink);
+  font-size: 11px;
+  line-height: 1;
 }
 
 .ap-row .caret {

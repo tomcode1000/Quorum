@@ -22,12 +22,19 @@ import type { Kind, WorkerRecord } from './types.js'
  *   - it raises the cost of farming, because an identity must demonstrate competence
  *     before it can extract anything beyond the assessment itself.
  *
- * **The assessment is paid.** That is not generosity and it is not negotiable. A
- * network whose first act is to extract unpaid work from someone who has not yet
- * earned anything is the thing this product exists to replace, and "a short unpaid
- * test" is how that always begins. The anti-farming protection is not withheld wages;
- * it is that failing ends the relationship, so the most an identity can extract is one
- * assessment's worth of pay.
+ * It is taken **per skill**. A worker chooses the kinds of question they want —
+ * telling readings apart, checking something is real, matching records, and so on —
+ * and answers five known-answer questions of each kind they chose. Passing a skill
+ * opens that kind of work to them and no other; failing one closes that skill and
+ * leaves the rest alone. Someone sharp at reading receipts should not be kept out of
+ * that work because they are unsure about categorising products, and should not be
+ * sent product categorisation because they are sharp at receipts.
+ *
+ * The assessment is not paid. Nothing in it reaches a caller or is billed to anyone,
+ * so there is no revenue behind it to pay a wage out of. What the product refuses is
+ * to take *productive* work for nothing: every question that reaches a worker from a
+ * caller is paid, and so is every known-answer check mixed into real work, because
+ * the worker cannot tell those apart from real questions.
  */
 
 /** How many known-answer questions a worker answers before seeing real work. */
@@ -46,6 +53,8 @@ export const ASSESSMENT_PASS_MARK = 4
 
 export type AssessmentState = {
   readonly workerId: string
+  /** The skill this assessment is for. Every question in it is of this kind. */
+  readonly kind: Kind
   /** The questions posed, in order. */
   readonly questions: readonly GoldenQuestion[]
   /** Outcomes so far, oldest first. */
@@ -60,37 +69,34 @@ export type AssessmentOutcome =
   /** Failed. No paid work, and the reason is given plainly. */
   | { readonly status: 'failed'; readonly correct: number; readonly of: number }
 
-/** Picks an assessment for a worker: a spread across the kinds they will be asked. */
+/**
+ * Picks the assessment for one skill: ASSESSMENT_LENGTH questions of that kind,
+ * drawn at random so two workers do not see the same set in the same order.
+ */
 export function buildAssessment(
   workerId: string,
+  kind: Kind,
   pool: readonly GoldenQuestion[],
   random: () => number = Math.random,
 ): AssessmentState {
-  // Draw across kinds rather than taking the first N, so a worker cannot pass by
-  // being good at one kind of question and blind to the other.
-  const byKind = new Map<Kind, GoldenQuestion[]>()
-  for (const question of pool) {
-    const list = byKind.get(question.kind) ?? []
-    list.push(question)
-    byKind.set(question.kind, list)
-  }
-
+  const available = pool.filter((question) => question.kind === kind)
   const chosen: GoldenQuestion[] = []
-  const kinds = [...byKind.keys()]
-  let index = 0
-  while (chosen.length < ASSESSMENT_LENGTH && kinds.length > 0) {
-    const kind = kinds[index % kinds.length]
-    const available = (byKind.get(kind as Kind) ?? []).filter((q) => !chosen.includes(q))
-    if (available.length === 0) {
-      kinds.splice(index % kinds.length, 1)
-      continue
-    }
-    const pick = available[Math.floor(random() * available.length)]
+  while (chosen.length < ASSESSMENT_LENGTH && available.length > 0) {
+    const [pick] = available.splice(Math.floor(random() * available.length), 1)
     if (pick) chosen.push(pick)
-    index += 1
   }
+  return { workerId, kind, questions: chosen, results: [] }
+}
 
-  return { workerId, questions: chosen, results: [] }
+/**
+ * The skills that can be assessed, which are the only ones a worker may choose.
+ *
+ * A skill with fewer known-answer questions than an assessment needs cannot be
+ * tested, and a skill that cannot be tested is not offered: routing work to somebody
+ * on the strength of nothing is exactly what the assessment exists to stop.
+ */
+export function assessableKinds(pool: readonly GoldenQuestion[], kinds: readonly Kind[]): Kind[] {
+  return kinds.filter((kind) => pool.filter((question) => question.kind === kind).length >= ASSESSMENT_LENGTH)
 }
 
 /** Records an answer and says what happens next. */
@@ -138,8 +144,9 @@ function summarise(state: AssessmentState): AssessmentOutcome {
  * measurably ahead of one who scraped four, and both start ahead of the prior — which
  * is the point, since the prior exists only to cover the case of knowing nothing.
  */
-export function seedFromAssessment(state: AssessmentState): WorkerRecord {
-  let record = blankRecord(state.workerId)
+export function seedFromAssessment(state: AssessmentState, existing?: WorkerRecord): WorkerRecord {
+  // Added to what is already there: passing a second skill must not erase the first.
+  let record = existing ?? blankRecord(state.workerId)
   for (const [index, result] of state.results.entries()) {
     const question = state.questions[index]
     if (!question) continue

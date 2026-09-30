@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { AskError, MIN_DEADLINE_MS, answerSchemaSchema, toAnswerSchema, type ParsedAsk } from './request.js'
+import { AskError, MIN_DEADLINE_MS, answerSchemaSchema, readPricing, toAnswerSchema, type ParsedAsk } from './request.js'
 import { KINDS } from './types.js'
 import type { Attachment, Kind, Resolution } from './types.js'
 
@@ -63,7 +63,9 @@ export const EXTENSION_URI = 'dev.quorum.resolver'
 const extensionSchema = z.object({
   kind: z.enum(KINDS).default('disambiguate'),
   answer_schema: answerSchemaSchema,
-  max_price: z.union([z.string(), z.number()]),
+  max_price: z.union([z.string(), z.number()]).optional(),
+  /** What acting on a wrong answer would cost, in dollars. See `adviseFromCost`. */
+  cost_of_error: z.union([z.string(), z.number()]).optional(),
   deadline_ms: z.number().int().default(45_000),
   caller_confidence: z.number().min(0).max(1).optional(),
 })
@@ -122,7 +124,7 @@ export function parseInputRequired(body: unknown): ParsedAsk & { taskId: string 
   if (!extension.success)
     throw new AskError(
       422,
-      `the ${EXTENSION_URI} extension is required on the task metadata, carrying at least answer_schema and max_price`,
+      `the ${EXTENSION_URI} extension is required on the task metadata, carrying at least answer_schema and one of max_price or cost_of_error`,
       { issues: extension.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message })) },
     )
   const config = extension.data
@@ -143,10 +145,7 @@ export function parseInputRequired(body: unknown): ParsedAsk & { taskId: string 
     if (part.kind === 'data') attachments.push({ type: 'json', body: part.data, caption: 'What the agent read' })
   }
 
-  const maxPriceCents =
-    typeof config.max_price === 'number' ? Math.round(config.max_price * 100) : Math.round(Number(String(config.max_price).replace(/[$,\s]/g, '')) * 100)
-  if (!Number.isFinite(maxPriceCents) || maxPriceCents <= 0)
-    throw new AskError(400, `max_price "${String(config.max_price)}" is not a valid amount`)
+  const { maxPriceCents, costOfErrorCents } = readPricing(config.max_price, config.cost_of_error)
 
   return {
     taskId: task.id,
@@ -155,6 +154,7 @@ export function parseInputRequired(body: unknown): ParsedAsk & { taskId: string 
     schema: toAnswerSchema(config.answer_schema),
     attachments,
     maxPriceCents,
+    ...(costOfErrorCents === undefined ? {} : { costOfErrorCents }),
     timeoutMs: config.deadline_ms,
     mode: 'blocking',
     // The task id is the caller's own reference, carried through to the receipt.

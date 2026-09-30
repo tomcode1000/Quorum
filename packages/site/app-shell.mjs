@@ -119,6 +119,7 @@ const WORKER_NAV = [
 const ASSESSMENT_NAV = [
   ['home', 'Home', 'app-home.html'],
   ['db', 'Earnings', 'app-earnings.html'],
+  ['target', 'Skills', 'app-skills.html'],
   ['clipboard', 'Assessment', 'app-assessment.html'],
   ['user', 'Profile', 'app-profile.html'],
   ['question', 'Help', 'app-help.html'],
@@ -283,6 +284,7 @@ export {
   consoleSide,
   appPage,
   script,
+  themeToggle,
   WORKER_NAV,
   ASSESSMENT_NAV,
   CONSOLE_NAV,

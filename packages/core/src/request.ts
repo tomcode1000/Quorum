@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { KINDS } from './types.js'
 import type { Attachment, Kind, Question } from './types.js'
+import { PRICE_CEILING_CENTS } from './pricing.js'
 
 /**
  * The request boundary.
@@ -41,8 +42,14 @@ export const askSchema = z.object({
   kind: z.enum(KINDS),
   context: attachmentsSchema.optional(),
   answer_schema: answerSchemaSchema,
-  /** The caller's ceiling, in dollars, as a decimal string. */
-  max_price: z.union([z.string(), z.number()]),
+  /** The caller's ceiling, in dollars, as a decimal string. Optional when `cost_of_error` is given. */
+  max_price: z.union([z.string(), z.number()]).optional(),
+  /**
+   * What acting on a wrong answer would cost the caller, in dollars. When given,
+   * Quorum prices the question from it, and says so plainly when a person is not
+   * worth asking at all. See `adviseFromCost`.
+   */
+  cost_of_error: z.union([z.string(), z.number()]).optional(),
   deadline_ms: z.number().int(),
   /** Opaque A2A task reference. Accepted as a string and never parsed. */
   task_ref: z.string().max(500).optional(),
@@ -60,6 +67,8 @@ export type ParsedAsk = {
   schema: Question['schema']
   attachments: Attachment[]
   maxPriceCents: number
+  /** Set when the caller priced the question by what being wrong would cost. */
+  costOfErrorCents?: number
   timeoutMs: number
   taskRef?: string
   callerConfidence?: number
@@ -97,8 +106,7 @@ export function parseAsk(body: unknown): ParsedAsk {
   if (ask.mode === 'callback' && !ask.callback_url)
     throw new AskError(400, 'callback mode requires callback_url')
 
-  const maxPriceCents = toCents(ask.max_price)
-  if (maxPriceCents === null) throw new AskError(400, `max_price "${String(ask.max_price)}" is not a valid amount`)
+  const { maxPriceCents, costOfErrorCents } = readPricing(ask.max_price, ask.cost_of_error)
 
   const attachments: Attachment[] = []
   if (ask.context?.image_url) attachments.push({ type: 'image', url: ask.context.image_url })
@@ -112,12 +120,31 @@ export function parseAsk(body: unknown): ParsedAsk {
     schema: toAnswerSchema(ask.answer_schema),
     attachments,
     maxPriceCents,
+    ...(costOfErrorCents === undefined ? {} : { costOfErrorCents }),
     timeoutMs: ask.deadline_ms,
     mode: ask.mode,
     ...(ask.task_ref === undefined ? {} : { taskRef: ask.task_ref }),
     ...(ask.caller_confidence === undefined ? {} : { callerConfidence: ask.caller_confidence }),
     ...(ask.callback_url === undefined ? {} : { callbackUrl: ask.callback_url }),
   }
+}
+
+/**
+ * The two ways a caller can price a question: a ceiling it is willing to pay, or
+ * what being wrong would cost it. At least one is required. With only a cost of
+ * error the ceiling is ours, and the price is chosen beneath it from that cost.
+ */
+export function readPricing(
+  maxPrice: string | number | undefined,
+  costOfError: string | number | undefined,
+): { maxPriceCents: number; costOfErrorCents?: number } {
+  if (maxPrice === undefined && costOfError === undefined)
+    throw new AskError(400, 'give max_price, cost_of_error, or both: one of them has to set the price')
+  const costOfErrorCents = costOfError === undefined ? undefined : toCents(costOfError)
+  if (costOfErrorCents === null) throw new AskError(400, `cost_of_error "${String(costOfError)}" is not a valid amount`)
+  const maxPriceCents = maxPrice === undefined ? PRICE_CEILING_CENTS : toCents(maxPrice)
+  if (maxPriceCents === null) throw new AskError(400, `max_price "${String(maxPrice)}" is not a valid amount`)
+  return { maxPriceCents, ...(costOfErrorCents === undefined ? {} : { costOfErrorCents }) }
 }
 
 /** Converts the wire answer schema into the internal one. */

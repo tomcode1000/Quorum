@@ -1,133 +1,169 @@
-import type { InputRequired } from '@quorum/core'
+import type { InputRequired, Kind } from '@quorum/core'
 
 /**
- * A small but honest A2A chain.
+ * One agent, one afternoon, three errors it cannot see in itself.
  *
- * Agent A is an accounts-payable orchestrator. It delegates to Agent B, an invoice
- * reader, and then acts on whatever B returns by scheduling a payment. Neither agent
- * is a strawman: B is careful, reports its confidence accurately, and does not lie
- * about anything. That is the point of the demonstration.
+ * An accounts-payable agent is closing out the week: an expense receipt to record and
+ * a supplier invoice to pay. It is a careful agent. It reports its confidence
+ * honestly, and at each of the three moments below it knows it might be wrong.
  *
- * The receipt B is given has a genuinely ambiguous total — the kind of smudged
- * thermal print that any OCR pipeline produces a low-confidence read from. B knows
- * it is unsure. Under the A2A specification the correct thing for it to do is enter
- * `input-required` and put the question to a human. In an autonomous chain there is
- * no human, so that state is a dead end, and B does the only other thing available:
- * it picks its best guess and reports success.
+ * What it cannot do is find out. Each of these errors is one that every automated
+ * check it could run shares with it:
  *
- * Nothing in the chain is broken when that happens. No error is raised, no retry
- * fires, no alert goes off. A is told the invoice total is 4.50, A believes it,
- * and a supplier is underpaid by a factor of ten. That is what "silent delegation
- * failure" means concretely, and it is why the failure is expensive: the system
- * cannot tell you it went wrong, because as far as it knows it did not.
+ *   - the receipt total was read badly by the OCR, and every model after the OCR
+ *     reads the same bad string;
+ *   - the supplier name matches the one on file at 0.93, and no score says which
+ *     side of "the same company" 0.93 is on;
+ *   - the payment link looks like the supplier's site, and the only thing that
+ *     knows it is not is someone who looks at it.
+ *
+ * Retrying, asking a bigger model, or asking the agent to check its own work all
+ * inherit the same blind spot. A person looking at the evidence does not. That is
+ * the whole argument, and each moment below is priced by what being wrong there
+ * would cost: a cheap answer for a small mistake, the most certainty on offer before
+ * money leaves for good.
  */
 
-/** The evidence B is working from. */
-export const RECEIPT = {
-  supplier: 'Meridian Print & Supply',
-  invoiceRef: 'MPS-2026-0914',
-  imageUrl: 'https://quorum.dev/demo/receipt-mps-2026-0914.png',
-  /** What the OCR pass produced, confidence and all. */
-  ocr: {
-    lines: ['MERIDIAN PRINT & SUPPLY', 'INV MPS-2026-0914', 'QTY 3  TONER CARTRIDGE', 'TOTAL  4S.00'],
-    /** The total field, read badly: the S could be a 5, and the decimal is smudged. */
-    total: { reading: '4.50', alternative: '45.00', confidence: 0.41 },
+export type Check = {
+  readonly id: 'receipt-total' | 'supplier-match' | 'payment-link'
+  /** The capability this goes to, as a caller names it. */
+  readonly capability: string
+  readonly kind: Kind
+  readonly question: string
+  readonly evidence: readonly string[]
+  readonly options: readonly string[] | 'boolean'
+  /** What the agent would have gone with, and how sure it was. */
+  readonly guess: boolean | string
+  readonly confidence: number
+  readonly truth: boolean | string
+  /** What acting on a wrong answer here would cost, in dollars. */
+  readonly costOfError: string
+  /** What the agent does next with its own guess. */
+  readonly alone: string
+  /** What it does with the right answer. */
+  readonly answered: string
+}
+
+export const CHECKS: readonly Check[] = [
+  {
+    id: 'receipt-total',
+    capability: 'Tell two readings apart',
+    kind: 'disambiguate',
+    question: 'The printed line reads "TOTAL 4S.00" and the decimal point is smudged. Is the total 45.00 or 4.50?',
+    evidence: ['Meridian Print & Supply, invoice MPS-2026-0914. Three toner cartridges.'],
+    options: ['45.00', '4.50'],
+    guess: '4.50',
+    confidence: 0.41,
+    truth: '45.00',
+    costOfError: '40.50',
+    alone: 'records the expense at $4.50; the supplier is underpaid by $40.50 and nothing flags it',
+    answered: 'records the expense at $45.00',
   },
-  /** What the total actually is, known only to this file so the demo can score itself. */
-  truth: '45.00',
-} as const
+  {
+    id: 'supplier-match',
+    capability: 'Match records',
+    kind: 'match',
+    question:
+      'On file: "Acme Industrial Supply Ltd", paid to an account ending 4471, billing from billing@acme-industrial.com. This invoice: "ACME Industrial Supply", asking for payment to a new account ending 9083, sent from accounts@acme-industria1.com. Is this invoice from the supplier on file?',
+    evidence: ['Invoice AIS-7731 for $4,800.00, marked urgent, with "our bank details have changed" in the footer.'],
+    options: 'boolean',
+    guess: true,
+    confidence: 0.93,
+    truth: false,
+    costOfError: '4800.00',
+    alone: 'treats the 0.93 name match as the same supplier and sends $4,800.00 to the new account',
+    answered: 'holds the invoice and asks the real supplier to confirm the change',
+  },
+  {
+    id: 'payment-link',
+    capability: 'Check something is real',
+    kind: 'verify',
+    question:
+      'The invoice says to pay at https://acme-industria1.com/pay. The supplier\'s own site, on file, is acme-industrial.com. Is the payment page on the supplier\'s own site?',
+    evidence: ['The link in the invoice footer, and the domain on the supplier record.'],
+    options: 'boolean',
+    guess: true,
+    confidence: 0.88,
+    truth: false,
+    costOfError: '4800.00',
+    alone: 'opens the payment page and enters the company card',
+    answered: 'does not open the link, and reports it as a lookalike domain',
+  },
+]
 
-export type ChainResult = {
-  /** What Agent A ended up believing the invoice total was. */
-  recordedTotal: string | null
-  /** Whether anything in the chain signalled that the figure might be wrong. */
-  flagged: boolean
-  /** A human-readable trace of what each agent did, in order. */
-  trace: string[]
-  /** What Agent A actually did with the number. */
-  action: string
+/** Finds the check a worker is looking at, from the prompt they were shown. */
+export function checkForPrompt(prompt: string): Check | undefined {
+  return CHECKS.find((check) => check.question === prompt)
 }
 
-/** Agent B's read of the receipt, including how sure it is. */
-export function readInvoice(): { total: string; confidence: number; alternative: string } {
-  return {
-    total: RECEIPT.ocr.total.reading,
-    confidence: RECEIPT.ocr.total.confidence,
-    alternative: RECEIPT.ocr.total.alternative,
-  }
+export function answerSchemaFor(check: Check) {
+  return check.options === 'boolean' ? { type: 'boolean' as const } : { type: 'enum' as const, options: [...check.options] }
 }
 
 /**
- * The `input-required` task status Agent B emits when it is not sure.
+ * The `input-required` task status the agent emits at one of these moments.
  *
- * This is the artefact the whole product turns on, and it is worth noticing that it
- * is not written for Quorum. It is what the A2A specification already says a careful
- * agent should produce at this moment: the task id, the state, and the question it
- * wants to put to a person, with the evidence attached. The only Quorum-specific part
- * is the metadata entry saying what a wrong answer would cost.
+ * Nothing in it is written for Quorum except the one metadata entry saying what a
+ * wrong answer would cost and how sure the agent is. The rest is what the A2A
+ * specification already says a careful agent should produce: the question it wants
+ * to put to a person, and the evidence.
  */
-export function inputRequired(taskId: string, maxPrice = '0.25'): InputRequired {
-  const read = readInvoice()
+export function inputRequired(taskId: string, check: Check): InputRequired {
   return {
     id: taskId,
-    contextId: 'ctx_ap_run',
+    contextId: 'ctx_ap_week_close',
     status: {
       state: 'input-required',
       message: {
         role: 'agent',
         parts: [
-          {
-            kind: 'text',
-            text: `The total on this receipt is either ${read.alternative} or ${read.total}. The printed line reads "TOTAL 4S.00" and the decimal point is smudged. Which is it?`,
-          },
-          { kind: 'text', text: `Supplier: ${RECEIPT.supplier}. Invoice ${RECEIPT.invoiceRef}. Three toner cartridges.` },
-          { kind: 'file', file: { name: 'receipt.png', mimeType: 'image/png', uri: RECEIPT.imageUrl } },
-          { kind: 'data', data: RECEIPT.ocr.total },
+          { kind: 'text', text: check.question },
+          ...check.evidence.map((text) => ({ kind: 'text' as const, text })),
         ],
-        messageId: 'msg_b_clarify_1',
+        messageId: `msg_${check.id}`,
       },
       timestamp: new Date().toISOString(),
     },
     metadata: {
       'dev.quorum.resolver': {
-        kind: 'disambiguate',
-        answer_schema: { type: 'enum', options: [RECEIPT.ocr.total.alternative, RECEIPT.ocr.total.reading] },
-        max_price: maxPrice,
+        kind: check.kind,
+        answer_schema: answerSchemaFor(check),
+        cost_of_error: check.costOfError,
+        caller_confidence: check.confidence,
         deadline_ms: 30_000,
-        // B is being straight about how much it trusts itself, which raises the bar
-        // rather than lowering it.
-        caller_confidence: RECEIPT.ocr.total.confidence,
       },
     },
   }
 }
 
+export type Outcome = {
+  readonly check: Check
+  /** What the agent went with, whether its own guess or the answer it got. */
+  readonly acted: boolean | string | null
+  /** Whether the agent knew it had no answer, rather than acting on a guess. */
+  readonly flagged: boolean
+  readonly trace: readonly string[]
+}
+
 /**
  * Run one: the chain as it exists today.
  *
- * Agent B reaches `input-required`, finds nobody there, and resolves its own
- * uncertainty by picking the higher-confidence reading. This is not a bug in B; it is
- * the documented behaviour of agents under ambiguity, which is to make additional
- * autonomous decisions rather than stop.
+ * At each moment the agent reaches `input-required`, finds nobody there, and goes
+ * with its best guess. Nothing errors. That is the failure: not a crash, but three
+ * plausible decisions that nothing in the system can tell are wrong.
  */
-export function runWithoutResolver(): ChainResult {
-  const trace: string[] = []
-  const read = readInvoice()
-
-  trace.push('A: new invoice from Meridian Print & Supply. Delegating extraction to B.')
-  trace.push(`B: OCR read the total as ${read.total} with confidence ${read.confidence.toFixed(2)}.`)
-  trace.push(`B: that is below my threshold, and ${read.alternative} is equally consistent with the print.`)
-  trace.push('B: entering input-required to ask a human which it is.')
-  trace.push('B: nobody is listening on input-required. No UI, no user, no channel.')
-  trace.push(`B: proceeding with the higher-confidence reading, ${read.total}, and reporting completed.`)
-  trace.push(`A: received completed with total ${read.total}. No error, no warning, nothing to retry.`)
-  trace.push(`A: scheduling payment of ${read.total} to ${RECEIPT.supplier}.`)
-
-  return {
-    recordedTotal: read.total,
-    // Nothing anywhere in this chain knows the figure is wrong.
+export function runAlone(): Outcome[] {
+  return CHECKS.map((check) => ({
+    check,
+    acted: check.guess,
     flagged: false,
-    trace,
-    action: `Scheduled a payment of $${read.total} against invoice ${RECEIPT.invoiceRef}.`,
-  }
+    trace: [
+      `unsure (confidence ${check.confidence.toFixed(2)}); entering input-required.`,
+      'nobody is listening on input-required, so it goes with its guess.',
+      `it ${check.alone}.`,
+    ],
+  }))
 }
+
+export const show = (value: boolean | string | null): string =>
+  value === null ? 'no answer' : value === true ? 'yes' : value === false ? 'no' : value

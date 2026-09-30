@@ -177,6 +177,12 @@ const page = ({ title, body, docs = false, script = false }) => `<!doctype html>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700${script ? ';800' : ''}&family=JetBrains+Mono:wght@400;500${script ? '&family=Caveat:wght@600;700' : ''}&display=swap"/>
 <link rel="stylesheet" href="${docs ? '../assets/quorum.css' : 'assets/quorum.css'}"/>
+<script>
+  /* The stored theme, applied before first paint so no page flashes the other one. */
+  try {
+    if (localStorage.getItem('quorum-theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark')
+  } catch (e) {}
+</script>
 </head>
 <body>
 ${body}

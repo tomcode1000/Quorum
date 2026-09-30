@@ -381,7 +381,10 @@ function explainAsk(state: EngineState, belief: Belief, target: number, explorat
   if (state.answers.length === 0) return 'first answer'
   const leader = belief.candidates[0]
   if (!leader) return 'no valid answer yet'
-  if (belief.candidates.length > 1)
-    return `answers disagree, leader at ${leader.confidence.toFixed(3)} below target ${target.toFixed(3)}`
-  return `single answer at ${leader.confidence.toFixed(3)} below target ${target.toFixed(3)}, second opinion needed`
+  // Enough decimals that "below" is visible: 0.9897 against 0.990 must not print as 0.990 below 0.990.
+  const places = (value: number) => (Math.abs(value - target) < 0.0005 ? 4 : 3)
+  const at = `${leader.confidence.toFixed(places(leader.confidence))} below target ${target.toFixed(places(leader.confidence))}`
+  if (belief.candidates.length > 1) return `answers disagree, leader at ${at}`
+  const agreeing = leader.supporters.length
+  return agreeing === 1 ? `one answer at ${at}, second opinion needed` : `${agreeing} agree at ${at}, another opinion needed`
 }

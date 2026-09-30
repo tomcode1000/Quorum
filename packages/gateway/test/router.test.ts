@@ -62,6 +62,8 @@ function harness(options: { random?: () => number } = {}): Harness {
     addWorker(workerId, record) {
       const worker = store.upsertWorker(workerId, WORKER_ADDRESS)
       if (record) worker.record = record
+      // Every question in these tests is a disambiguation, so that is the skill passed.
+      worker.skills.disambiguate = 'passed'
     },
     autoAnswer(workerId, value, { selfConfidence = 1, delayMs = 10 } = {}) {
       const controller = new AbortController()
@@ -360,5 +362,17 @@ describe('known-answer seeding', () => {
     const resolution = await resolving
     // The golden answer never reached the caller, so the question did not resolve.
     assert.notEqual(resolution.status, 'resolved')
+
+    // It was still work the worker could not tell apart from a real question, so it
+    // is paid — and recorded under the prompt they saw, not the caller's.
+    assert.deepEqual(
+      h.paymaster.wages.map((w) => w.workerId),
+      ['w1'],
+      'a known-answer check is paid like any other answer',
+    )
+    assert.equal(resolution.receipts?.length ?? 0, 0, 'the caller is not shown a wage they did not pay for')
+    const history = h.store.workers.get('w1')?.payments ?? []
+    assert.equal(history[0]?.label, 'The line reads TOTAL 128.40. Is the total 128.40 or 12.84?')
+    assert.equal(history[0]?.status, 'settled')
   })
 })

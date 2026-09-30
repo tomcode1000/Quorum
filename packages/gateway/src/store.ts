@@ -1,7 +1,8 @@
-import { blankRecord } from '@quorum/core'
+import { blankRecord, type Kind } from '@quorum/core'
 import type { AssessmentState, GoldenQuestion, Question, RateState, Resolution, WorkerAnswer, WorkerRecord } from '@quorum/core'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
+import { legacySkills, standing, type Skills } from './skills.js'
 
 /**
  * Gateway state.
@@ -55,17 +56,25 @@ export type Worker = {
   tooFastCount: number
   answerCount: number
   /**
-   * Set until the worker has passed the entry assessment.
+   * The assessment in progress, for one skill, if any.
    *
-   * While this is present the worker is invisible to the router, so a caller's
-   * question can never reach somebody who has not yet demonstrated they can do the
-   * task. See `onboarding.ts`.
+   * Only a passed skill brings work, so a caller's question never reaches somebody
+   * who has not shown they can answer that kind. See `onboarding.ts`.
    */
   assessment: AssessmentState | null
-  /** Set when they failed. They keep what they earned and are offered no more work. */
-  assessmentFailed: boolean
+  /** The kinds of question they chose, and whether each has been passed. See `skills.ts`. */
+  skills: Skills
   /** Newest first. Capped, because a phone renders a page of this and no more. */
   payments: WagePayment[]
+  /**
+   * How this worker signs, which decides who can move what is in their account.
+   *
+   * A passkey worker's public key is kept because a browser hands it over only once,
+   * when the passkey is made; signing back in later returns a signature and no key,
+   * and the key is what the account address is derived from. A Tempo Wallet worker
+   * signs through Tempo's hosted wallet, so there is no key of theirs to keep.
+   */
+  signer: { kind: 'passkey'; publicKey: `0x${string}` } | { kind: 'tempo-wallet' } | null
 }
 
 /** One question offered to one worker. */
@@ -92,6 +101,12 @@ export type LiveQuestion = {
   /** Set for callback-mode callers, who are not holding a socket. */
   readonly callbackUrl?: string
   answers: WorkerAnswer[]
+  /**
+   * Known-answer checks answered while this question was live. Paid like any other
+   * answer when the question settles, but kept apart from `answers` because they are
+   * evidence about the worker, not about the caller's question.
+   */
+  calibrations: { workerId: string; assignmentId: string; prompt: string; kind: Question['kind'] }[]
   assignments: Assignment[]
   /** Answers bought, whether or not they arrived. Drives MAX_RESPONDERS. */
   bought: number
@@ -107,8 +122,11 @@ type Snapshot = {
     earnedCents: number
     tooFastCount?: number
     answerCount?: number
+    /** Only in rosters saved before skills; converted on load. */
     assessmentFailed?: boolean
+    skills?: Skills
     payments?: WagePayment[]
+    signer?: Worker['signer']
   }[]
 }
 
@@ -146,8 +164,9 @@ export class Store {
           tooFastCount: entry.tooFastCount ?? 0,
           answerCount: entry.answerCount ?? 0,
           assessment: null,
-          assessmentFailed: entry.assessmentFailed ?? false,
+          skills: entry.skills ?? legacySkills(entry.record, entry.assessmentFailed ?? false),
           payments: entry.payments ?? [],
+          signer: entry.signer ?? null,
         })
     } catch {
       // No saved roster, or an unreadable one. Either way, start clean.
@@ -166,8 +185,9 @@ export class Store {
         earnedCents: w.earnedCents,
         tooFastCount: w.tooFastCount,
         answerCount: w.answerCount,
-        assessmentFailed: w.assessmentFailed,
+        skills: w.skills,
         payments: w.payments,
+        signer: w.signer,
       })),
     }
     this.#writing = this.#writing.then(async () => {
@@ -177,9 +197,11 @@ export class Store {
     return this.#writing
   }
 
-  upsertWorker(workerId: string, address: `0x${string}`): Worker {
+  upsertWorker(workerId: string, address: `0x${string}`, signer: Worker['signer'] = null): Worker {
     const existing = this.workers.get(workerId)
     if (existing) {
+      // Never re-pointed. A worker's address is where their wages go, so letting a
+      // later registration change it would let anyone holding the id redirect them.
       existing.lastSeenAt = Date.now()
       return existing
     }
@@ -194,8 +216,9 @@ export class Store {
       tooFastCount: 0,
       answerCount: 0,
       assessment: null,
-      assessmentFailed: false,
+      skills: {},
       payments: [],
+      signer,
     }
     this.workers.set(workerId, worker)
     return worker
@@ -224,6 +247,13 @@ export class Store {
     return map
   }
 
+  /** The worker paid at this address, if any. Addresses are compared case-insensitively. */
+  workerAt(address: string): Worker | undefined {
+    const wanted = address.toLowerCase()
+    for (const worker of this.workers.values()) if (worker.address.toLowerCase() === wanted) return worker
+    return undefined
+  }
+
   /**
    * Workers who could be asked right now.
    *
@@ -231,15 +261,16 @@ export class Store {
    * they will not see: an assignment sitting unanswered in a dead session spends the
    * caller's deadline without buying anything.
    */
-  availableWorkers(staleAfterMs = 30_000): Worker[] {
+  availableWorkers(kind?: Kind, staleAfterMs = 30_000): Worker[] {
     const cutoff = Date.now() - staleAfterMs
     return [...this.workers.values()].filter(
       (w) =>
         w.lastSeenAt >= cutoff &&
         w.busyWith === null &&
-        // Nobody reaches a caller's question before passing the entry assessment.
+        // Nobody is sent a question mid-assessment, and nobody is sent a kind of
+        // question they have not passed. Without a kind, anyone who passed anything.
         w.assessment === null &&
-        !w.assessmentFailed,
+        (kind === undefined ? standing(w.skills) === 'passed' : w.skills[kind] === 'passed'),
     )
   }
 

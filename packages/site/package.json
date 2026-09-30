@@ -4,7 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node render.mjs",
-    "dev": "node serve.js"
+    "build": "node render.mjs && npm run build:wallet",
+    "dev": "node serve.js",
+    "build:wallet": "esbuild wallet/index.js --bundle --format=iife --global-name=QuorumWallet --minify --target=es2022 --outfile=dist/assets/wallet.js && esbuild wallet/tempo-wallet.js --bundle --format=iife --global-name=QuorumTempoWallet --minify --target=es2022 --outfile=dist/assets/tempo-wallet.js"
+  },
+  "dependencies": {
+    "accounts": "^0.19.0",
+    "viem": "^2.57.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
   }
 }

@@ -210,10 +210,11 @@ ${joinSection()}
 /*
   Sign in.
 
-  The comp offered "Back to other sign in options". There are no other options:
-  a passkey is the only way in, by design, and offering a door that does not
-  exist is worse than not drawing it. "Use another device" stays, because
-  cross-device passkeys are real.
+  This page introduces signing in; the sign-in itself happens in the app
+  (app-signin.html), where the wallet code runs. Its two buttons are the app's
+  two ways in: a passkey made here, or an existing Tempo Wallet. The comp's
+  second button was "Use another device", which went to the same place as the
+  first, so the slot now carries the option that actually exists.
 */
 const WHY_PASSKEY = [
   ['shield', 'More secure', 'A passkey cannot be phished or leaked in a breach, because there is no secret you could be tricked into typing.'],
@@ -228,7 +229,7 @@ const workerSignIn = () => page({
 <section class="w-band"><div class="shell w-grid w-grid-3">
   <div class="w-copy">
     <p class="w-eyebrow">Welcome back</p>
-    <h1 class="w-h">Sign in with<em>a passkey.</em></h1>
+    <h1 class="w-h">Sign in,<em>no password.</em></h1>
     <p class="w-lede">Use your fingerprint, face or device PIN. There is no password to enter, because there is no password to begin with.</p>
     <div class="w-stack">
       ${WHY_PASSKEY.map(([i, t, d]) => `<div class="w-stack-row"><span class="w-tile" style="width:42px;height:42px;border-radius:12px">${ic(i)}</span><div><b>${t}</b><p>${d}</p></div></div>`).join('')}
@@ -240,14 +241,14 @@ const workerSignIn = () => page({
 
   <div class="w-signin">
     <span class="brand" style="display:inline-flex;align-items:center;gap:10px"><span class="mark">${MARK}</span>Quorum</span>
-    <h2>Sign in with passkey</h2>
-    <p class="w-signin-lede">Use your fingerprint, face or device PIN to continue.</p>
+    <h2>Sign in</h2>
+    <p class="w-signin-lede">With a passkey on this device, or with the Tempo Wallet you already have.</p>
     <a class="w-passkey" href="${WORKER_APP}">
       <span class="w-tile" style="width:42px;height:42px;border-radius:12px;background:var(--surface)">${ic('faceid')}</span>
       <span><b>Use this device</b><span>Face, fingerprint or device PIN</span></span>
     </a>
     <div class="w-or">OR</div>
-    <a class="btn btn-ghost" style="width:100%;height:50px" href="${WORKER_APP}">${ic('key')} Use another device</a>
+    <a class="btn btn-ghost" style="width:100%;height:50px" href="${WORKER_APP}#tempo-wallet">${ic('wallet')} Use Tempo Wallet</a>
     <p class="dim" style="margin:22px 0 0;font-size:12.5px;line-height:1.6">First time here? The same button makes your passkey, so there is no separate sign-up.</p>
   </div>
 </div></section>

@@ -82,11 +82,14 @@ export function devRoutes(services: { config: Config; router: Router; store: Sto
     if (targets.length === 0)
       return c.json({ error: 'no registered workers; sign in on the worker app first' }, 404)
 
-    for (const worker of targets)
+    for (const worker of targets) {
       worker.record = {
         ...worker.record,
         byKind: { ...worker.record.byKind, [kind]: { agreements, disagreements: 0, unresolved: 0 } },
       }
+      // History without the skill would be ignored: only a passed skill brings work.
+      worker.skills[kind] = 'passed'
+    }
     void store.save()
 
     return c.json({

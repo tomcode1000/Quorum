@@ -5,12 +5,15 @@ import {
   inputRequiredResponse,
   parseAsk,
   parseInputRequired,
-  quote,
+  priceAsk,
+  type CostAdvice,
   type Question,
   type Resolution,
 } from '@quorum/core'
 import type { Paymaster } from '@quorum/core'
+import { CHAIN_IDS } from '@quorum/paymaster'
 import { Hono } from 'hono'
+import { Credential } from 'mppx'
 import { Mppx, tempo } from 'mppx/server'
 import { randomUUID } from 'node:crypto'
 import { agentCard, serviceManifest } from './agent-card.js'
@@ -83,6 +86,8 @@ export function createServer(services: Services): Hono {
     c.json({
       ok: true,
       network: paymaster.networkName,
+      // The worker app needs this before anyone has signed in, to open Tempo Wallet on the right chain.
+      chainId: CHAIN_IDS[config.network],
       workersOnline: store.availableWorkers().length,
       questionsInFlight: store.live.size,
     }),
@@ -112,7 +117,16 @@ export function createServer(services: Services): Hono {
       throw error
     }
 
-    const priced = quote({ kind: parsed.kind, maxPriceCents: parsed.maxPriceCents, schema: parsed.schema })
+    const pricing = priceAsk(parsed)
+    // Asked what a mistake would cost, the honest answer is sometimes that a person
+    // is not worth it. Said before any payment, so the answer costs nothing.
+    if (pricing.kind === 'not-worth-asking')
+      return c.json({
+        status: 'not_worth_asking',
+        reason: pricing.advice.reason,
+        advice: adviceBody(pricing.advice),
+      })
+    const priced = pricing.quote
     if (!priced.ok)
       return c.json(
         {
@@ -125,8 +139,11 @@ export function createServer(services: Services): Hono {
 
     // Refusing here rather than after taking payment: a caller should not pay to
     // discover that nobody was online.
-    if (store.availableWorkers().length === 0)
-      return c.json({ error: 'no workers are online to answer right now', status: 'refused', retry_after_ms: 15_000 }, 503)
+    if (store.availableWorkers(parsed.kind).length === 0)
+      return c.json(
+        { error: `nobody who has passed ${parsed.kind} questions is online right now`, status: 'refused', retry_after_ms: 15_000 },
+        503,
+      )
 
     const question: Question = {
       id: `q_${randomUUID().replaceAll('-', '').slice(0, 20)}`,
@@ -158,6 +175,7 @@ export function createServer(services: Services): Hono {
         quote: centsToDollars(priced.priceCents),
         quote_cents: priced.priceCents,
         claim_url: `${config.publicUrl}/v1/questions/${question.id}/claim`,
+        ...(pricing.advice === undefined ? {} : { advice: adviceBody(pricing.advice) }),
         expires_in_ms: QUOTE_TTL_MS,
         workers_online: store.availableWorkers().length,
         payment: challenge,
@@ -200,7 +218,9 @@ export function createServer(services: Services): Hono {
     if (paid.status === 402) return paid.challenge
 
     store.pending.delete(id)
+    const payer = payerOf(c.req.raw)
     const resolution = await router.resolve(pending.question, {
+      ...(payer === null ? {} : { payer }),
       ...(pending.callbackUrl === undefined ? {} : { callbackUrl: pending.callbackUrl }),
     })
 
@@ -226,6 +246,36 @@ export function createServer(services: Services): Hono {
   app.get('/docs', (c) => c.text(docs(config), 200, { 'content-type': 'text/markdown; charset=utf-8' }))
 
   return app
+}
+
+/**
+ * Where a refund goes: the account the caller's credential says it paid from.
+ *
+ * Without this every unresolved question kept the caller's money, which is the one
+ * failure this product says it will never have. The `source` is asserted by the
+ * caller rather than proven, but the only refund it can redirect is the caller's
+ * own, so trusting it costs nobody else anything.
+ */
+function payerOf(request: Request): `0x${string}` | null {
+  try {
+    const source = Credential.fromRequest(request).source
+    const address = source?.split(':').at(-1)
+    return address && /^0x[0-9a-fA-F]{40}$/.test(address) ? (address as `0x${string}`) : null
+  } catch {
+    return null
+  }
+}
+
+/** The cost-of-error reasoning, in the wire's dollars, so a caller can check it. */
+export function adviceBody(advice: CostAdvice) {
+  return {
+    worth_asking: advice.worthAsking,
+    price: centsToDollars(advice.priceCents),
+    target_confidence: Number(advice.targetConfidence.toFixed(3)),
+    expected_loss_without: advice.expectedLossWithoutCents === null ? null : centsToDollars(Math.round(advice.expectedLossWithoutCents)),
+    expected_cost_with: centsToDollars(Math.round(advice.expectedCostWithCents)),
+    reason: advice.reason,
+  }
 }
 
 /** Whether this question came in as a forwarded A2A task, so it should go back as one. */
@@ -294,7 +344,19 @@ function challengeHeader(challenge: unknown, priceCents: number, config: Config)
 function docs(config: Config): string {
   return `# Quorum
 
-Resolves the A2A \`input-required\` state with a real person.
+For the mistakes your agent cannot catch in itself. When the OCR misread a
+figure, every model after it reads the same wrong text; when a store is a
+lookalike, it was built to pass your checks; when your agent wrote both drafts,
+it grades its own work. Retrying or asking a bigger model shares the blind spot.
+A person looking at the evidence does not.
+
+## When to ask
+
+When acting on a wrong answer would cost more than asking. Send
+\`cost_of_error\` (what the mistake would cost you, in dollars) and
+\`caller_confidence\` (how sure you are of your own guess), and Quorum does
+the arithmetic: it prices the question from the cost, and when your guess is
+the better bet it answers \`not_worth_asking\` and charges nothing.
 
 ## Ask
 
@@ -305,7 +367,8 @@ Resolves the A2A \`input-required\` state with a real person.
       "kind": "disambiguate",
       "context": { "image_url": "https://...", "extracted": { "total": "4.50", "confidence": 0.41 } },
       "answer_schema": { "type": "enum", "options": ["45.00", "4.50", "neither"] },
-      "max_price": "0.25",
+      "cost_of_error": "40.50",
+      "caller_confidence": 0.41,
       "deadline_ms": 30000,
       "task_ref": "a2a:task:01J8XQ.../input-required"
     }
@@ -315,19 +378,29 @@ Returns \`402\` with a payment challenge and a \`claim_url\`. Pay, then:
     POST ${config.publicUrl}/v1/questions/{id}/claim
     Authorization: Payment <credential>
 
+\`max_price\` may be sent instead of, or as well as, \`cost_of_error\`: it is a
+ceiling, and the price also sets how sure the answer must be.
+
 The connection is held open until the question resolves. Statuses are
 \`resolved\`, \`no_consensus\`, \`timeout\` and \`refused\`; the last three refund you.
+\`not_worth_asking\` comes back before any payment.
 
 You may also POST an A2A \`input-required\` task status unmodified, with a
 \`dev.quorum.resolver\` entry in its metadata carrying \`answer_schema\` and
-\`max_price\`. The response is the task status to resume with.
+\`cost_of_error\` or \`max_price\`. The response is the task status to resume with.
 
 ## What it is for
 
-Data judgment: verifying a low-confidence extracted field, checking whether a
-business and address are real, categorising, comparing two candidate answers,
-looking at an image. Not approvals — no question here carries authority over
-your systems, and questions that would are refused.
+Five kinds of question, each answered only by people assessed in it:
+
+- disambiguate: two readings of the same evidence, when the extraction cannot choose
+- verify: whether something is what it claims, when it was built to look like it is
+- match: whether two records are the same thing, when a similarity score is not a decision
+- categorise: which of your categories an item falls in, at the boundary between two
+- compare: which of two candidates is better, when your agent produced both
+
+Not approvals: no question here carries authority over your systems, and
+questions that would are refused.
 
 ## Network
 

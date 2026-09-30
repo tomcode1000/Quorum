@@ -15,15 +15,15 @@ const proofSection = () => `<section class="section"><div class="shell split">
   <div>
     <p class="eyebrow">Proof</p>
     <h1 class="h-xl">Real performance.<br/>Settlement you can check.</h1>
-    <p class="lede">The numbers below are measured, not projected. Every wage is a transaction on a public ledger, so you can open any answer and see who was paid, how much, and when.</p>
+    <p class="lede">Nothing here is projected. The latency is from the recorded demo run, and every wage is a transaction on a public ledger, so you can open any answer and see who was paid, how much, and when.</p>
     <ul class="feats">
-      ${[['bolt', 'Avg. latency', '6s from question to answer'], ['money', 'Avg. cost', '$0.02 per answer'], ['cube', 'On-chain', 'Every wage is inspectable']].map(([i, t, d]) => `<li class="feat"><span class="ico ico-sm">${ic(i)}</span><b>${t}</b><span>${d}</span></li>`).join('')}
+      ${[['bolt', 'Latency', 'Seconds, not a ticket queue'], ['money', 'Price', '5\u201350\u00a2 a question, set by the cost of error'], ['cube', 'On-chain', 'Every wage is inspectable']].map(([i, t, d]) => `<li class="feat"><span class="ico ico-sm">${ic(i)}</span><b>${t}</b><span>${d}</span></li>`).join('')}
     </ul>
   </div>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px">
     ${[
-      ['clock', 'Latency', 'Time from request to answer', '6.3s', 'Median across resolved questions'],
-      ['money', 'Cost', 'Per resolved answer', '$0.02', 'Wage paid per responder'],
+      ['clock', 'Latency', 'Two people, one answer', '5.5s', 'From the recorded demo run'],
+      ['money', 'Wage', 'Paid to each person who answers', '$0.02', 'Sent on chain the moment it is accepted'],
     ].map(([i, t, s, v, n]) => `<div class="card card-lg"><div style="display:flex;gap:10px;align-items:center"><span class="ico ico-sm">${ic(i)}</span><div><b style="font-size:13px;display:block">${t}</b><span class="dim" style="font-size:11.5px">${s}</span></div></div><div style="font-size:28px;font-weight:700;letter-spacing:-.03em;margin:18px 0 4px;font-variant-numeric:tabular-nums">${v}</div><span class="dim" style="font-size:11.5px">${n}</span></div>`).join('')}
     <div class="card card-lg">
       <div style="display:flex;gap:10px;align-items:center"><span class="ico ico-sm">${ic('cube')}</span><div><b style="font-size:13px;display:block">Settlement</b><span class="dim" style="font-size:11.5px">Verifiable on the explorer</span></div></div>
@@ -55,7 +55,7 @@ const limitsSection = () => `<section class="section-tight" style="background:va
 
 const ctaSection = () => `<section class="foot-cta"><div class="shell">
   <h2 class="h-lg">Ready to build with Quorum?</h2>
-  <p class="lede" style="margin-inline:auto;text-align:center">Add one tool to your agent and start getting verified answers from real people.</p>
+  <p class="lede" style="margin-inline:auto;text-align:center">Forward the input-required your agent already emits. The first question it cannot check for itself is the one to send.</p>
   <a class="btn btn-primary btn-lg" style="margin-top:22px" href="docs/index.html">Get started ${ic('arrow')}</a>
 </div></section>`
 
@@ -76,19 +76,19 @@ const integration = () => page({
   <div>
     <p class="eyebrow">Integration</p>
     <h1 class="h-xl">Build with Quorum.<br/>Integrate with confidence.</h1>
-    <p class="lede">Quorum fits into what you already run. One MCP tool, or one HTTP call. No SDK to adopt, no account to provision, and no change to your workflow.</p>
+    <p class="lede">Quorum sits where your agent already stops: the A2A <code>input-required</code> state. Forward it as it is, give the agent the <code>ask_human</code> MCP tool, or POST the question. No SDK, no account, and payment per call over MPP on Tempo.</p>
     <div style="display:flex;gap:12px;margin-top:28px;flex-wrap:wrap">
       <a class="btn btn-primary btn-lg" href="docs/index.html">View developer docs ${ic('arrow')}</a>
-      <a class="btn btn-ghost btn-lg" href="#">Get started</a>
+      <a class="btn btn-ghost btn-lg" href="docs/quickstart.html">Quickstart</a>
     </div>
   </div>
   <div style="display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:16px">
     <div style="display:flex;flex-direction:column;gap:12px">
-      ${[['plug', 'MCP tool', 'One entry in your agent\u2019s config.'], ['code', 'REST API', 'Plain HTTP for anything else.'], ['globe', 'Webhooks', 'Results delivered when you are not waiting.'], ['book', 'Documentation', 'Guides, examples and a full reference.']]
+      ${[['route', 'A2A input-required', 'Forward the paused task unchanged.'], ['plug', 'MCP tool', 'ask_human, beside the agent’s own tools.'], ['code', 'HTTP', 'POST /v1/questions, pay the 402, claim.'], ['globe', 'Callbacks', 'Results posted back when you are not waiting.']]
         .map(([i, t, d]) => `<div class="card" style="padding:14px"><div style="display:flex;gap:10px;align-items:flex-start"><span class="ico ico-sm">${ic(i)}</span><div><b style="font-size:13px;display:block">${t}</b><span class="dim" style="font-size:11.5px">${d}</span></div></div></div>`).join('')}
     </div>
     <div class="panel"><div class="panel-head">${ic('code')} Quickstart <span class="badge badge-accent" style="margin-left:auto">MCP</span></div><div class="panel-body">
-      <div class="code code-light"><pre><span class="ln">{</span><span class="ln"> <span class="k">"mcpServers"</span>: {</span><span class="ln">   <span class="k">"quorum"</span>: {</span><span class="ln">     <span class="k">"url"</span>: <span class="s">"https://api.quorum.dev/mcp"</span></span><span class="ln">   }</span><span class="ln"> }</span><span class="ln">}</span></pre></div>
+      <div class="code code-light"><pre><span class="ln">{</span><span class="ln"> <span class="k">"mcpServers"</span>: {</span><span class="ln">   <span class="k">"quorum"</span>: {</span><span class="ln">     <span class="k">"command"</span>: <span class="s">"node"</span>,</span><span class="ln">     <span class="k">"args"</span>: [<span class="s">"packages/gateway/dist/mcp.js"</span>]</span><span class="ln">   }</span><span class="ln"> }</span><span class="ln">}</span></pre></div>
       <p class="dim" style="margin:14px 0 8px">Your agent now has <code style="font-family:var(--mono);font-size:11.5px">ask_human</code> alongside its own tools.</p>
       <div class="code code-light"><pre><span class="ln">{</span><span class="ln"> <span class="k">"answer"</span>: <span class="s">"45.00"</span>,</span><span class="ln"> <span class="k">"confidence"</span>: <span class="n">0.99</span>,</span><span class="ln"> <span class="k">"responders"</span>: <span class="n">2</span></span><span class="ln">}</span></pre></div>
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">
@@ -149,21 +149,21 @@ const docsHome = () => docsPage({
   title: 'Docs', current: 'index.html',
   body: `<p class="eyebrow">Getting started</p>
     <h1 class="h-lg" id="s0">Welcome to Quorum Docs</h1>
-    <p class="lede">Quorum lets your agent ask a real person a question mid-task and get a structured answer in about six seconds. Start with the quickstart, then read the capability reference.</p>
+    <p class="lede">Quorum is for the mistakes your agent cannot catch in itself: a misread, a lookalike, a near-match, a boundary case, a choice between its own drafts. It puts that one question to a person and returns one of your options with its confidence, in about six seconds.</p>
     <div style="display:flex;gap:12px;margin:24px 0 34px"><a class="btn btn-primary" href="quickstart.html">Quickstart ${ic('arrow')}</a><a class="btn btn-ghost" href="#">View API reference</a></div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px">
-      ${[['bolt', 'Fast integration', 'One tool call. No SDK, no account.'], ['shield', 'Refunded on failure', 'You never pay for an answer you did not get.'], ['db', 'Structured results', 'Confidence, responders and receipts.'], ['users', 'Five capabilities', 'Each routed to a proven worker.']]
+      ${[['bolt', 'A2A, MCP or HTTP', 'Forward input-required, call ask_human, or POST.'], ['target', 'Priced by the mistake', 'Send cost_of_error; the price follows from it.'], ['shield', 'Refunded on failure', 'You never pay for an answer you did not get.'], ['users', 'Five capabilities', 'Each answered by people assessed in it.']]
         .map(([i, t, d]) => `<div class="card"><span class="ico ico-sm">${ic(i)}</span><b class="h-sm" style="display:block;margin:11px 0 4px">${t}</b><span class="feat"><span>${d}</span></span></div>`).join('')}
     </div>
     <h2 class="h-md" id="s1" style="margin-top:40px">Quickstart</h2>
     <p class="muted" style="margin:6px 0 18px;font-size:14px">Make your first request and see Quorum work.</p>
     <div class="split-even" style="gap:22px">
       <ol class="steps" style="margin:0">
-        ${[['Add the MCP server', 'One entry in your agent config.'], ['Ask a question', 'Send the question and its options.'], ['Handle the answer', 'Read the confidence and act on it.']]
+        ${[['Add the MCP server', 'One entry in your agent config.'], ['Ask at the right moment', 'When acting on a wrong answer would cost more than asking.'], ['Handle the answer', 'Check the status, then act on it.']]
           .map(([t, d], x) => `<li class="step" style="grid-template-columns:24px minmax(0,1fr)"><span class="step-n">${x + 1}</span><div class="step-b"><b class="h-sm">${t}</b><p>${d}</p></div></li>`).join('')}
       </ol>
-      <div class="code"><div class="code-tabs">${['Python', 'Node.js', 'cURL'].map((t, x) => `<button role="tab" aria-selected="${x === 0}">${t}</button>`).join('')}<button class="code-copy">Copy</button></div>
-      <pre><span class="ln"><span class="k">from</span> quorum <span class="k">import</span> Quorum</span><span class="ln"></span><span class="ln">q = Quorum()</span><span class="ln"></span><span class="ln">result = q.<span class="f">ask</span>(</span><span class="ln">    capability=<span class="s">"telling_readings_apart"</span>,</span><span class="ln">    question=<span class="s">"Is the total 45.00 or 4.50?"</span>,</span><span class="ln">    options=[<span class="s">"45.00"</span>, <span class="s">"4.50"</span>],</span><span class="ln">)</span><span class="ln"><span class="f">print</span>(result.answer, result.confidence)</span></pre></div>
+      <div class="code"><div class="code-tabs">${['MCP', 'HTTP', 'A2A'].map((t, x) => `<button role="tab" aria-selected="${x === 0}">${t}</button>`).join('')}<button class="code-copy">Copy</button></div>
+      <pre><span class="ln"><span class="c"># The ask_human tool, as your agent calls it</span></span><span class="ln">{</span><span class="ln">  <span class="k">"kind"</span>: <span class="s">"disambiguate"</span>,</span><span class="ln">  <span class="k">"question"</span>: <span class="s">"Is the total 45.00 or 4.50?"</span>,</span><span class="ln">  <span class="k">"answer_schema"</span>: { <span class="k">"type"</span>: <span class="s">"enum"</span>, <span class="k">"options"</span>: [<span class="s">"45.00"</span>, <span class="s">"4.50"</span>] },</span><span class="ln">  <span class="k">"cost_of_error"</span>: <span class="s">"40.50"</span>,</span><span class="ln">  <span class="k">"caller_confidence"</span>: <span class="n">0.41</span></span><span class="ln">}</span></pre></div>
     </div>
     <div class="note-box" style="margin-top:22px">${ic('question')}<span>There is no API key to create. Payment happens per call over the 402 flow, and a question that does not resolve is refunded automatically.</span></div>`,
 })
@@ -173,19 +173,19 @@ const quickstart = () => docsPage({
   body: `<a class="back" href="index.html">${ic('arrow')} Docs</a>
     <p class="eyebrow">Quickstart</p>
     <h1 class="h-lg" id="s0">Get started with Quorum in minutes.</h1>
-    <p class="lede">This walks you through making your first request, reading the answer, and handling the case where nothing resolves. Zero to a working integration in a few minutes.</p>
+    <p class="lede">Your first request, reading the answer, and the case where nothing resolves. The example is a shopping agent about to trust a store it cannot verify.</p>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin:28px 0 40px">
-      ${[['plug', '1. Add the server', 'One entry in your agent config.'], ['code', '2. Make a request', 'Send a question with its options.'], ['check', '3. See the response', 'Structured, with a confidence score.']]
+      ${[['plug', '1. Add the server', 'One entry in your agent config.'], ['code', '2. Make a request', 'The question, its answer space, and what a mistake costs.'], ['check', '3. See the response', 'One of your options, with its confidence.']]
         .map(([i, t, d]) => `<div class="card"><span class="ico ico-sm">${ic(i)}</span><b class="h-sm" style="display:block;margin:11px 0 4px">${t}</b><span class="feat"><span>${d}</span></span></div>`).join('')}
     </div>
     <h2 class="h-md" id="s1">1. Add the server</h2>
-    <p class="muted" style="margin:8px 0 16px;font-size:14px">Point your MCP client at Quorum. There is no signup and no key to paste.</p>
+    <p class="muted" style="margin:8px 0 16px;font-size:14px">The MCP server runs beside your agent over stdio, from a built checkout. There is no signup and no key to paste.</p>
     <div class="code"><div class="code-tabs"><button role="tab" aria-selected="true">JSON</button><button class="code-copy">Copy</button></div>
-    <pre><span class="ln">{</span><span class="ln">  <span class="k">"mcpServers"</span>: {</span><span class="ln">    <span class="k">"quorum"</span>: { <span class="k">"url"</span>: <span class="s">"https://api.quorum.dev/mcp"</span> }</span><span class="ln">  }</span><span class="ln">}</span></pre></div>
+    <pre><span class="ln">{</span><span class="ln">  <span class="k">"mcpServers"</span>: {</span><span class="ln">    <span class="k">"quorum"</span>: { <span class="k">"command"</span>: <span class="s">"node"</span>, <span class="k">"args"</span>: [<span class="s">"packages/gateway/dist/mcp.js"</span>] }</span><span class="ln">  }</span><span class="ln">}</span></pre></div>
     <h2 class="h-md" id="s2" style="margin-top:36px">2. Make a request</h2>
     <p class="muted" style="margin:8px 0 16px;font-size:14px">Your agent now has <code style="font-family:var(--mono);font-size:12.5px">ask_human</code>. Over plain HTTP the same call looks like this.</p>
     <div class="code"><div class="code-tabs">${['cURL', 'Python', 'Node.js'].map((t, x) => `<button role="tab" aria-selected="${x === 0}">${t}</button>`).join('')}<button class="code-copy">Copy</button></div>
-    <pre><span class="ln">curl -X POST https://api.quorum.dev/v1/questions \\</span><span class="ln">  -H <span class="s">"Content-Type: application/json"</span> \\</span><span class="ln">  -d <span class="s">'{</span></span><span class="ln"><span class="s">    "capability": "checking_something_is_real",</span></span><span class="ln"><span class="s">    "question": "Is this a valid postal address?",</span></span><span class="ln"><span class="s">    "options": ["yes", "no"],</span></span><span class="ln"><span class="s">    "max_price": "0.25"</span></span><span class="ln"><span class="s">  }'</span></span></pre></div>
+    <pre><span class="ln">curl -X POST $QUORUM_URL/v1/questions \\</span><span class="ln">  -H <span class="s">"Content-Type: application/json"</span> \\</span><span class="ln">  -d <span class="s">'{</span></span><span class="ln"><span class="s">    "kind": "verify",</span></span><span class="ln"><span class="s">    "question": "Is this the brand\u2019s own store?",</span></span><span class="ln"><span class="s">    "answer_schema": { "type": "boolean" },</span></span><span class="ln"><span class="s">    "context": { "text": "Nike Official Store, nike-outlet-sale.shop" },</span></span><span class="ln"><span class="s">    "deadline_ms": 30000,</span></span><span class="ln"><span class="s">    "cost_of_error": "180.00",</span></span><span class="ln"><span class="s">    "caller_confidence": 0.9</span></span><span class="ln"><span class="s">  }'</span></span></pre></div>
     <div class="note-box" style="margin-top:20px">${ic('question')}<span>The first call returns <b>402</b> with a payment challenge and a claim URL. Pay it, then call the claim URL. That request blocks until a person answers.</span></div>`,
 })
 
@@ -193,7 +193,7 @@ const firstRequest = () => docsPage({
   title: 'Make your first request', current: 'first-request.html',
   body: `<a class="back" href="quickstart.html">${ic('arrow')} Quickstart</a>
     <h1 class="h-lg" id="s0">Make your first request</h1>
-    <p class="lede">This example asks a person to confirm an address is real, and shows exactly what comes back.</p>
+    <p class="lede">A shopping agent is about to pay a store whose page looks exactly like the brand&rsquo;s. Every check it can run says the store is real. This asks a person, and shows exactly what comes back.</p>
     <div class="flow" style="margin:24px 0 36px">
       ${['Add the server', 'Make a request', 'Read the response', 'Handle failures'].map((t, x) => `${x ? `<span class="flow-arrow">${ic('arrow')}</span>` : ''}<div class="flow-step" style="text-align:left"><span class="ico ico-sm ${x < 2 ? 'ico-good' : 'ico-plain'}">${x < 2 ? ic('check') : `<span style="font-size:10px;font-weight:700">${x + 1}</span>`}</span><b style="margin-top:8px">${t}</b></div>`).join('')}
     </div>
@@ -202,18 +202,18 @@ const firstRequest = () => docsPage({
         <h2 class="h-md" id="s1">Send the request</h2>
         <p class="muted" style="margin:8px 0 14px;font-size:14px">Post the question to the questions endpoint.</p>
         <div class="code"><div class="code-tabs"><button role="tab" aria-selected="true">POST /v1/questions</button><button class="code-copy">Copy</button></div>
-        <pre><span class="ln">curl -X POST https://api.quorum.dev/v1/questions \\</span><span class="ln">  -H <span class="s">"Content-Type: application/json"</span> \\</span><span class="ln">  -d <span class="s">'{</span></span><span class="ln"><span class="s">    "capability": "checking_something_is_real",</span></span><span class="ln"><span class="s">    "question": "Is this address real?",</span></span><span class="ln"><span class="s">    "options": ["yes", "no"]</span></span><span class="ln"><span class="s">  }'</span></span></pre></div>
+        <pre><span class="ln">curl -X POST $QUORUM_URL/v1/questions \\</span><span class="ln">  -H <span class="s">"Content-Type: application/json"</span> \\</span><span class="ln">  -d <span class="s">'{</span></span><span class="ln"><span class="s">    "kind": "verify",</span></span><span class="ln"><span class="s">    "question": "Is this the brand\u2019s own store?",</span></span><span class="ln"><span class="s">    "answer_schema": { "type": "boolean" },</span></span><span class="ln"><span class="s">    "context": { "text": "Nike Official Store, nike-outlet-sale.shop" },</span></span><span class="ln"><span class="s">    "deadline_ms": 30000,</span></span><span class="ln"><span class="s">    "cost_of_error": "180.00",</span></span><span class="ln"><span class="s">    "caller_confidence": 0.9</span></span><span class="ln"><span class="s">  }'</span></span></pre></div>
         <h2 class="h-md" id="s2" style="margin-top:32px">Parameters</h2>
         <div class="card" style="padding:0;overflow:hidden;margin-top:12px"><table class="tbl"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead><tbody>
-          ${[['capability', 'string', 'Yes', 'One of the five capability ids.'], ['question', 'string', 'Yes', 'Phrased for someone with no context on your system.'], ['options', 'array', 'Yes', 'The allowed answers. Free text is not accepted.'], ['context', 'object', 'No', 'Evidence the person needs: image_url, text or extracted.'], ['max_price', 'string', 'No', 'Your ceiling. Also sets how sure the answer must be.']]
-            .map(([p, t, r, d]) => `<tr><td><code>${p}</code></td><td class="dim">${t}</td><td>${r === 'Yes' ? '<span class="badge badge-good">Yes</span>' : '<span class="dim">No</span>'}</td><td class="dim">${d}</td></tr>`).join('')}
+          ${[['kind', 'string', 'Yes', 'disambiguate, verify, match, categorise or compare.'], ['question', 'string', 'Yes', 'Phrased for someone with no context on your system.'], ['answer_schema', 'object', 'Yes', 'boolean, enum with options, or number. Free text is not accepted.'], ['deadline_ms', 'number', 'Yes', 'How long you will wait, 5 to 120 seconds.'], ['context', 'object', 'No', 'Evidence the person needs: image_url, text or extracted.'], ['cost_of_error', 'string', 'One of', 'What acting on a wrong answer would cost you, in dollars. Sets the price, and says when a person is not worth asking.'], ['max_price', 'string', 'these two', 'Your ceiling in dollars. Also sets how sure the answer must be.'], ['caller_confidence', 'number', 'No', 'How sure you are of your own guess. With cost_of_error, decides whether asking is worth it.']]
+            .map(([p, t, r, d]) => `<tr><td><code>${p}</code></td><td class="dim">${t}</td><td>${r === 'Yes' ? '<span class="badge badge-good">Yes</span>' : `<span class="dim">${r}</span>`}</td><td class="dim">${d}</td></tr>`).join('')}
         </tbody></table></div>
       </div>
       <div>
         <h2 class="h-md" id="s3">Response</h2>
-        <p class="muted" style="margin:8px 0 14px;font-size:14px">A resolved question returns the answer with its confidence and receipts.</p>
+        <p class="muted" style="margin:8px 0 14px;font-size:14px">No, it is not the brand&rsquo;s store. The answer comes back with its confidence and the receipts for every wage.</p>
         <div class="code"><div class="code-tabs"><button role="tab" aria-selected="true">200 OK</button><button class="code-copy">Copy</button></div>
-        <pre><span class="ln">{</span><span class="ln">  <span class="k">"question_id"</span>: <span class="s">"q_9f2a…"</span>,</span><span class="ln">  <span class="k">"status"</span>: <span class="s">"resolved"</span>,</span><span class="ln">  <span class="k">"answer"</span>: <span class="s">"yes"</span>,</span><span class="ln">  <span class="k">"confidence"</span>: <span class="n">0.98</span>,</span><span class="ln">  <span class="k">"responders"</span>: <span class="n">2</span>,</span><span class="ln">  <span class="k">"agreement"</span>: <span class="s">"unanimous"</span>,</span><span class="ln">  <span class="k">"latency_ms"</span>: <span class="n">6120</span></span><span class="ln">}</span></pre></div>
+        <pre><span class="ln">{</span><span class="ln">  <span class="k">"question_id"</span>: <span class="s">"q_9f2a…"</span>,</span><span class="ln">  <span class="k">"status"</span>: <span class="s">"resolved"</span>,</span><span class="ln">  <span class="k">"answer"</span>: <span class="n">false</span>,</span><span class="ln">  <span class="k">"confidence"</span>: <span class="n">0.99</span>,</span><span class="ln">  <span class="k">"responders"</span>: <span class="n">2</span>,</span><span class="ln">  <span class="k">"agreement"</span>: <span class="s">"unanimous"</span>,</span><span class="ln">  <span class="k">"latency_ms"</span>: <span class="n">6120</span></span><span class="ln">}</span></pre></div>
         <div class="note-box" style="margin-top:18px">${ic('warn')}<span>Check <code style="font-family:var(--mono)">status</code> before using <code style="font-family:var(--mono)">answer</code>. Anything other than <b>resolved</b> means no answer was reached, and you were refunded.</span></div>
       </div>
     </div>`,
@@ -223,12 +223,12 @@ const response = () => docsPage({
   title: 'Understand the response', current: 'response.html',
   body: `<a class="back" href="quickstart.html">${ic('arrow')} Quickstart</a>
     <h1 class="h-lg" id="s0">Understand the response</h1>
-    <p class="lede">Quorum returns structured JSON. Every response carries the answer, how sure it is, who contributed and what they were paid.</p>
+    <p class="lede">Every response carries the answer, how sure it is, who answered and on what record, and the transaction for every wage, so your agent can check the answer rather than trust it.</p>
     <div class="split-even" style="gap:24px;margin-top:28px">
       <div>
         <h2 class="h-md" id="s1">Response structure</h2>
         <div class="code" style="margin-top:12px"><div class="code-tabs"><button role="tab" aria-selected="true">JSON</button><button class="code-copy">Copy</button></div>
-        <pre><span class="ln">{</span><span class="ln">  <span class="k">"question_id"</span>: <span class="s">"q_9f2a…"</span>,</span><span class="ln">  <span class="k">"status"</span>: <span class="s">"resolved"</span>,</span><span class="ln">  <span class="k">"answer"</span>: <span class="s">"45.00"</span>,</span><span class="ln">  <span class="k">"confidence"</span>: <span class="n">0.99</span>,</span><span class="ln">  <span class="k">"agreement"</span>: <span class="s">"unanimous"</span>,</span><span class="ln">  <span class="k">"evidence"</span>: [</span><span class="ln">    { <span class="k">"worker"</span>: <span class="s">"w_8812"</span>, <span class="k">"reputation"</span>: <span class="n">0.96</span> }</span><span class="ln">  ],</span><span class="ln">  <span class="k">"receipts"</span>: [{ <span class="k">"tx"</span>: <span class="s">"0x5555c6…"</span> }]</span><span class="ln">}</span></pre></div>
+        <pre><span class="ln">{</span><span class="ln">  <span class="k">"question_id"</span>: <span class="s">"q_9f2a…"</span>,</span><span class="ln">  <span class="k">"status"</span>: <span class="s">"resolved"</span>,</span><span class="ln">  <span class="k">"answer"</span>: <span class="s">"45.00"</span>,</span><span class="ln">  <span class="k">"confidence"</span>: <span class="n">0.99</span>,</span><span class="ln">  <span class="k">"agreement"</span>: <span class="s">"unanimous"</span>,</span><span class="ln">  <span class="k">"evidence"</span>: [</span><span class="ln">    { <span class="k">"worker"</span>: <span class="s">"w_8812"</span>, <span class="k">"answer"</span>: <span class="s">"45.00"</span>, <span class="k">"reputation"</span>: <span class="n">0.96</span> }</span><span class="ln">  ],</span><span class="ln">  <span class="k">"receipts"</span>: [{ <span class="k">"tx"</span>: <span class="s">"0x5555c6…"</span>, <span class="k">"amount_cents"</span>: <span class="n">2</span> }]</span><span class="ln">}</span></pre></div>
       </div>
       <div style="display:flex;flex-direction:column;gap:12px">
         ${[['file', 'question_id', 'Your handle for this question.'], ['check', 'status', 'resolved, no_consensus, timeout or refused.'], ['shield', 'confidence', 'Posterior probability the answer is right.'], ['users', 'evidence', 'Who answered and their standing.'], ['cube', 'receipts', 'The wage transactions, on chain.']]
@@ -237,12 +237,12 @@ const response = () => docsPage({
     </div>
     <h2 class="h-md" id="s2" style="margin-top:36px">Statuses</h2>
     <div class="card" style="padding:0;overflow:hidden;margin-top:12px"><table class="tbl"><thead><tr><th>Status</th><th>What it means</th><th>What to do</th></tr></thead><tbody>
-      ${[['resolved', 'good', 'The bar was cleared. The answer is trustworthy.', 'Continue your workflow.'], ['no_consensus', 'bad', 'People looked and disagreed. The question is ambiguous.', 'Surface it. You were refunded.'], ['timeout', 'bad', 'Nobody answered in time.', 'Retry or proceed, saying you are guessing.'], ['refused', 'bad', 'Not servable: wrong capability, or no supply.', 'Check the capability id.']]
+      ${[['resolved', 'good', 'The bar was cleared. The answer is trustworthy.', 'Continue your workflow.'], ['no_consensus', 'bad', 'People looked and disagreed. The question is ambiguous.', 'Surface it. You were refunded.'], ['timeout', 'bad', 'Nobody answered in time.', 'Retry or proceed, saying you are guessing.'], ['refused', 'bad', 'Nobody who passed that capability is online, or the kind is not servable.', 'You were not charged. Retry, or proceed and say so.'], ['not_worth_asking', 'good', 'With your cost_of_error and confidence, your own guess is the better bet.', 'Proceed. Nothing was charged.']]
         .map(([s, k, m, a]) => `<tr><td><span class="badge badge-${k}">${s}</span></td><td class="dim">${m}</td><td class="dim">${a}</td></tr>`).join('')}
     </tbody></table></div>
     <h2 class="h-md" id="s3" style="margin-top:36px">Handling it in your app</h2>
     <div class="code" style="margin-top:12px"><div class="code-tabs"><button role="tab" aria-selected="true">Python</button><button class="code-copy">Copy</button></div>
-    <pre><span class="ln">result = q.<span class="f">ask</span>(...)</span><span class="ln"></span><span class="ln"><span class="k">if</span> result.status == <span class="s">"resolved"</span>:</span><span class="ln">    use(result.answer)</span><span class="ln"><span class="k">elif</span> result.status == <span class="s">"no_consensus"</span>:</span><span class="ln">    escalate_internally(result.evidence)   <span class="c"># genuinely ambiguous</span></span><span class="ln"><span class="k">else</span>:</span><span class="ln">    proceed_and_flag()                     <span class="c"># never a silent guess</span></span></pre></div>
+    <pre><span class="ln">result = claim(question)   <span class="c"># your 402-paying HTTP client</span></span><span class="ln"></span><span class="ln"><span class="k">if</span> result[<span class="s">"status"</span>] == <span class="s">"resolved"</span>:</span><span class="ln">    act_on(result[<span class="s">"answer"</span>])</span><span class="ln"><span class="k">elif</span> result[<span class="s">"status"</span>] == <span class="s">"no_consensus"</span>:</span><span class="ln">    hold_for_review(result[<span class="s">"evidence"</span>])   <span class="c"># genuinely ambiguous</span></span><span class="ln"><span class="k">else</span>:</span><span class="ln">    proceed_and_flag()                      <span class="c"># never a silent guess</span></span></pre></div>
     <div class="note-box" style="margin-top:20px">${ic('warn')}<span>Do not threshold on <code style="font-family:var(--mono)">confidence</code> alone. Check <code style="font-family:var(--mono)">status</code> first, because an unresolved question has no answer to be confident about.</span></div>`,
 })
 
@@ -268,9 +268,9 @@ const capabilityReference = () => docsPage({
   body: `<a class="back" href="index.html">${ic('arrow')} Capability reference</a>
     <p class="eyebrow">Capability reference</p>
     <h1 class="h-lg" id="s0">Telling readings apart</h1>
-    <p class="lede">Decides which of two readings of the same evidence is correct, even when they are formatted differently or come from different extractions.</p>
+    <p class="lede">For the misread your extraction cannot undo: once OCR has turned the image into text, every model after it reads the same text. A person looks at the image and says which reading is right.</p>
     <ul class="feats" style="margin-top:24px">
-      ${[['target', 'High accuracy', 'With the evidence in front of the worker.'], ['file', 'Multiple formats', 'Text, numbers, codes and images.'], ['shield', 'Built for noisy data', 'Smudges, scans and bad OCR.']].map(([i, t, d]) => `<li class="feat"><span class="ico ico-sm">${ic(i)}</span><b>${t}</b><span>${d}</span></li>`).join('')}
+      ${[['eye', 'Looks at the original', 'The image goes with the question, not the text made of it.'], ['swap', 'One of your readings', 'Never a third guess.'], ['target', 'Priced by the mistake', 'Send cost_of_error and the certainty bought matches it.']].map(([i, t, d]) => `<li class="feat"><span class="ico ico-sm">${ic(i)}</span><b>${t}</b><span>${d}</span></li>`).join('')}
     </ul>
     <div class="split-even" style="gap:20px;margin-top:34px">
       <div class="card card-lg"><h2 class="h-md" id="s1" style="margin:0">How it works</h2><p class="dim" style="margin:10px 0 16px;line-height:1.65">The question and its evidence go to the worker with the best record on this kind of judgment. A second opinion is bought only if the first cannot carry the question alone.</p>
@@ -285,7 +285,7 @@ const capabilityReference = () => docsPage({
     <h2 class="h-md" id="s3" style="margin-top:36px">Example request</h2>
     <div class="split-even" style="gap:20px;margin-top:12px">
       <div class="code"><div class="code-tabs"><button role="tab" aria-selected="true">POST /v1/questions</button><button class="code-copy">Copy</button></div>
-      <pre><span class="ln">{</span><span class="ln">  <span class="k">"capability"</span>: <span class="s">"telling_readings_apart"</span>,</span><span class="ln">  <span class="k">"question"</span>: <span class="s">"Is the total 45.00 or 4.50?"</span>,</span><span class="ln">  <span class="k">"options"</span>: [<span class="s">"45.00"</span>, <span class="s">"4.50"</span>],</span><span class="ln">  <span class="k">"context"</span>: {</span><span class="ln">    <span class="k">"image_url"</span>: <span class="s">"https://…/receipt.png"</span></span><span class="ln">  }</span><span class="ln">}</span></pre></div>
+      <pre><span class="ln">{</span><span class="ln">  <span class="k">"kind"</span>: <span class="s">"disambiguate"</span>,</span><span class="ln">  <span class="k">"question"</span>: <span class="s">"Is the total 45.00 or 4.50?"</span>,</span><span class="ln">  <span class="k">"answer_schema"</span>: { <span class="k">"type"</span>: <span class="s">"enum"</span>, <span class="k">"options"</span>: [<span class="s">"45.00"</span>, <span class="s">"4.50"</span>] },</span><span class="ln">  <span class="k">"context"</span>: { <span class="k">"image_url"</span>: <span class="s">"https://…/receipt.png"</span> },</span><span class="ln">  <span class="k">"deadline_ms"</span>: <span class="n">30000</span>,</span><span class="ln">  <span class="k">"cost_of_error"</span>: <span class="s">"40.50"</span>,</span><span class="ln">  <span class="k">"caller_confidence"</span>: <span class="n">0.41</span></span><span class="ln">}</span></pre></div>
       <div class="code"><div class="code-tabs"><button role="tab" aria-selected="true">200 OK</button><button class="code-copy">Copy</button></div>
       <pre><span class="ln">{</span><span class="ln">  <span class="k">"status"</span>: <span class="s">"resolved"</span>,</span><span class="ln">  <span class="k">"answer"</span>: <span class="s">"45.00"</span>,</span><span class="ln">  <span class="k">"confidence"</span>: <span class="n">0.99</span>,</span><span class="ln">  <span class="k">"agreement"</span>: <span class="s">"unanimous"</span>,</span><span class="ln">  <span class="k">"responders"</span>: <span class="n">2</span>,</span><span class="ln">  <span class="k">"latency_ms"</span>: <span class="n">5312</span></span><span class="ln">}</span></pre></div>
     </div>`,

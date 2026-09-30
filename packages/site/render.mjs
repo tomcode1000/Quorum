@@ -21,6 +21,7 @@ import {
   assessmentPassed as appAssessmentPassed,
   assessmentFailed as appAssessmentFailed,
   signIn as appSignIn,
+  skills as appSkills,
 } from './pages-app.mjs'
 import {
   liveActivity,
@@ -67,6 +68,7 @@ const PAGES = {
     nothing to hydrate on a phone that is already struggling.
   */
   'app-signin.html': appSignIn,
+  'app-skills.html': appSkills,
   'app-home.html': appHome,
   'app-question.html': appQuestion,
   'app-submitted.html': appSubmitted,

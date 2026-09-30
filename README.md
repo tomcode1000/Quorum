@@ -14,6 +14,22 @@ In an autonomous agent-to-agent chain there is no UI and no user. Agent A hired 
 
 Nothing breaks when that happens. That is the problem. No error is raised, no retry fires, no alert goes off — the chain cannot tell you it went wrong because as far as it knows it did not. This is the failure mode documented as *silent delegation failure*, and it is the dominant one in 2026 multi-agent stacks.
 
+## Why a person, and not a retry
+
+An agent can fix most of its own mistakes: retry, call a bigger model, search, ask itself to check its work. What it cannot fix is a mistake that every one of those checks makes too. If the OCR read a smudged "4S.00" as 4.50, every model downstream reads the same wrong string. If a store was built to look like the brand's, it was built to pass exactly the checks a model can run. If the agent wrote both drafts, it is grading its own work. More compute makes the wrong answer more confident, not right.
+
+A person looking at the evidence is the one check whose errors are not the agent's errors. Each capability is one place where that blind spot shows up:
+
+| Capability | Why the agent cannot settle it itself | A moment it matters |
+| --- | --- | --- |
+| Tell two readings apart | The extraction already turned the image into text; every later model reads the same text | "Is the total 45.00 or 4.50?" before an entry is posted |
+| Check something is real | A lookalike is built to pass the checks a model can run | "Is this the brand's own store?" before a shopping agent pays |
+| Match records | A 0.93 similarity score does not say which side of "the same" it is on | "Are these two customers one person?" before a merge |
+| Categorise | Where one category ends is a rule people agreed, not a fact in the data | "Allowed, or a counterfeit listing?" for a moderation agent |
+| Compare | The agent produced both candidates, and a model tends to prefer its own work | "Which reply goes to the customer?" for a support agent |
+
+And the agent should not ask whenever it is unsure. It should ask **when being wrong costs more than asking**. Send `cost_of_error` with the question and Quorum does that arithmetic: it prices the question from the cost, buying more certainty for a bigger mistake, and when the agent's own guess is the better bet it says so and charges nothing.
+
 Run the comparison yourself:
 
 ```bash
@@ -21,7 +37,7 @@ npm install
 npm run demo
 ```
 
-Same chain, same ambiguous receipt, twice. First without a resolver: the invoice is recorded at $4.50 instead of $45.00, unflagged. Then with one: the question reaches a person, comes back in about five seconds, and the chain completes correctly.
+One accounts-payable agent closing out its week, run twice. It meets three moments it cannot check for itself: a misread receipt total, an invoice from a lookalike of a known supplier with new bank details, and a payment link on a domain one character off. Alone, it makes all three wrong decisions and nothing flags any of them. With Quorum, each goes to a person, priced by its cost of error ($0.45 for a $40.50 mistake, $0.50 for a $4,800 one), and all three come back right, for $1.45 in total.
 
 ## What this is not
 
@@ -49,10 +65,13 @@ POST /v1/questions
   "kind": "disambiguate",
   "context": { "image_url": "https://…", "extracted": { "total": "4.50", "confidence": 0.41 } },
   "answer_schema": { "type": "enum", "options": ["45.00", "4.50", "neither"] },
-  "max_price": "0.25",
+  "cost_of_error": "40.50",
+  "caller_confidence": 0.41,
   "deadline_ms": 30000
 }
 ```
+
+`cost_of_error` is what acting on a wrong answer would cost you. Quorum prices the question from it; send `max_price` instead, or as well, to set a ceiling yourself. If your own guess is the better bet, the answer is `200 {"status": "not_worth_asking"}` with the arithmetic, before anything is charged.
 
 ```http
 HTTP/1.1 402 Payment Required
@@ -68,13 +87,13 @@ Authorization: Payment <credential>
 
 The connection is held open until the question resolves. Terminal statuses are `resolved`, `no_consensus`, `timeout` and `refused`; **the last three refund you.**
 
-You can also POST an A2A `input-required` task status **unmodified**, with a `dev.quorum.resolver` entry in its metadata carrying `answer_schema` and `max_price`. The response is the task status to resume with. Your agent does not restate its question in our vocabulary — it forwards the thing it was already going to emit.
+You can also POST an A2A `input-required` task status **unmodified**, with a `dev.quorum.resolver` entry in its metadata carrying `answer_schema` and `cost_of_error` or `max_price`. The response is the task status to resume with. Your agent does not restate its question in our vocabulary — it forwards the thing it was already going to emit.
 
 Most agents will reach it through MCP instead, via one tool, `ask_human`.
 
 ### What it answers
 
-Data judgment: verifying a low-confidence extracted field, telling two readings of the same evidence apart, checking whether something is what it claims to be, categorising, comparing candidate answers, looking at an image.
+Data judgment, in the five capabilities above, and only from people who passed an assessment in that capability. Every answer is one of the options the caller sent, with its confidence.
 
 **Not approvals.** Deploying to production, sending external communications, moving money, deleting data, changing privileges — these always need a human with authority, that human is always a colleague, and nobody outsources them to a stranger. Quorum has no access to your systems and questions that would require it are refused.
 
@@ -94,15 +113,18 @@ The model is a Dawid-Skene style weighted vote with a symmetric error assumption
 
 **Price is the confidence dial, exposed once.** Five cents buys a quick single opinion; fifty buys near-certainty and funds the extra answers that certainty costs. There is deliberately no second knob for confidence — see the note on `trustTarget` for why letting a caller's self-doubt raise the bar turned the hardest questions into refunds.
 
+**And the cost of error sets the price.** An answer bought at price `P` leaves at most `1 − trustTarget(P)` chance of being wrong, so asking costs `P + (1 − trustTarget(P)) × cost_of_error` and not asking costs `(1 − caller_confidence) × cost_of_error`. `adviseFromCost` in [`pricing.ts`](packages/core/src/pricing.ts) picks the price that minimises the first, and says not to ask when the second is smaller.
+
 Reputation is a Beta posterior over agreement outcomes, per worker **per question kind**, because the skills do not transfer. It is derived rather than stored: every input is an answer and a payment that exist on chain, so it can be rebuilt after a bug and a worker can check our arithmetic without our cooperation. A question that ends `no_consensus` counts against nobody — penalising the dissenter would teach the pool to guess the popular answer, which would make the whole confidence model a lie.
 
 ## What the worker gets
 
-- Passkey sign-in. No seed phrase, ever.
-- A short **paid** entry assessment before any caller's question reaches them.
+- Passkey sign-in, or Tempo Wallet. No seed phrase, ever.
+- A short entry assessment before any caller's question reaches them: five known-answer questions, unpaid because nothing in it is billed to anyone.
 - One question at a time, answered by tapping rather than typing.
 - Paid per answer, direct to their own account, the moment the answer is accepted.
 - **No deposit, no stake, no bond, no minimum payout, and no gas asset to acquire.**
+- A way out that costs nothing. A passkey controls a Tempo account directly, but a passkey only works on the site that made it, so the app has a *Send* control and Quorum pays the network fee. A worker who signs in with Tempo Wallet is paid straight into it and has nothing to move.
 
 That last line is the one differentiator no competitor can copy without rebuilding their economics. HUMAN Protocol pays in HMT. Kleros and Reality.eth require a bond. Sapien requires workers to buy and lock SAPIEN to unlock better-paying tasks. Every prior attempt puts a capital requirement on the person doing the work, which is incoherent for someone earning two cents an answer.
 
@@ -117,7 +139,10 @@ packages/core        the engine: confidence model, escalation, reputation, prici
                      A2A mapping, anti-farming. No I/O, no chain, heavily tested.
 packages/paymaster   the only code that knows a chain exists, behind one interface.
 packages/gateway     HTTP + MCP surface, the 402 loop, the router, the worker API.
-packages/worker-app  phone-first worker app. One HTML file, no framework.
+packages/site        the marketing site, the worker app (app-*.html) and the operator
+                     console. Static pages; the wallet code is one lazily loaded bundle.
+packages/worker-app  a bare debug client for the worker API. Not for real work: it has
+                     no key for the address it registers, so nothing paid to it can move.
 demo                 the two-run comparison.
 ```
 
@@ -135,10 +160,10 @@ Then two terminals:
 
 ```bash
 npm run gateway   # :8787
-npm run worker    # :5173
+npm run site      # :4173
 ```
 
-Open **http://localhost:5173**. Sign in — no password, nothing to fund. The app finds the gateway on port 8787 of whatever host served it, so no query string is needed; pass `?gateway=https://…` if yours is elsewhere.
+Open **http://localhost:4173/app-signin.html**. Sign in — no password, nothing to fund. The app finds the gateway on port 8787 of whatever host served it, so no query string is needed; pass `?gateway=https://…` if yours is elsewhere.
 
 ### Putting a question in front of yourself
 
@@ -196,8 +221,17 @@ The recipient held nothing beforehand: no gas asset, no prior balance, no accoun
 ### Tests
 
 ```bash
-npm test          # 57 tests
+npm test          # 104 tests
+npm run typecheck
 npm run demo      # the two-run comparison, no keys or network needed
+```
+
+The demo is seeded, so a run can be replayed exactly; `--random` gives a fresh draw, including the runs where people disagree and the agent is refunded.
+
+Against a real gateway, with a worker signed in and on shift:
+
+```bash
+npm run demo -- --live   # a new wallet from the faucet pays all three 402s; wages and refunds print explorer links
 ```
 
 ## On Tempo
@@ -212,7 +246,8 @@ What is used and why:
 
 - **Sub-cent fees** — a two-cent wage can be sent at all, so no balance needs holding.
 - **TIP-20 memos** — every wage carries the question it paid for, so the receipt *is* the work record and the worker keeps it whatever happens to us.
-- **Workers never transact** — the treasury is the sender, so no fee is ever charged to a worker. This needs no fee sponsorship and therefore holds on mainnet as well as testnet.
+- **Workers are never charged a fee** — for a wage the treasury is the sender, and when a worker sends from their own account the gateway co-signs as fee payer (`/v1/relay`, Tempo's fee-payer transaction field). That relay is Quorum's own treasury, not Tempo's public testnet sponsor, so it holds on mainnet too. It sponsors one thing only: a registered worker transferring the wage stablecoin.
+- **Passkey accounts** — Tempo derives an account's address from a P-256 key, so a passkey made in the browser *is* a Tempo account, and signs for it with no seed phrase anywhere.
 - **No native gas asset** — a worker cannot be asked for capital by accident.
 - **Concurrent nonce lanes** — three wages on an escalated question settle in parallel, not serially.
 - **`transferSync` returning the emitted `Transfer` event** — a TIP-20 transfer can be blocked by a recipient policy and still succeed at the transaction level, so a successful receipt is *not* evidence anyone was paid. The emitted recipient and amount are verified before a wage is called settled.
@@ -243,6 +278,7 @@ Stated plainly because judges penalise pretending more than an acknowledged gap.
 - **Account recovery is not built.** A passkey synced through iCloud Keychain or Google Password Manager survives a lost phone, which covers most people most of the time. A device-bound one does not, and the earnings behind it would be unreachable. Tempo smart accounts support multiple authorised keys, so the production answer is a second key registered at sign-up — that is designed and not implemented.
 - **Cross-border worker payments raise KYC and labour questions** not solved here.
 - **Cheap fees are not a moat.** Base, Solana and Polygon are also cheap. Tempo is the best *fit* — no gas asset, session vouchers, Stripe-backed 402 SDKs — not a defensible technical edge.
+- **Tempo Wallet sign-in has not been completed by a person yet.** It is built on Tempo's Accounts SDK and the gateway side is tested, but the wallet's own sign-in window has only been exercised by code, not tapped through on a phone. The passkey path — sign in, be paid, send it on with the fee covered — has been run against Moderato.
 - **Session mode is not built.** Charge mode works end to end first, because that is the one a caller hits.
 
 ## Licence

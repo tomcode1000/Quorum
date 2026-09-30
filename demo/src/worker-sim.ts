@@ -1,6 +1,6 @@
 import type { AnswerSchema } from '@quorum/core'
 import type { Assignment, Router } from '@quorum/gateway'
-import { RECEIPT } from './chain.js'
+import { checkForPrompt } from './chain.js'
 
 /**
  * A stand-in worker, for running the demo unattended.
@@ -20,6 +20,8 @@ import { RECEIPT } from './chain.js'
 
 export type SimOptions = {
   workerId: string
+  /** The prompt of the live question an assignment belongs to; assignments do not carry it. */
+  promptFor: (questionId: string) => string
   /** Probability this worker answers correctly. */
   accuracy?: number
   /** How long they take to look, in milliseconds. */
@@ -30,7 +32,7 @@ export type SimOptions = {
 }
 
 export function startSimulatedWorker(router: Router, options: SimOptions): () => void {
-  const { workerId, accuracy = 1, thinkMs = 2_600, selfConfidence = 0.9, random = Math.random } = options
+  const { workerId, promptFor, accuracy = 1, thinkMs = 2_600, selfConfidence = 0.9, random = Math.random } = options
   const controller = new AbortController()
 
   void (async () => {
@@ -46,7 +48,7 @@ export function startSimulatedWorker(router: Router, options: SimOptions): () =>
       if (controller.signal.aborted) return
 
       const correct = random() < accuracy
-      const value = answerFor(assignment, correct)
+      const value = answerFor(assignment, promptFor(assignment.questionId), correct)
       router.submitAnswer({ assignmentId: assignment.assignmentId, workerId, value, selfConfidence })
     }
   })()
@@ -61,12 +63,15 @@ export function startSimulatedWorker(router: Router, options: SimOptions): () =>
  * apart from real work — which is the entire reason golden questions are worth
  * seeding.
  */
-function answerFor(assignment: Assignment, correct: boolean): boolean | number | string {
+function answerFor(assignment: Assignment, prompt: string, correct: boolean): boolean | number | string {
   if (assignment.golden) {
     const { truth, schema } = assignment.golden
     return correct ? truth : someOtherAnswer(schema, truth)
   }
-  return correct ? RECEIPT.truth : RECEIPT.ocr.total.reading
+  const check = checkForPrompt(prompt)
+  if (!check) throw new Error(`the simulated worker was shown a question the demo did not ask: ${prompt}`)
+  // A wrong answer is the agent's own guess: the mistake a careless look would make.
+  return correct ? check.truth : check.guess
 }
 
 /** A valid answer that is not the right one, so a wrong answer is still a legal one. */

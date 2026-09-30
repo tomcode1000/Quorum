@@ -1,4 +1,4 @@
-import { KINDS, centsToDollars, quote, type Question } from '@quorum/core'
+import { KINDS, centsToDollars, priceAsk, readPricing, type Question } from '@quorum/core'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { randomUUID } from 'node:crypto'
@@ -95,32 +95,53 @@ export function createMcpServer(services: {
           .describe('The evidence the person needs. Without it they are guessing too.'),
         max_price: z
           .string()
-          .default('0.25')
-          .describe('Your ceiling in dollars. Also sets how sure the answer must be: more money, surer answer.'),
+          .optional()
+          .describe('Your ceiling in dollars. Also sets how sure the answer must be: more money, surer answer. Defaults to 0.25 when cost_of_error is not given.'),
+        cost_of_error: z
+          .string()
+          .optional()
+          .describe(
+            'What acting on a wrong answer would cost you, in dollars: the payment you would misdirect, the refund you would owe. Quorum prices the question from it, and tells you when a person is not worth asking.',
+          ),
         deadline_ms: z.number().int().min(5_000).max(120_000).default(45_000).describe('How long you will wait.'),
         caller_confidence: z
           .number()
           .min(0)
           .max(1)
           .optional()
-          .describe('How much you trust your own current guess. Low values raise the bar for the answer.'),
+          .describe('How much you trust your own current guess. With cost_of_error it decides whether asking is worth it; a low value also sends the question to your strongest people first.'),
         task_ref: z.string().optional().describe('Your A2A task id, carried through to the payment receipt.'),
       },
     },
     async (input) => {
-      const maxPriceCents = Math.round(Number(String(input.max_price).replace(/[$,\s]/g, '')) * 100)
-      const priced = quote({
+      const { maxPriceCents, costOfErrorCents } = readPricing(
+        input.max_price ?? (input.cost_of_error === undefined ? '0.25' : undefined),
+        input.cost_of_error,
+      )
+      const pricing = priceAsk({
         kind: input.kind,
-        maxPriceCents,
         schema: toSchema(input.answer_schema),
+        maxPriceCents,
+        costOfErrorCents,
+        callerConfidence: input.caller_confidence,
       })
+      if (pricing.kind === 'not-worth-asking')
+        return {
+          content: [
+            {
+              type: 'text' as const,
+              text: `Not worth asking a person, so nothing was charged: ${pricing.advice.reason}.`,
+            },
+          ],
+        }
+      const priced = pricing.quote
       if (!priced.ok)
         return {
           isError: true,
           content: [{ type: 'text' as const, text: `${priced.reason}. The floor is ${centsToDollars(priced.floorCents)}.` }],
         }
 
-      if (store.availableWorkers().length === 0)
+      if (store.availableWorkers(input.kind).length === 0)
         return {
           content: [
             {

@@ -79,7 +79,7 @@ export const CAPABILITIES: readonly Capability[] = [
     id: 'disambiguate',
     name: 'Tell two readings apart',
     description:
-      'You have two plausible readings of the same evidence and cannot choose. A person looks at what you looked at and says which it is. Seconds.',
+      'Two readings of the same evidence and your extraction cannot choose. Once OCR has turned the image into text, every model after it reads the same text, so retrying cannot fix a misread. A person looks at the original and picks one of your readings. Seconds.',
     class: 'judgment',
     verification: 'consensus',
     kind: 'disambiguate',
@@ -93,7 +93,7 @@ export const CAPABILITIES: readonly Capability[] = [
     id: 'verify',
     name: 'Check something is what it claims',
     description:
-      'Confirm a fact about evidence you already hold: is this address real, is this a valid format, is this the official site. Seconds.',
+      'Whether something is what it claims: the official store, the supplier\'s real domain, a genuine address. A lookalike is built to pass the checks a model can run; a person sees what it got wrong. Yes or no, in seconds.',
     class: 'judgment',
     verification: 'consensus',
     kind: 'verify',
@@ -107,7 +107,7 @@ export const CAPABILITIES: readonly Capability[] = [
     id: 'match_entity',
     name: 'Decide whether two records are the same thing',
     description:
-      'You have candidates and cannot tell which is the same entity: which of these five search results is the official company site, whether two customer records are one person, whether this listing is the business you were looking for. A person decides in seconds.',
+      'Whether two records are the same person, company or product. A similarity score of 0.93 does not say which side of the line it is on, and a wrong merge is hard to undo. A person reads the field that decides it. Seconds.',
     class: 'judgment',
     verification: 'consensus',
     kind: 'match',
@@ -121,7 +121,7 @@ export const CAPABILITIES: readonly Capability[] = [
     id: 'categorise',
     name: 'Put something in the right bucket',
     description:
-      'Your classifier is between two classes, or the item does not obviously fit the taxonomy. Give a person the item and the options and they will place it.',
+      'Which of your categories an item belongs in, when your classifier is between two. The boundary is a rule people agreed, not a fact in the data, so there is nothing left for the model to learn from. A person applies your rule. Seconds.',
     class: 'judgment',
     verification: 'consensus',
     kind: 'categorise',
@@ -135,7 +135,7 @@ export const CAPABILITIES: readonly Capability[] = [
     id: 'compare_outputs',
     name: 'Say which of two candidates is better',
     description:
-      'Two answers, two drafts, two extractions — you cannot tell which is better because you produced both. A person reads them and picks.',
+      'Which of two candidates is better, when your agent produced both. A model judging its own work tends to prefer it; a person who wrote neither reads them side by side and picks one.',
     class: 'judgment',
     verification: 'consensus',
     kind: 'compare',

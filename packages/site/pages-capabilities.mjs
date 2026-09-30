@@ -67,101 +67,167 @@ const verdict = (title, sub) =>
 
 /* ------------------------------------------------------------- the five -- */
 
+/*
+  What each page argues.
+
+  Every capability exists for one reason: a kind of error an agent cannot catch
+  in itself, because every check it could run makes the same error. Each page
+  names that blind spot, shows the one question that settles it, shows what the
+  engine actually does (who was asked, at what confidence), and ends on an answer
+  of the shape the product really returns: one of the options sent, or a yes or
+  no, with its confidence. The scenarios deliberately come from different kinds
+  of agent, because the problem is not a payments problem. It is any decision an
+  agent is about to act on without being able to tell it is wrong.
+
+  The comps drew these pages with a passport authenticity check, a record merge,
+  a whole inbox sorted and a contract diff. None of those is what this product
+  does, so the panels stay and what is in them is the product's own.
+*/
+
+const asked = (lines) =>
+  `<p style="font-size:12.5px;color:var(--ink-2);margin:0 0 12px">What happened</p>${checks(lines)}`
+
+const option = (label, value) =>
+  `<div class="card card-flat" style="padding:10px;margin-top:8px"><div class="dim" style="font-size:10.5px;margin-bottom:3px">${label}</div><b style="font-size:13px">${value}</b></div>`
+
 const readings = () => capabilityPage({
   n: '01', slug: 'readings', tag: 'Telling readings apart',
   title: 'Telling readings apart.',
-  lede: 'Two readings of the same evidence, and your extraction cannot choose. A person looks at what you looked at and says which it is, in seconds, for cents.',
-  feats: [['target', 'High accuracy', 'Settles the reading, not the closest match.'], ['eye', 'Sees the evidence', 'The image travels with the question.'], ['shield', 'Reduces errors', 'Stops a wrong figure entering your ledger.'], ['spark', 'Works across formats', 'Text, numbers, codes and images.']],
-  input: `<span class="tag">Input</span><p style="font-size:12.5px;color:var(--ink-2);margin:12px 0 10px">The printed line reads &ldquo;TOTAL 4S.00&rdquo;. Is the total 45.00 or 4.50?</p>
-    <div class="card card-flat" style="padding:10px;margin-bottom:8px"><div class="dim" style="font-size:10.5px;margin-bottom:3px">Option A</div><b style="font-size:13px">45.00</b></div>
-    <div class="card card-flat" style="padding:10px"><div class="dim" style="font-size:10.5px;margin-bottom:3px">Option B</div><b style="font-size:13px">4.50</b></div>`,
-  analysis: checks([['Reads the printed line', 'The S is a 5 in this typeface.'], ['Checks the decimal', 'The smudge sits after the second digit.'], ['Weighs the record', 'Both responders have a long clean history.']]),
-  result: verdict('Right answer. Not a guess.', 'Option A is correct. Two people agreed independently, confidence 0.99.'),
-  steps: [['Read', 'Understands the evidence.'], ['Ask', 'Routes to a proven worker.'], ['Weigh', 'Buys a second opinion if needed.'], ['Answer', 'Returns the reading and its confidence.']],
+  lede: 'Your OCR turned a smudged &ldquo;4S.00&rdquo; into text, and every model after it reads the same text. Asking again gets the same wrong number with more confidence. A person looks at the image itself and says which reading it is.',
+  feats: [
+    ['eye', 'Looks at the original', 'The image travels with the question, not the string your extraction made of it.'],
+    ['swap', 'One of your readings', 'You send the candidates. The answer is one of them, never a third guess.'],
+    ['target', 'Priced by the mistake', 'Send what a wrong figure would cost, and the certainty bought matches it.'],
+    ['shield', 'Says when it cannot tell', 'If people disagree, the print is unreadable. You are told so, and refunded.'],
+  ],
+  input: `<span class="tag">Your agent sends</span><p style="font-size:12.5px;color:var(--ink-2);margin:12px 0 10px">The printed line reads &ldquo;TOTAL 4S.00&rdquo;. Is the total 45.00 or 4.50?</p>
+    ${option('Its reading, 0.41 confident', '4.50')}${option('The other reading', '45.00')}`,
+  analysis: asked([
+    ['Priced from the cost of error', 'A $40.50 mistake buys an answer at 0.99 confidence.'],
+    ['Amara looked at the receipt', 'Answered 45.00. One answer reaches 0.926.'],
+    ['Joel was asked independently', 'Also 45.00. Together, 0.990.'],
+  ]),
+  result: verdict('45.00, at 0.990.', 'Two people who had not seen each other&rsquo;s answer read the same total. About five seconds.'),
+  steps: [['Send', 'The image and both readings.'], ['Ask', 'Someone proven at reading documents.'], ['Weigh', 'A second look if one is not enough.'], ['Answer', 'One reading, with its confidence.']],
   example: {
-    intro: 'Quorum shows the worker exactly what your extraction saw, and asks the one question that decides it.',
-    title: 'A supplier invoice for the wrong amount.',
-    body: 'An accounts-payable agent reads a smudged total as 4.50 at 0.41 confidence. Without a resolver it pays 4.50 against a 45.00 invoice and nothing flags it. With one, the question reaches a person and the correct figure comes back before the payment is scheduled.',
-    panel: `${row('Agent reading: 4.50', 'Rejected', 'bad')}${row('Resolved reading: 45.00', 'Accepted', 'good')}`,
-    tags: ['Accounts payable', 'Document extraction', 'Finance'],
+    intro: 'The question is the one your extraction could not settle, with the evidence it was looking at. Nothing else from your system leaves it.',
+    title: 'An expense recorded at a tenth of its value.',
+    body: 'A finance agent reads a thermal receipt at 0.41 confidence and records $4.50 against a $45.00 purchase. No error is raised, because nothing knows it is wrong. With the question sent to a person, the right figure is back before the entry is posted.',
+    panel: `${row('Agent&rsquo;s reading: 4.50', 'Not used', 'bad')}${row('Answer: 45.00, 0.990', 'Posted', 'good')}`,
+    tags: ['Document extraction', 'Receipts and invoices', 'Labels and forms'],
   },
 })
 
 const real = () => capabilityPage({
   n: '02', slug: 'real', tag: 'Checking something is real',
   title: 'Checking something is real.',
-  lede: 'Confirm that a document, an address, a listing or a business is genuine. A person checks it against what is actually there and tells you plainly.',
-  feats: [['shield', 'Spots the fake', 'Catches altered and out-of-context content.'], ['image', 'Checks authenticity', 'Documents, images and identities.'], ['globe', 'Uses real sources', 'Cross-references what can be checked.'], ['bolt', 'Works in seconds', 'Fast, confident answers.']],
-  input: `<span class="tag">Input</span><div class="card card-flat" style="padding:12px;margin-top:12px"><div style="display:flex;align-items:center;gap:9px"><span class="ico ico-sm">${ic('id')}</span><div><b style="font-size:12.5px;display:block">passport_photo.jpg</b><span class="dim" style="font-size:11px">1.4 MB</span></div></div></div><p class="dim" style="margin:10px 0 0">Does this document look genuine?</p>`,
-  analysis: checks([['Document structure', 'Matches the official format.'], ['Security features', 'Hologram and ink patterns are consistent.'], ['Issuing authority', 'Matches the stated department.']]),
-  result: verdict('Authentic.', 'This document appears genuine. Two responders agreed, confidence 0.98.'),
-  steps: [['Upload', 'The image or record arrives with the question.'], ['Inspect', 'A person looks at the actual artefact.'], ['Check', 'Format, features and issuer are compared.'], ['Report', 'A structured verdict with its reasons.']],
+  lede: 'A lookalike is built to pass the checks a model can run: the name matches, the page looks right, the text is fluent. A person sees what the lookalike got wrong, and your agent is told before it acts on it.',
+  feats: [
+    ['eye', 'Sees what was built to fool a model', 'Swapped letters, borrowed branding, a domain one character off.'],
+    ['check', 'A plain yes or no', 'Is this what it claims to be. Nothing to interpret.'],
+    ['target', 'Priced by the mistake', 'Checking a store before a $12 order and before a $1,200 one is not the same purchase.'],
+    ['shield', 'Evidence stays yours', 'The person sees only what you send with the question.'],
+  ],
+  input: `<span class="tag">Your agent sends</span><div class="card card-flat" style="padding:12px;margin-top:12px"><div style="display:flex;align-items:center;gap:9px"><span class="ico ico-sm">${ic('globe')}</span><div><b style="font-size:12.5px;display:block">Nike Official Store</b><span class="dim" style="font-size:11px">nike-outlet-sale.shop</span></div></div></div><p class="dim" style="margin:10px 0 0">Is this the brand&rsquo;s own store?</p>`,
+  analysis: asked([
+    ['The agent&rsquo;s own check passed', 'Name, logo and product photos all match.'],
+    ['Amara looked at the listing', 'No: not the brand&rsquo;s domain. 0.926.'],
+    ['Joel was asked independently', 'No. Together, 0.990.'],
+  ]),
+  result: verdict('No. Not the brand&rsquo;s store.', 'Two people agreed independently, 0.990 confidence. The agent does not place the order.'),
+  steps: [['Send', 'What the agent is about to trust.'], ['Look', 'A person proven at spotting fakes.'], ['Weigh', 'A second look if one is not enough.'], ['Answer', 'Yes or no, with its confidence.']],
   example: {
-    intro: 'The worker sees the document itself, not a description of it, which is what makes the check worth anything.',
-    title: 'Spotting a fake in onboarding.',
-    body: 'A bank receives a passport for KYC. Quorum routes it to a person who checks the format, the security features and the issuer, and flags it as altered in seconds with a clear reason, not a probability with nothing behind it.',
-    panel: `${row('Security feature missing', 'Flagged', 'bad')}${row('Document format incorrect', 'Flagged', 'bad')}${row('Issuer details do not match', 'Flagged', 'bad')}`,
-    tags: ['KYC', 'Onboarding', 'Fraud'],
+    intro: 'The agent asks at the moment it is about to act on something it cannot verify, and not before.',
+    title: 'A shopping agent about to pay a lookalike store.',
+    body: 'A buying agent finds the trainers its user asked for, at a good price, on a page that looks exactly like the brand&rsquo;s. Every automated signal says it is the real store, because that is what the page was built to make them say. A person says it is not, and the order goes to the real one.',
+    panel: `${row('Agent: official store, 0.90', 'Not used', 'bad')}${row('Answer: lookalike, 0.990', 'Order held', 'good')}`,
+    tags: ['Shopping agents', 'Brand safety', 'Payment links'],
   },
 })
 
 const matching = () => capabilityPage({
   n: '03', slug: 'matching', tag: 'Matching records',
   title: 'Matching records.',
-  lede: 'Decide whether records from different systems are the same thing, even when the names, formats and identifiers do not line up.',
-  feats: [['db', 'Finds related data', 'Across different sources and systems.'], ['link', 'Handles variations', 'Different formats and naming styles.'], ['file', 'Reduces duplicates', 'Identifies and merges near-identical records.'], ['shield', 'Improves accuracy', 'Builds one clear, complete picture.']],
-  input: `<span class="tag">Input</span>
-    ${[['db', 'Hospital system', 'John A. Smith · 12/04/1982'], ['file', 'Insurance claim', 'J. Smith · 12/04/1982'], ['globe', 'National registry', 'John Smith · 12/04/1982']].map(([i, s, v]) => `<div class="card card-flat" style="padding:10px;margin-top:8px"><div style="display:flex;gap:9px;align-items:center"><span class="ico ico-sm">${ic(i)}</span><div><b style="font-size:12px;display:block">${s}</b><span class="dim" style="font-size:11px">${v}</span></div></div></div>`).join('')}`,
-  analysis: `<p style="font-size:12.5px;color:var(--ink-2);margin:0 0 12px">Possible matches found</p>
-    ${[['John A. Smith', 'Hospital', '95%'], ['J. Smith', 'Claims', '88%'], ['John Smith', 'Registry', '76%']].map(([n, s, m]) => `<div style="display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid var(--border)"><span class="ico ico-sm ico-plain" style="width:19px;height:19px;border-radius:50%">${ic('users')}</span><div style="min-width:0"><b style="font-size:12px;display:block">${n}</b><span class="dim" style="font-size:11px">${s}</span></div><span class="badge badge-good" style="margin-left:auto">${m}</span></div>`).join('')}`,
-  result: verdict('One matched record.', 'All three sources refer to the same person. Combined into one profile.'),
-  steps: [['Collect', 'Records arrive from several sources.'], ['Compare', 'A person reads the fields that matter.'], ['Decide', 'Same entity, or not.'], ['Merge', 'One accurate record, ready to use.']],
+  lede: 'A similarity score of 0.93 does not say which side of &ldquo;the same person&rdquo; it is on, and a merge cannot be undone quietly. A person reads the fields that decide it and answers the question the pipeline actually has: same, or not.',
+  feats: [
+    ['link', 'Reads what decides it', 'The field that breaks the match, not the fields that agree.'],
+    ['check', 'Same, or not', 'A decision, where fuzzy matching only gives you a score.'],
+    ['target', 'Priced by the mistake', 'Merging two people&rsquo;s records costs more than a duplicate row.'],
+    ['shield', 'Only what you send', 'The records you put in the question, and nothing from your database.'],
+  ],
+  input: `<span class="tag">Your agent sends</span>
+    ${[['db', 'Record A', 'Sam Okafor · sam.okafor@mail.com · born 1991'], ['db', 'Record B', 'Samuel Okafor · sam.okafor@mail.com · born 1964']].map(([i, s, v]) => `<div class="card card-flat" style="padding:10px;margin-top:8px"><div style="display:flex;gap:9px;align-items:center"><span class="ico ico-sm">${ic(i)}</span><div><b style="font-size:12px;display:block">${s}</b><span class="dim" style="font-size:11px">${v}</span></div></div></div>`).join('')}
+    <p class="dim" style="margin:10px 0 0">Are these the same person?</p>`,
+  analysis: asked([
+    ['The agent&rsquo;s matcher scored 0.93', 'Same name root, same email address.'],
+    ['Amara read both records', 'No: born 27 years apart. 0.926.'],
+    ['Joel was asked independently', 'No. Together, 0.990.'],
+  ]),
+  result: verdict('No. Two people.', 'A shared family email, not one customer. The records stay apart, and neither sees the other&rsquo;s history.'),
+  steps: [['Send', 'The records in question.'], ['Read', 'Someone proven at matching.'], ['Weigh', 'A second look if one is not enough.'], ['Answer', 'Same or not, with its confidence.']],
   example: {
-    intro: 'Fuzzy matching gets you a score. A person gets you a decision, which is what the pipeline actually needs.',
-    title: 'One patient, multiple sources.',
-    body: 'A hospital record lists &ldquo;John A. Smith&rdquo;. The insurance claim says &ldquo;J. Smith&rdquo;. Quorum asks a person to compare the names, dates and identifiers, so you get one complete profile instead of three partial ones.',
-    panel: `${row('Demographics', 'Merged', 'good')}${row('Medical history', 'Merged', 'good')}${row('Insurance details', 'Merged', 'good')}`,
-    tags: ['Healthcare', 'Data quality', 'Deduplication'],
+    intro: 'Send only the pairs your matcher could not settle. Quorum takes the uncertain middle, not the whole table.',
+    title: 'A father and son, one inbox.',
+    body: 'A customer-data agent deduplicates accounts. Two records share an email address and a surname, and its matcher is 0.93 sure they are one person. Merged, a son would see his father&rsquo;s orders and addresses. A person notices the birth years, and the merge does not happen.',
+    panel: `${row('Matcher: same person, 0.93', 'Not merged', 'bad')}${row('Answer: two people, 0.990', 'Kept apart', 'good')}`,
+    tags: ['Customer data', 'Deduplication', 'Supplier records'],
   },
 })
 
 const categorising = () => capabilityPage({
   n: '04', slug: 'categorising', tag: 'Categorising',
   title: 'Categorising.',
-  lede: 'Put an item in the right bucket when your classifier is between two, or when the item does not obviously fit the taxonomy you gave it.',
-  feats: [['db', 'Finds the pattern', 'Reads content and structure, not keywords.'], ['grid', 'Applies your rules', 'Uses the taxonomy you send.'], ['tag', 'Reduces manual work', 'Handles only the items that need a person.'], ['bolt', 'Stays consistent', 'The same judgment across the batch.']],
-  input: `<span class="tag">Uncategorised</span>
-    ${[['file', 'Invoice #INV-48231', '£1,250.00'], ['mail', 'john@company.com', 'Subject: Partnership'], ['image', 'IMG_2048.jpg', '1.2 MB'], ['file', 'Contract_v3.pdf', '480 KB']].map(([i, t, s]) => `<div class="card card-flat" style="padding:9px;margin-top:7px"><div style="display:flex;gap:9px;align-items:center"><span class="ico ico-sm">${ic(i)}</span><div style="min-width:0"><b style="font-size:11.5px;display:block">${t}</b><span class="dim" style="font-size:10.5px">${s}</span></div></div></div>`).join('')}`,
-  analysis: `<p style="font-size:12.5px;color:var(--ink-2);margin:0 0 12px">Sorted into your taxonomy</p>
-    ${[['file', 'Invoices', 'Financial documents', '12'], ['mail', 'Emails', 'Communication', '8'], ['image', 'Images', 'Media files', '4'], ['file', 'Contracts', 'Legal documents', '6']].map(([i, n, d, c]) => `<div style="display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid var(--border)"><span class="ico ico-sm">${ic(i)}</span><div><b style="font-size:12px;display:block">${n}</b><span class="dim" style="font-size:11px">${d}</span></div><span class="badge badge-accent" style="margin-left:auto">${c} items</span></div>`).join('')}`,
-  result: verdict('Sorted and ready.', 'Every item is in a bucket you named, with the ambiguous ones decided by a person.'),
-  steps: [['Scan', 'Reads the item and its context.'], ['Identify', 'Finds the features that decide it.'], ['Categorise', 'Places it in your taxonomy.'], ['Return', 'Consistent, structured output.']],
+  lede: 'Where one category ends and the next begins is a rule people agreed on, not a fact in the data, so a classifier between two classes has nothing left to learn from. A person applies your rule to the item in front of them.',
+  feats: [
+    ['grid', 'Your taxonomy, applied', 'You send the categories. The answer is one of them.'],
+    ['eye', 'Reads what the words mean', 'Coded language and context a keyword model takes at face value.'],
+    ['target', 'Priced by the mistake', 'A mislabelled ticket and a missed counterfeit are not the same cost.'],
+    ['tag', 'Only the uncertain ones', 'Your classifier keeps the clear cases. People take the tail.'],
+  ],
+  input: `<span class="tag">Your agent sends</span><div class="card card-flat" style="padding:12px;margin-top:12px"><b style="font-size:12.5px;display:block">&ldquo;Designer-inspired watch, AAA quality, looks identical to the original&rdquo;</b><span class="dim" style="font-size:11px">Marketplace listing, £45</span></div>
+    ${option('Categories', 'Allowed · Counterfeit · Needs more information')}`,
+  analysis: asked([
+    ['The classifier was split', 'Allowed 0.52, Counterfeit 0.48.'],
+    ['Amara read the listing', 'Counterfeit: &ldquo;AAA quality&rdquo; is how replicas are sold. 0.926.'],
+    ['Joel was asked independently', 'Counterfeit. Together, 0.990.'],
+  ]),
+  result: verdict('Counterfeit, at 0.990.', 'The listing comes down under your counterfeit policy, and the decision carries its confidence.'),
+  steps: [['Send', 'The item and your categories.'], ['Read', 'Someone proven at your kind of item.'], ['Weigh', 'A second look if one is not enough.'], ['Answer', 'One category, with its confidence.']],
   example: {
-    intro: 'Send only the items your classifier could not settle. Quorum handles the tail, not the whole batch.',
-    title: 'Sorting a mixed inbox.',
-    body: 'Documents, emails, images and contracts arrive together. Your classifier is confident about most of them. The handful it is not go to a person, so the whole batch comes out consistent rather than mostly right.',
-    panel: `${row('Faster search', 'Improved', 'good')}${row('Less manual sorting', 'Improved', 'good')}${row('Higher accuracy on the tail', 'Improved', 'good')}`,
-    tags: ['Document management', 'Operations', 'Data quality'],
+    intro: 'The boundary cases are where a model is least sure and where the policy matters most.',
+    title: 'A replica sold in plain sight.',
+    body: 'A moderation agent reviews new listings. The words are polite and the photos are clean, so the classifier calls it a coin toss. People who have seen the phrase before know exactly what &ldquo;AAA quality&rdquo; means, and the listing is handled under the policy that fits it.',
+    panel: `${row('Classifier: allowed, 0.52', 'Not used', 'bad')}${row('Answer: counterfeit, 0.990', 'Removed', 'good')}`,
+    tags: ['Trust and safety', 'Support triage', 'Compliance labels'],
   },
 })
 
 const comparing = () => capabilityPage({
   n: '05', slug: 'comparing', tag: 'Comparing',
   title: 'Comparing.',
-  lede: 'Say which of two candidates is better, or what changed between two versions. You produced both, so you are the worst judge of which one won.',
-  feats: [['swap', 'Finds differences', 'Spots changes, gaps and inconsistencies.'], ['file', 'Checks versions', 'Compares versions or sources of the same data.'], ['shield', 'Verifies accuracy', 'Highlights what matches and what does not.'], ['clock', 'Saves time', 'Clear, structured results in seconds.']],
-  input: `<span class="tag">Comparison</span>
-    ${[['Source A', 'ID document (new)'], ['Source B', 'ID document (existing)']].map(([t, s]) => `<div class="card card-flat" style="padding:10px;margin-top:8px"><div style="display:flex;gap:9px;align-items:center"><span class="ico ico-sm">${ic('id')}</span><div><b style="font-size:12px;display:block">${t}</b><span class="dim" style="font-size:11px">${s}</span></div></div></div>`).join('')}`,
-  analysis: `<p style="font-size:12.5px;color:var(--ink-2);margin:0 0 12px">Comparison results</p>
-    ${row('Name', 'Match', 'good')}${row('Date of birth', 'Match', 'good')}${row('Document number', 'Difference', 'bad')}${row('Expiry date', 'Match', 'good')}`,
-  result: verdict('One real difference.', 'The document numbers do not match. Everything else is identical.'),
-  steps: [['Receive', 'Both candidates arrive together.'], ['Read', 'A person reads them side by side.'], ['Identify', 'What changed, and what did not.'], ['Summarise', 'A structured verdict you can act on.']],
+  lede: 'Your agent wrote both drafts, and a model asked to judge its own work tends to like it. A person reads the two side by side and picks the one that should go out.',
+  feats: [
+    ['users', 'An outside reader', 'Someone who did not write either candidate.'],
+    ['swap', 'One of the two', 'The answer is a choice between what you sent, not a rewrite.'],
+    ['target', 'Priced by the mistake', 'A reply to an angry customer is worth more certainty than a tagline.'],
+    ['shield', 'Says when it is a tie', 'If people split, you are told the two are as good as each other, and refunded.'],
+  ],
+  input: `<span class="tag">Your agent sends</span>
+    ${option('Draft A', '&ldquo;Per our policy, refunds take 14 days.&rdquo;')}${option('Draft B', '&ldquo;Sorry this happened. Your refund is on its way and should arrive by the 14th.&rdquo;')}
+    <p class="dim" style="margin:10px 0 0">Which reply should go to a customer charged twice?</p>`,
+  analysis: asked([
+    ['The agent rated its own drafts', 'A: 0.61, B: 0.58. Too close to choose.'],
+    ['Amara read both', 'B. 0.926.'],
+    ['Joel was asked independently', 'B. Together, 0.990.'],
+  ]),
+  result: verdict('Draft B, at 0.990.', 'Two readers who wrote neither chose the same reply, and that is the one sent.'),
+  steps: [['Send', 'Both candidates and the question.'], ['Read', 'Someone proven at comparing.'], ['Weigh', 'A second reader if one is not enough.'], ['Answer', 'One candidate, with its confidence.']],
   example: {
-    intro: 'A difference a person notices in two seconds is often one a diff cannot express at all.',
-    title: 'Two versions of a contract.',
-    body: 'A legal team sends two versions of the same agreement. Quorum returns what was added, removed and modified, and flags the one change that actually matters, so nothing is missed in a file nobody has time to read twice.',
-    panel: `${row('Payment terms', 'Changed', 'bad')}${row('Parties', 'Unchanged', 'good')}${row('Governing law', 'Unchanged', 'good')}`,
-    tags: ['Legal', 'Contracts', 'Review'],
+    intro: 'The question is the one your agent could not answer about its own work: which of these is better.',
+    title: 'The reply that keeps the customer.',
+    body: 'A support agent drafts two answers to a customer who was charged twice. Scored by the model that wrote them, the stiff one edges ahead. Read by people, the apology wins every time, and that is the one that goes out.',
+    panel: `${row('Agent&rsquo;s pick: Draft A', 'Not sent', 'bad')}${row('Answer: Draft B, 0.990', 'Sent', 'good')}`,
+    tags: ['Customer support', 'Drafts and replies', 'Extraction review'],
   },
 })
 

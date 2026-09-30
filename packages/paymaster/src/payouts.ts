@@ -1,5 +1,7 @@
 import { refundMemo, wageMemo } from '@quorum/core'
 import type { Paymaster, PayoutReceipt, RefundReceipt } from '@quorum/core'
+import { BaseError, HttpRequestError } from 'viem'
+import { Abis } from 'viem/tempo'
 import {
   centsToUnits,
   chainFor,
@@ -125,12 +127,22 @@ async function transfer(
   // Tempo's public sponsor is testnet-only, so a claim resting on it would have to be
   // withdrawn on mainnet. This claim does not: a worker holds nothing and pays nothing
   // on any network, because being paid has never required them to transact.
-  const result = await client.token.transferSync({
-    token: currencyFor(network),
-    to: input.to,
-    amount,
-    memo: input.memo,
-  })
+  const send = () => client.token.transferSync({ token: currencyFor(network), to: input.to, amount, memo: input.memo })
+
+  let result: Awaited<ReturnType<typeof send>>
+  try {
+    result = await send()
+  } catch (error) {
+    // A dropped connection to the RPC says nothing about whether the transaction
+    // was broadcast, so a blind resend risks paying the same wage twice. The memo is
+    // unique to this payment and indexed on chain: look for it first, and resend
+    // only when it is not there. Seen on Moderato at roughly one send in ten.
+    if (!(error instanceof BaseError) || !error.walk((e) => e instanceof HttpRequestError)) throw error
+    await new Promise((resolve) => setTimeout(resolve, SETTLE_WAIT_MS))
+    const landed = await findTransfer(client, network, input.to, input.memo)
+    if (landed) return { txHash: landed }
+    result = await send()
+  }
 
   if (result.receipt.status !== 'success')
     throw new PaymentFailed(`${input.label}: transaction reverted (${result.receipt.transactionHash})`)
@@ -143,6 +155,32 @@ async function transfer(
 
   return { txHash: result.receipt.transactionHash }
 }
+
+/** How long to let a possibly-broadcast transfer land before looking for it. Blocks are sub-second. */
+const SETTLE_WAIT_MS = 3_000
+
+/** The hash of a transfer already on chain carrying this memo to this recipient, if any. */
+async function findTransfer(
+  client: QuorumClient,
+  network: Network,
+  to: `0x${string}`,
+  memo: `0x${string}`,
+): Promise<`0x${string}` | null> {
+  const latest = await client.getBlockNumber()
+  const logs = await client.getLogs({
+    address: currencyFor(network),
+    event: TRANSFER_WITH_MEMO,
+    args: { to, memo },
+    fromBlock: latest > 1_000n ? latest - 1_000n : 0n,
+    toBlock: latest,
+  })
+  return logs[0]?.transactionHash ?? null
+}
+
+const TRANSFER_WITH_MEMO = Abis.tip20.find(
+  (item): item is Extract<(typeof Abis.tip20)[number], { type: 'event'; name: 'TransferWithMemo' }> =>
+    item.type === 'event' && item.name === 'TransferWithMemo',
+)!
 
 export class PaymentFailed extends Error {
   override name = 'PaymentFailed'

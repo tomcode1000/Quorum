@@ -1,5 +1,5 @@
 import { serve } from '@hono/node-server'
-import { createPaymaster, createQuorumClient } from '@quorum/paymaster'
+import { CHAIN_IDS, createPaymaster, createQuorumClient } from '@quorum/paymaster'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { loadConfig } from './config.js'
@@ -12,6 +12,7 @@ import { GOLDEN_SEED } from './golden-seed.js'
 import { Router } from './router.js'
 import { createServer } from './server.js'
 import { Store } from './store.js'
+import { walletRoutes } from './wallet-routes.js'
 import { workerApi } from './worker-api.js'
 
 /**
@@ -66,8 +67,22 @@ async function main(): Promise<void> {
   app.use('/.well-known/*', cors({ origin: '*', allowMethods: ['GET', 'OPTIONS'] }))
 
   app.route('/', createServer({ config, store, router, paymaster, events }))
-  app.route('/v1/worker', workerApi({ store, router, paymaster, wageCents: config.wageCents }))
+  app.route(
+    '/v1/worker',
+    workerApi({
+      store,
+      router,
+      paymaster,
+      wageCents: config.wageCents,
+      chainId: CHAIN_IDS[config.network],
+      currency: config.currency,
+    }),
+  )
   app.route('/v1/capabilities', escalationRoutes({ config, escalations, store }))
+
+  // Tempo Wallet sign-in and the fee relay for workers moving their own wages. Each
+  // carries its own allowlisted CORS, credentialed because the SDK sends cookies.
+  app.route('/', walletRoutes({ config, store }))
 
   // The operator console. Read-only, and served to a browser like the worker app,
   // so it needs the same CORS treatment and the same allowlist — it carries the

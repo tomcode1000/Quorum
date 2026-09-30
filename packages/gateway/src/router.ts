@@ -16,7 +16,6 @@ import {
   wagesFor,
 } from '@quorum/core'
 import type { AvailableWorker, Paymaster, PayoutReceipt, Question, Resolution, WorkerAnswer } from '@quorum/core'
-import { payAll } from '@quorum/paymaster'
 import { randomUUID } from 'node:crypto'
 import type { Assignment, LiveQuestion, Store } from './store.js'
 
@@ -57,7 +56,17 @@ export type RouterOptions = {
 
 export type RouterEvent =
   | { type: 'question.received'; questionId: string; prompt: string; priceCents: number; kind: Question['kind'] }
-  | { type: 'worker.asked'; questionId: string; workerId: string; assignmentId: string; exploratory: boolean; reason: string }
+  | {
+      type: 'worker.asked'
+      questionId: string
+      workerId: string
+      assignmentId: string
+      exploratory: boolean
+      /** A known-answer check rather than the caller's question. Never shown to the worker. */
+      calibration: boolean
+      reason: string
+    }
+  | { type: 'calibration.answered'; questionId: string; workerId: string; correct: boolean }
   | { type: 'answer.received'; questionId: string; workerId: string; value: unknown; confidence: number }
   | { type: 'worker.paid'; questionId: string; workerId: string; amountCents: number; txHash: string }
   | { type: 'caller.refunded'; questionId: string; amountCents: number; txHash: string }
@@ -100,6 +109,7 @@ export class Router {
       deadlineAt: startedAt + question.timeoutMs,
       payer: options.payer ?? null,
       answers: [],
+      calibrations: [],
       assignments: [],
       bought: 0,
       settled,
@@ -143,7 +153,7 @@ export class Router {
     const outstanding = live.assignments.filter((a) => a.expiresAt > Date.now() && !answered.has(a.assignmentId)).length
 
     const available: AvailableWorker[] = this.#store
-      .availableWorkers()
+      .availableWorkers(live.question.kind)
       .filter((worker) => !rateLimited(worker.rate))
       .map((worker) => ({ ...worker.record, ...(worker.busyWith === null ? {} : { busy: true }) }))
 
@@ -181,9 +191,10 @@ export class Router {
     // against truth rather than only against what other workers said. They look
     // identical to the worker and are paid identically, because a check a worker can
     // detect is a check they can pass selectively.
-    const golden = shouldSeedGolden(this.#random)
-      ? this.#store.golden.find((g) => g.kind === live.question.kind)
-      : undefined
+    // Any check of the right kind, not always the first: a worker who is only ever
+    // shown one known-answer question per kind would learn it by heart.
+    const checks = this.#store.golden.filter((g) => g.kind === live.question.kind)
+    const golden = shouldSeedGolden(this.#random) ? checks[Math.floor(this.#random() * checks.length)] : undefined
 
     const assignment: Assignment = {
       assignmentId: randomUUID(),
@@ -207,7 +218,8 @@ export class Router {
       workerId,
       assignmentId: assignment.assignmentId,
       exploratory,
-      reason,
+      calibration: golden !== undefined,
+      reason: golden === undefined ? reason : 'known-answer check, calibrating reputation against the truth',
     })
 
     const waiter = this.#waiting.get(workerId)
@@ -307,8 +319,23 @@ export class Router {
     // calibrates reputation directly, which is the only signal that survives a pool
     // being careless all at once.
     if (assignment.golden) {
-      worker.record = score(worker.record, assignment.golden.kind, gradeGolden(assignment.golden, input.value))
+      const outcome = gradeGolden(assignment.golden, input.value)
+      worker.record = score(worker.record, assignment.golden.kind, outcome)
       live.assignments = live.assignments.filter((a) => a.assignmentId !== assignment.assignmentId)
+      // Paid like real work, at settlement. The worker could not tell it apart from
+      // real work, so it was real work to them.
+      live.calibrations.push({
+        workerId: input.workerId,
+        assignmentId: input.assignmentId,
+        prompt: assignment.golden.prompt,
+        kind: assignment.golden.kind,
+      })
+      this.#onEvent({
+        type: 'calibration.answered',
+        questionId: live.question.id,
+        workerId: input.workerId,
+        correct: outcome === 'agree',
+      })
       void this.#store.save()
       this.#step(live)
       return { accepted: true }
@@ -370,63 +397,29 @@ export class Router {
 
     // Pay first. A worker's wage is not contingent on the caller's connection
     // surviving, and not contingent on the crowd having agreed with them.
-    const owed = wagesFor(live.answers, this.#wageCents)
-    const { receipts, failures } = owed.length
-      ? await payAll(
-          this.#paymaster,
-          owed.flatMap((entry) => {
-            const worker = this.#store.workers.get(entry.workerId)
-            if (!worker) return []
-            return [
-              {
-                questionId: live.question.id,
-                assignmentId: entry.assignmentId,
-                workerId: entry.workerId,
-                to: worker.address,
-                amountCents: entry.amountCents,
-              },
-            ]
-          }),
-        )
-      : { receipts: [] as PayoutReceipt[], failures: [] }
-
-    for (const receipt of receipts) {
-      const worker = this.#store.workers.get(receipt.workerId)
-      if (worker) worker.earnedCents += receipt.amountCents
-      this.#store.recordPayment(receipt.workerId, {
-        at: Date.now(),
-        amountCents: receipt.amountCents,
-        txHash: receipt.txHash,
-        questionId: live.question.id,
-        label: live.question.prompt,
-        kind: live.question.kind,
-        status: 'settled',
-      })
-      this.#onEvent({
-        type: 'worker.paid',
-        questionId: live.question.id,
-        workerId: receipt.workerId,
-        amountCents: receipt.amountCents,
-        txHash: receipt.txHash,
-      })
-    }
-
-    // A failed wage is recorded too, and recorded as failed. The alternative is a
-    // worker who answered, saw nothing appear, and has no way to tell whether they
-    // were skipped or robbed — which is the exact suspicion this product exists to
-    // remove. It says what happened and stays in the list.
-    for (const failure of failures) {
-      console.error(`[quorum] wage payment failed for ${failure.workerId}: ${failure.error}`)
-      this.#store.recordPayment(failure.workerId, {
-        at: Date.now(),
-        amountCents: this.#wageCents,
-        txHash: null,
-        questionId: live.question.id,
-        label: live.question.prompt,
-        kind: live.question.kind,
-        status: 'failed',
-      })
-    }
+    // Known-answer checks are paid in the same batch. Each is recorded under the prompt
+    // the worker actually saw, so their own history cannot later reveal which of their
+    // assignments were checks.
+    const [{ receipts }] = await Promise.all([
+      this.#payOut(
+        live,
+        wagesFor(live.answers, this.#wageCents).map((entry) => ({
+          ...entry,
+          label: live.question.prompt,
+          kind: live.question.kind,
+        })),
+      ),
+      this.#payOut(
+        live,
+        live.calibrations.map((entry) => ({
+          workerId: entry.workerId,
+          assignmentId: entry.assignmentId,
+          amountCents: this.#wageCents,
+          label: entry.prompt,
+          kind: entry.kind,
+        })),
+      ),
+    ])
 
     // Then refund the caller if they did not get what they paid for.
     let refund: Resolution['refund']
@@ -488,6 +481,64 @@ export class Router {
     live.finish(resolution)
 
     if (live.callbackUrl) void this.#postCallback(live.callbackUrl, resolution)
+  }
+
+  /**
+   * Pays a batch of wages and records every outcome against the worker.
+   *
+   * A failed wage is recorded too, and recorded as failed. The alternative is a
+   * worker who answered, saw nothing appear, and has no way to tell whether they
+   * were skipped or robbed — which is the exact suspicion this product exists to
+   * remove. It says what happened and stays in the list.
+   */
+  async #payOut(
+    live: LiveQuestion,
+    entries: readonly { workerId: string; assignmentId: string; amountCents: number; label: string; kind: Question['kind'] }[],
+  ): Promise<{ receipts: PayoutReceipt[] }> {
+    const payable = entries.flatMap((entry) => {
+      const worker = this.#store.workers.get(entry.workerId)
+      return worker ? [{ entry, to: worker.address }] : []
+    })
+    const settled = await Promise.allSettled(
+      payable.map(({ entry, to }) =>
+        this.#paymaster.payWorker({
+          questionId: live.question.id,
+          assignmentId: entry.assignmentId,
+          workerId: entry.workerId,
+          to,
+          amountCents: entry.amountCents,
+        }),
+      ),
+    )
+
+    const receipts: PayoutReceipt[] = []
+    settled.forEach((outcome, index) => {
+      const { entry } = payable[index]!
+      const base = { at: Date.now(), questionId: live.question.id, label: entry.label, kind: entry.kind }
+      if (outcome.status === 'rejected') {
+        console.error(`[quorum] wage payment failed for ${entry.workerId}: ${String(outcome.reason)}`)
+        this.#store.recordPayment(entry.workerId, { ...base, amountCents: entry.amountCents, txHash: null, status: 'failed' })
+        return
+      }
+      const receipt = outcome.value
+      receipts.push(receipt)
+      const worker = this.#store.workers.get(receipt.workerId)
+      if (worker) worker.earnedCents += receipt.amountCents
+      this.#store.recordPayment(receipt.workerId, {
+        ...base,
+        amountCents: receipt.amountCents,
+        txHash: receipt.txHash,
+        status: 'settled',
+      })
+      this.#onEvent({
+        type: 'worker.paid',
+        questionId: live.question.id,
+        workerId: receipt.workerId,
+        amountCents: receipt.amountCents,
+        txHash: receipt.txHash,
+      })
+    })
+    return { receipts }
   }
 
   /** Delivers a resolution to a callback-mode caller who is not holding a socket. */

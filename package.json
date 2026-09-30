@@ -14,7 +14,7 @@
   },
   "scripts": {
     "build": "tsc --build packages/gateway demo && npm run build -w @quorum/worker-app",
-    "typecheck": "tsc --build --force",
+    "typecheck": "tsc --build --force packages/core packages/paymaster packages/gateway demo && tsc -p packages/worker-app --noEmit",
     "test": "npm run test -w @quorum/core && npm run test -w @quorum/gateway",
     "resolver": "npm run start -w @quorum/gateway",
     "worker": "npm run dev -w @quorum/worker-app",

@@ -1,4 +1,4 @@
-import { MAX_RESPONDERS, WAGE_CENTS } from './quorum.js'
+import { MAX_RESPONDERS, trustTarget, WAGE_CENTS } from './quorum.js'
 import { SERVABLE_KINDS, type AnswerSchema, type Kind } from './types.js'
 
 /**
@@ -114,4 +114,105 @@ export function expectedMarginCents(
   // Failures buy more answers than successes do, by definition: they escalated.
   const wages = options.answersBought * wageCents * (1 - options.noConsensusRate) + MAX_RESPONDERS * wageCents * options.noConsensusRate
   return revenue - wages
+}
+
+/**
+ * What an escalation is worth, from what being wrong would cost.
+ *
+ * An agent should not ask a person because it is unsure. It should ask when being
+ * wrong costs more than asking. That is a number, and the caller is the one party
+ * that knows it: an agent about to release a $4,000 payment and an agent tagging a
+ * support ticket are both "unsure", and they should not buy the same answer.
+ *
+ * Price already sets how sure the answer has to be (`trustTarget`): the engine does
+ * not answer below the target, and refunds instead. So an answer bought at price P
+ * leaves at most `1 - trustTarget(P)` chance of being wrong, and the expected cost of
+ * asking is the price plus that residual times the cost of error:
+ *
+ *   cost of asking at P   =  P + (1 - trustTarget(P)) * costOfError
+ *   cost of not asking    =  (1 - callerConfidence) * costOfError
+ *
+ * The price chosen is the one that minimises the first, within the kind's floor and
+ * the ceiling. A small cost of error lands on the floor; a large one on the ceiling,
+ * buying the most certainty on offer. Asking is worth it only when the first is
+ * smaller than the second. When the caller has not said how sure it is, there is
+ * nothing to compare against, so asking is taken as the caller's decision and the
+ * figures are returned for it to check.
+ */
+export type CostAdvice = {
+  readonly worthAsking: boolean
+  readonly priceCents: number
+  /** The confidence an answer at that price must reach before it is returned. */
+  readonly targetConfidence: number
+  /** Expected loss if the agent acts on its own guess. Null when its confidence is unknown. */
+  readonly expectedLossWithoutCents: number | null
+  /** Price plus the expected loss that remains after the answer. */
+  readonly expectedCostWithCents: number
+  readonly reason: string
+}
+
+export function adviseFromCost(input: {
+  kind: Kind
+  schema: AnswerSchema
+  costOfErrorCents: number
+  callerConfidence?: number | undefined
+}): CostAdvice {
+  const floor = priceFloor(input.kind, input.schema)
+  const residual = (price: number) => 1 - trustTarget({ priceCents: price })
+  const costAt = (price: number) => price + residual(price) * input.costOfErrorCents
+
+  let best = floor
+  for (let price = floor; price <= PRICE_CEILING_CENTS; price += 1) if (costAt(price) < costAt(best)) best = price
+
+  const withCents = costAt(best)
+  const withoutCents =
+    input.callerConfidence === undefined ? null : (1 - input.callerConfidence) * input.costOfErrorCents
+  const worthAsking = withoutCents === null || withCents < withoutCents
+  const dollars = (cents: number) => `$${(cents / 100).toFixed(2)}`
+
+  return {
+    worthAsking,
+    priceCents: best,
+    targetConfidence: trustTarget({ priceCents: best }),
+    expectedLossWithoutCents: withoutCents,
+    expectedCostWithCents: withCents,
+    reason:
+      withoutCents === null
+        ? `at ${dollars(best)} the answer must reach ${trustTarget({ priceCents: best }).toFixed(3)} confidence, leaving an expected ${dollars(withCents - best)} of the ${dollars(input.costOfErrorCents)} at risk`
+        : worthAsking
+          ? `acting on your guess risks an expected ${dollars(withoutCents)}; asking costs ${dollars(best)} and leaves ${dollars(withCents - best)} at risk`
+          : `acting on your guess risks an expected ${dollars(withoutCents)}, less than the ${dollars(withCents)} asking would cost overall; go ahead without a person`,
+  }
+}
+
+/**
+ * Prices a parsed ask, by ceiling or by cost of error.
+ *
+ * With a cost of error, the advised price is used beneath the caller's ceiling, and
+ * a question that is not worth a person is declined before anything is charged: the
+ * cheapest correct answer to "should I ask?" is sometimes "no", and a product that
+ * charged for it anyway would be selling doubt.
+ */
+export type PricedAsk =
+  | { readonly kind: 'quoted'; readonly quote: Quote; readonly advice?: CostAdvice }
+  | { readonly kind: 'not-worth-asking'; readonly advice: CostAdvice }
+
+export function priceAsk(input: {
+  kind: Kind
+  schema: AnswerSchema
+  maxPriceCents: number
+  costOfErrorCents?: number | undefined
+  callerConfidence?: number | undefined
+}): PricedAsk {
+  if (input.costOfErrorCents === undefined)
+    return { kind: 'quoted', quote: quote({ kind: input.kind, maxPriceCents: input.maxPriceCents, schema: input.schema }) }
+  const advice = adviseFromCost({
+    kind: input.kind,
+    schema: input.schema,
+    costOfErrorCents: input.costOfErrorCents,
+    callerConfidence: input.callerConfidence,
+  })
+  if (!advice.worthAsking) return { kind: 'not-worth-asking', advice }
+  const maxPriceCents = Math.min(input.maxPriceCents, advice.priceCents)
+  return { kind: 'quoted', quote: quote({ kind: input.kind, maxPriceCents, schema: input.schema }), advice }
 }

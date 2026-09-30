@@ -6,8 +6,11 @@
   new look, it gets a new component here rather than a local override, so the
   seventeen pages cannot drift apart.
 
-  Built to the approved comps. The page is light only and says so — the comps are
-  white, so the site does not follow the viewer's OS theme.
+  Built to the approved comps, which are white. Light is the default, and the
+  operating system's preference is not followed. Dark is a choice a person makes
+  with the theme control, and it applies to every page: the site, the docs, the
+  worker app and the console. A choice that held in one place and not the next
+  would read as the site forgetting it.
 */
 
 :root {
@@ -61,6 +64,48 @@
 
   --shell: 1240px;
   --pad: 40px;
+}
+
+/*
+  Dark mode.
+
+  Required rather than optional. A worker answers at night on a phone whose
+  battery has to last the evening, and the console gets projected in rooms with
+  the lights off. The tokens are redefined under an attribute set before first
+  paint from the stored choice, so every page switches together.
+*/
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --ground: #0c1017;
+  --ground-2: #151b25;
+  --surface: #131923;
+  --surface-2: #171e29;
+  --border: #232c3a;
+  --border-2: #2d3849;
+
+  --ink: #eef2f9;
+  --ink-2: #c6d0df;
+  --ink-3: #96a3b8;
+  --ink-4: #74829a;
+  --ink-5: #5d6b83;
+
+  --accent: #4c8dff;
+  --accent-2: #6ba0ff;
+  --accent-ink: #06101f;
+  --accent-wash: #16243c;
+  --accent-wash-2: #1c2d4a;
+
+  --good: #41c97a;
+  --good-wash: #102a1d;
+  --warn: #e0a940;
+  --warn-wash: #2a2011;
+  --bad: #f0605a;
+  --bad-wash: #2c1414;
+
+  --sh-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --sh-md: 0 1px 2px rgba(0, 0, 0, 0.35), 0 6px 18px rgba(0, 0, 0, 0.32);
+  --sh-lg: 0 1px 2px rgba(0, 0, 0, 0.35), 0 14px 40px rgba(0, 0, 0, 0.45);
 }
 
 * {
@@ -743,6 +788,18 @@ h3 {
   color: #b45309;
 }
 
+[data-theme='dark'] .code-light .s {
+  color: var(--code-str);
+}
+
+[data-theme='dark'] .code-light .k {
+  color: var(--code-key);
+}
+
+[data-theme='dark'] .code-light .n {
+  color: var(--code-num);
+}
+
 /* ------------------------------------------------------------------ table -- */
 
 .tbl {
@@ -1231,6 +1288,14 @@ h3 {
 
 .w-band-alt {
   background: linear-gradient(180deg, #ffffff 0%, #f4f8fd 100%);
+}
+
+[data-theme='dark'] .w-band {
+  background: linear-gradient(180deg, var(--ground-2) 0%, var(--ground) 100%);
+}
+
+[data-theme='dark'] .w-band-alt {
+  background: linear-gradient(180deg, var(--ground) 0%, var(--ground-2) 100%);
 }
 
 .w-grid {

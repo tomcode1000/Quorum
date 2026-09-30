@@ -14,6 +14,7 @@ import {
   row,
   script,
   stat,
+  themeToggle,
   tile,
   workerSide,
   workerTop,
@@ -379,6 +380,31 @@ const earnings = () =>
       </div>
     `)}
 
+    ${card(
+      `
+      ${cardHead('Send from your account')}
+      <div class="ap-pad" style="padding-top:0;display:grid;gap:12px">
+        <div class="ap-field">${ic('out')}<input type="text" inputmode="text" autocomplete="off" spellcheck="false" placeholder="Send to, 0x…" data-app="send-to" aria-label="Address to send to"/></div>
+        <div class="ap-field">${ic('money')}<input type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="Amount in dollars" data-app="send-amount" aria-label="Amount in dollars"/></div>
+        <button class="ap-primary" type="button" data-app="send">${ic('faceid')} Send with your passkey</button>
+        <p data-app="send-status" class="ap-info" style="margin:0" hidden></p>
+        ${info('shield', 'Nothing to pay to move it', 'Your passkey signs the transfer on this device. Quorum pays the network fee and can do nothing else with your account.')}
+      </div>
+    `,
+      ' data-app="send-card" hidden',
+    )}
+
+    ${card(
+      `
+      ${cardHead('Your wages go to Tempo Wallet')}
+      <div class="ap-pad" style="padding-top:0">
+        ${info('wallet', 'Already where you use it', 'You signed in with Tempo Wallet, so every wage lands in it directly. Spend or send it there like anything else you hold.')}
+        <a class="ap-second" href="https://wallet.tempo.xyz" target="_blank" rel="noopener" style="margin-top:14px">${ic('out')} Open Tempo Wallet</a>
+      </div>
+    `,
+      ' data-app="tempo-wallet-card" hidden',
+    )}
+
     ${card(`
       ${cardHead('How you get paid')}
       <div class="ap-rows ap-rows-inset">
@@ -495,6 +521,7 @@ const profile = () =>
     `)}
 
     ${card(`<div class="ap-rows">
+      ${row({ icon: 'target', title: 'Your skills', note: 'What you answer, and adding more', href: 'app-skills.html' })}
       ${row({ icon: 'shield', title: 'Sign-in and security', note: 'Your passkey, and the devices you use', href: 'app-settings.html' })}
       ${row({ icon: 'wallet', title: 'Where wages are sent', note: 'The account your passkey made', href: 'app-settings.html' })}
       ${row({ icon: 'lock', title: 'Privacy', note: 'What is kept about you, and what is not', href: 'app-settings.html' })}
@@ -682,11 +709,74 @@ const settings = () =>
 </div>`,
   })
 
+/* ----------------------------------------------------------------- skills -- */
+
+/*
+  Skills.
+
+  A worker picks the kinds of question they want, as on any marketplace, and is
+  assessed in each one. There is no comp for this screen, so it is built from the
+  settings screen's switch rows and the assessment screen's "What happens" card,
+  and reads as part of the same app.
+
+  The icons and names are the capability catalogue's, so a worker choosing
+  "Matching records" here is choosing the same thing a caller buys under that
+  name. The notes are written for the worker rather than the caller: what they
+  will be looking at, not what the caller's pipeline needed.
+*/
+const SKILLS = [
+  ['disambiguate', 'swap', 'Telling readings apart', 'Look at a receipt, label or line of text and say which of two readings is right. For example: is the total 45.00 or 4.50?'],
+  ['verify', 'shield', 'Checking something is real', 'Say whether a date, an address or a detail is genuine and consistent. For example: is "31 February" a real date?'],
+  ['match', 'link', 'Matching records', 'Decide whether two records describe the same person, place or product, when they are written differently.'],
+  ['categorise', 'tag', 'Categorising', 'Put an item or a message in the right group from a short list you are given.'],
+  ['compare', 'list', 'Comparing', 'Pick the better of two options: the cheaper one, the correct one, or the one that describes something best.'],
+]
+
+const skillRow = ([kind, icon, title, note]) =>
+  `<div class="ap-row" data-skill="${kind}">${tile(icon, '', 'sm')}<div><b>${title}</b><span>${note}</span></div><span class="ap-row-val" data-skill-state="${kind}"></span><button class="ap-toggle" type="button" role="switch" aria-checked="false" aria-label="${title}" data-skill-toggle="${kind}"></button></div>`
+
+const skills = () =>
+  appPage({
+    title: 'Your skills',
+    script: true,
+    side: workerSide('skills', ASSESSMENT_NAV),
+    main: `${workerTop(back('Back to home', 'app-home.html'))}
+<div class="ap-cols">
+  <div class="ap-stack">
+    <div>
+      ${chip('Your skills')}
+      <h1 class="ap-h1 ap-h1-lg">What are you<em>good at?</em></h1>
+      <p class="ap-sub">Pick the kinds of question you want to answer. Each one has its own five-question assessment, and only the ones you pass bring you work. You can add more whenever you like.</p>
+    </div>
+
+    ${card(`
+      <div class="ap-card-head">${tile('target')}<div style="flex:1;min-width:0"><h2 class="ap-h2">Skills</h2><span style="display:block;font-size:12.5px;color:var(--ink-3);margin-top:2px">Switch on the ones you want to be assessed in.</span></div></div>
+      <div class="ap-rows">${SKILLS.map(skillRow).join('')}</div>
+    `)}
+
+    <p data-app="skills-error" class="ap-info ap-info-bad" style="margin:0" hidden></p>
+    <button class="ap-primary" type="button" data-app="skills-save" disabled>Start the assessment ${ic('arrow')}</button>
+  </div>
+
+  <div class="ap-stack">
+    ${card(`
+      ${cardHead(`${tile('shield', '', 'sm')} What happens`)}
+      <div class="ap-rows ap-rows-inset">
+        ${['Pick what you are good at', 'Five questions for each', 'Work in what you passed'].map((t, i) => `<div class="ap-row"><span class="ap-av ap-av-sm">${i + 1}</span><div><b>${t}</b><span>${['One skill or all five. Picking fewer is fine.', 'Four of five passes that skill. Take as long as you need.', 'Questions of that kind reach you, and every one is paid.'][i]}</span></div></div>`).join('')}
+      </div>
+      <div class="ap-pad">
+        ${info('lock', 'One try at each skill', 'An assessment you could retake until you passed would teach its answers, so each skill is assessed once. Not passing one closes that skill only, and the rest are unaffected.')}
+      </div>
+    `)}
+  </div>
+</div>`,
+  })
+
 /* ------------------------------------------------------------- assessment -- */
 
 const ASSESS_POINTS = [
   ['user', 'Be yourself', 'Use your own judgment. There is no trick and no preferred answer.'],
-  ['clipboard', 'Five questions', 'The same kind you will be answering for real, in the same format.'],
+  ['clipboard', 'Five per skill', 'Of the kind you picked, in the format you will answer for real.'],
   ['clock', 'About two minutes', 'At your own pace. Nothing is timing you.'],
   ['db', 'Then you are paid per answer', 'The assessment itself is not paid. Every real question after it is.'],
 ]
@@ -714,14 +804,14 @@ const assessment = () =>
     <div>
       ${chip('Assessment')}
       <h1 class="ap-h1 ap-h1-lg">Welcome to your<em>assessment.</em></h1>
-      <p class="ap-sub">Five short questions before any real work reaches you. They are the same kind of question you will be answering, and once you pass, every real question that reaches you is paid.</p>
+      <p class="ap-sub">Five short questions for each skill you picked, before any real work of that kind reaches you. Once you pass a skill, every real question of that kind is paid.</p>
     </div>
 
     <div class="ap-list" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
       ${ASSESS_POINTS.map(([icon, title, body]) => `<div>${tile(icon)}<b style="display:block;margin:14px 0 5px;font-size:14.5px;font-weight:700;letter-spacing:-0.02em">${title}</b><p style="margin:0;font-size:12.5px;line-height:1.55;color:var(--ink-3)">${body}</p></div>`).join('')}
     </div>
 
-    ${info('db', 'Finish it and work starts reaching you', 'You need four of the five. The assessment is not paid, because none of it reaches a customer; every question after it is paid the moment your answer is accepted.')}
+    ${info('db', 'Pass a skill and its work starts reaching you', 'You need four of the five in each. The assessment is not paid, because none of it reaches a customer; every question after it is paid the moment your answer is accepted.')}
 
     <a class="ap-primary" href="app-assessment-question.html">Start the assessment ${ic('arrow')}</a>
   </div>
@@ -730,7 +820,7 @@ const assessment = () =>
     ${card(`
       ${cardHead(`${tile('shield', '', 'sm')} What happens`)}
       <div class="ap-rows ap-rows-inset">
-        ${['Answer five questions', 'Four of five passes', 'Work starts reaching you'].map((t, i) => `<div class="ap-row"><span class="ap-av ap-av-sm">${i + 1}</span><div><b>${t}</b><span>${['Choose the option that answers each one.', 'Take as long as you need on each.', 'Questions are routed by what you are good at, and every one is paid.'][i]}</span></div></div>`).join('')}
+        ${['Five questions per skill', 'Four of five passes it', 'Work in what you passed'].map((t, i) => `<div class="ap-row"><span class="ap-av ap-av-sm">${i + 1}</span><div><b>${t}</b><span>${['Choose the option that answers each one.', 'Take as long as you need on each.', 'Only the kinds you passed reach you, and every one is paid.'][i]}</span></div></div>`).join('')}
       </div>
       <div class="ap-pad">
         ${info('lock', 'There is no password to leak', 'You sign in with your device. We hold nothing about you that a breach could take, because there is nothing of that sort to hold.')}
@@ -760,7 +850,7 @@ const assessmentQuestion = () =>
 <div class="ap-cols">
   <div class="ap-stack">
     <div>
-      <p class="ap-chip">Assessment</p>
+      <p class="ap-chip" data-app="q-skill">Assessment</p>
       <h1 class="ap-h1">Question <span data-app="q-number">1</span> of <span data-app="q-of">5</span></h1>
       <div class="ap-progress" style="margin-top:18px">
         <div class="ap-progress-track"><div class="ap-progress-fill" data-app="q-progress" style="width:20%"></div></div>
@@ -813,7 +903,7 @@ const assessmentPassed = () =>
         </div>
         <div style="flex:1;min-width:240px">
           <h1 class="ap-h1 ap-h1-lg">You passed.</h1>
-          <p class="ap-sub" style="margin-bottom:0">Real questions can reach you now, and every one of them is paid the moment your answer is accepted.</p>
+          <p class="ap-sub" style="margin-bottom:0" data-app="passed-note">Real questions can reach you now, and every one of them is paid the moment your answer is accepted.</p>
         </div>
       </div>
     </div>
@@ -823,9 +913,9 @@ const assessmentPassed = () =>
       ${metric('db', 'From here on', 'Loading', 'for every answer accepted', 'wage')}
     </div>`)}
 
-    ${info('bolt', 'Work can reach you now', 'Questions are routed by what each person tends to be good at, so the kinds you did well on will find you first.')}
+    ${info('bolt', 'Work can reach you now', 'Only questions of the kinds you passed are sent to you, and the ones you do best on find you first.')}
 
-    <a class="ap-primary" href="app-home.html">Start answering ${ic('arrow')}</a>
+    <a class="ap-primary" href="app-home.html" data-app="result-next">Start answering ${ic('arrow')}</a>
   </div>
 
   <div class="ap-stack">
@@ -864,7 +954,7 @@ const assessmentFailed = () =>
     <div>
       ${chip('Assessment complete')}
       <h1 class="ap-h1 ap-h1-lg">This did not work out.</h1>
-      <p class="ap-sub">Too many of the five were missed, so questions will not be routed to you. The assessment is not paid, so nothing is owed either way, and anything you had already earned stays in your own account where we cannot reach it.</p>
+      <p class="ap-sub" data-app="failed-note">Too many of the five were missed, so questions will not be routed to you. The assessment is not paid, so nothing is owed either way, and anything you had already earned stays in your own account where we cannot reach it.</p>
     </div>
 
     ${card(`<div class="ap-split">
@@ -874,7 +964,7 @@ const assessmentFailed = () =>
 
     ${info('shield', 'Nothing is being withheld', 'Anything you earned on a real question was sent the moment it was accepted, and it is in an account only you control. You can open every payment and check it.', 'plain')}
 
-    <a class="ap-primary" href="app-payments.html">See your payments ${ic('arrow')}</a>
+    <a class="ap-primary" href="app-payments.html" data-app="result-next">See your payments ${ic('arrow')}</a>
   </div>
 
   <div class="ap-stack">
@@ -912,6 +1002,7 @@ const signIn = () =>
   <a class="brand" href="index.html"><span class="mark">${MARK}</span>Quorum</a>
   <div class="ap-side-foot">
     <div class="ap-note">${ic('shield')}<div><b>Nothing to steal</b><p>There is no password here, so there is none to leak and none to remember.</p></div></div>
+    ${themeToggle()}
   </div>
 </aside>`,
     main: `<div class="ap-cols">
@@ -932,10 +1023,12 @@ const signIn = () =>
   <div class="ap-stack">
     ${card(`<div class="ap-pad" style="text-align:center">
       <span class="brand" style="display:inline-flex;align-items:center;gap:10px;font-size:19px;font-weight:700;letter-spacing:-0.035em"><span class="mark" style="width:28px;height:28px;color:var(--accent)">${MARK}</span>Quorum</span>
-      <h2 class="ap-h3" style="margin:20px 0 6px">Sign in with a passkey</h2>
-      <p style="margin:0 0 20px;font-size:13px;line-height:1.6;color:var(--ink-3)">Use your fingerprint, face or device PIN to continue.</p>
+      <h2 class="ap-h3" style="margin:20px 0 6px">Sign in</h2>
+      <p style="margin:0 0 20px;font-size:13px;line-height:1.6;color:var(--ink-3)">With a passkey on this device, or with your Tempo Wallet.</p>
       <button class="ap-primary" type="button" data-app="passkey">${ic('faceid')} Use this device</button>
       <p style="margin:14px 0 0;font-size:12px;line-height:1.6;color:var(--ink-4)">First time here? The same button makes your passkey, so there is no separate sign-up.</p>
+      <button class="ap-second" type="button" data-app="tempo-wallet" style="width:100%;justify-content:center;margin-top:18px">${ic('wallet')} Use Tempo Wallet instead</button>
+      <p style="margin:10px 0 0;font-size:12px;line-height:1.6;color:var(--ink-4)">Already have a Tempo Wallet? Be paid straight into it, with nothing to move afterwards.</p>
       <p data-app="signin-error" class="ap-info ap-info-bad" style="margin-top:14px;text-align:left" hidden></p>
     </div>`)}
 
@@ -947,6 +1040,7 @@ const signIn = () =>
   })
 
 export {
+  skills,
   home,
   question,
   submitted,

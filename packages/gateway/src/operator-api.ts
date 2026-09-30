@@ -5,6 +5,7 @@ import type { Escalations } from './escalations.js'
 import type { Events } from './events.js'
 import type { RouterEvent } from './router.js'
 import type { Store } from './store.js'
+import { standing } from './skills.js'
 
 /**
  * The operator console's read API.
@@ -54,9 +55,10 @@ export function operatorApi(services: {
     const scores = SERVABLE_KINDS.map((kind) => reliability(worker.record, kind))
     const best = scores.length ? Math.max(...scores) : 0
     const answered = worker.answerCount
-    const status = worker.assessmentFailed
+    const where = standing(worker.skills)
+    const status = where === 'failed'
       ? 'blocked'
-      : worker.assessment !== null
+      : worker.assessment !== null || where !== 'passed'
         ? 'in-assessment'
         : worker.busyWith !== null
           ? 'answering'
@@ -73,7 +75,7 @@ export function operatorApi(services: {
       answers alone printed "no record yet" beside a roster the router was
       actively using, which is the one thing this column must not do.
     */
-    const rated = !worker.assessmentFailed && worker.assessment === null
+    const rated = where === 'passed'
 
     return {
       workerId: worker.workerId,
@@ -84,7 +86,9 @@ export function operatorApi(services: {
       lastSeenAt: worker.lastSeenAt,
       busyWith: worker.busyWith,
       status,
-      assessment: worker.assessmentFailed ? 'failed' : worker.assessment !== null ? 'in-progress' : 'passed',
+      assessment: where === 'passed' || where === 'failed' ? where : 'in-progress',
+      /** Each skill they picked and where it stands. */
+      skills: worker.skills,
       /** Answers that arrived faster than the question could plausibly be read. */
       tooFastCount: worker.tooFastCount,
       payments: worker.payments.length,
@@ -120,7 +124,7 @@ export function operatorApi(services: {
         workersRegistered: workers.length,
         workersOnline: online(now).length,
         workersAnswering: workers.filter((w) => w.busyWith !== null).length,
-        workersBlocked: workers.filter((w) => w.assessmentFailed).length,
+        workersBlocked: workers.filter((w) => standing(w.skills) === 'failed').length,
         workersInAssessment: workers.filter((w) => w.assessment !== null).length,
         answersReceived: workers.reduce((sum, w) => sum + w.answerCount, 0),
       },
@@ -174,7 +178,8 @@ export function operatorApi(services: {
           capability.kind === undefined
             ? 0
             : workers.filter(
-                (w) => !w.assessmentFailed && w.assessment === null && reliability(w.record, capability.kind as Kind) > 0.5,
+                // Staffed means passed in this skill, not merely rated well somewhere.
+                (w) => w.skills[capability.kind as Kind] === 'passed',
               ).length
         return { id: capability.id, kind: capability.kind ?? null, name: capability.name, servable: capability.servable, staffed }
       }),

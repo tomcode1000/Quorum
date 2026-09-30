@@ -61,7 +61,7 @@ async function refresh() {
         badge.textContent = 'Unknown'
         badge.className = 'badge'
       } else if (found.servable) {
-        badge.textContent = `${found.price_cents.min}–${found.price_cents.max}¢`
+        badge.textContent = `${found.price_cents.min}–${found.price_cents.max}¢ a question`
         badge.className = 'badge badge-accent'
       } else {
         badge.textContent = 'No workforce yet'

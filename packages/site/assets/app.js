@@ -272,11 +272,15 @@ const initClock = () => {
 /*
   The worker's identity.
 
-  Shares the storage key with the existing worker app so a person who signed in
-  there is signed in here. There is no password and no seed phrase: the passkey
-  is the identity and the account it derives is where wages land.
+  There is no password and no seed phrase: the passkey, or Tempo Wallet, is the
+  identity, and the account it controls is where wages land.
+
+  Versioned, because sessions saved before this version carry an address that
+  was derived by a hash of our own rather than by Tempo's rule: an address no
+  key can sign for. Ignoring them sends the worker through sign-in again, where
+  an old passkey is recognised and they are asked to make a new one.
 */
-const SESSION_KEY = 'quorum.session'
+const SESSION_KEY = 'quorum.session.v2'
 
 const session = () => {
   try {
@@ -293,108 +297,119 @@ const passkeysAvailable = () =>
 const hex = (bytes) => [...new Uint8Array(bytes)].map((b) => b.toString(16).padStart(2, '0')).join('')
 
 /**
- * Derives the account from the passkey's public key.
+ * Loads one of the wallet bundles on demand.
  *
- * In the deployed app this is the Tempo accounts adapter's job — it returns the
- * counterfactual smart-account address for the credential. Deriving it locally
- * keeps the app runnable without that plumbing configured, which matters
- * because the thing worth testing first is whether a real person will answer a
- * real question on a real phone.
+ * They are the only part of the app with dependencies, and large ones, so no
+ * page pays for them until it is about to sign something.
  */
-/**
- * Derives the account from the credential id.
- *
- * From the id alone, deliberately. An attestation carries a public key and an
- * assertion does not, so deriving from the key would give one address when a
- * passkey is created and a different address when the same passkey is used to
- * sign in — the worker would come back to an empty account and their earnings
- * would be sitting at an address nothing could reach.
- *
- * In the deployed app this is the Tempo accounts adapter's job: it returns the
- * counterfactual smart-account address for the credential. Deriving it locally
- * keeps the app runnable without that plumbing configured, which matters
- * because the thing worth testing first is whether a real person will answer a
- * real question on a real phone.
- */
-const deriveAddress = async (credentialId) => {
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(credentialId))
-  return `0x${hex(new Uint8Array(digest).slice(12))}`
+const loadBundle = (file, global) =>
+  window[global]
+    ? Promise.resolve(window[global])
+    : new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = `assets/${file}`
+        script.onload = () => (window[global] ? resolve(window[global]) : reject(new Error('The wallet did not load.')))
+        script.onerror = () => reject(new Error('The wallet could not be downloaded. Check your connection.'))
+        document.head.append(script)
+      })
+
+const wallet = () => loadBundle('wallet.js', 'QuorumWallet')
+
+/** The public key registered for a passkey, or null when there is none on record. */
+const lookupKey = async (workerId) => {
+  try {
+    return (await get(`/v1/worker/key?workerId=${encodeURIComponent(workerId)}`)).publicKey
+  } catch {
+    return null
+  }
 }
 
+/** Set when an old passkey had to be replaced, so the next page can say so. */
+let legacyReplaced = false
+
 /**
- * Establishes the worker's identity.
+ * Establishes the worker's identity with a passkey.
  *
  * Existing passkey first, new one only if there is not one. This order is what
  * makes the button safe to press twice. A worker who clears their browser, or
  * whose first attempt failed after the passkey was already saved, would
- * otherwise be handed a brand new credential — and since the credential is the
- * identity, that is a brand new account with none of their earnings in it. The
- * money would still be theirs and still on the ledger, at an address they could
- * no longer reach from the app.
+ * otherwise be handed a brand new credential, and since the credential is the
+ * identity, that is a brand new account with none of their earnings in it.
  *
- * `credentials.get` with no `allowCredentials` asks the device for any
- * discoverable passkey for this site. If the person has none, or dismisses the
- * prompt, we fall through and make one.
+ * The account is the one Tempo itself derives from the passkey's public key, so
+ * the passkey can later sign transfers out of it. A browser hands over the key
+ * only when a passkey is made, which is why it is registered with the gateway and
+ * looked up again on every later sign-in.
  */
 const createIdentity = async () => {
   if (!passkeysAvailable()) {
     /*
-      No secure context — in practice a phone opening this over plain http on a
+      No secure context: in practice a phone opening this over plain http on a
       LAN address, where the browser refuses WebAuthn outright. A browser-local
       identity keeps the app usable for that, and for nothing else: an identity
-      anybody can mint is not an identity, and shipping it to real workers would
-      hand a farmer as many accounts as they cared to open. Production is https,
-      where the passkey path is the only path.
+      anybody can mint is not an identity, and nothing paid to it can be moved.
+      Production is https, where the passkey path is the only path.
     */
     const random = crypto.getRandomValues(new Uint8Array(20))
     const address = `0x${hex(random)}`
-    return { workerId: `local-${address.slice(2, 18)}`, address }
+    return { workerId: `local-${address.slice(2, 18)}`, address, signer: null }
   }
 
+  const { existingPasskey, createPasskey } = await wallet()
   try {
-    const existing = await navigator.credentials.get({
-      publicKey: {
-        challenge: crypto.getRandomValues(new Uint8Array(32)),
-        userVerification: 'preferred',
-        timeout: 60000,
-      },
-      // Silent if the device has nothing to offer, rather than a dead prompt.
-      mediation: 'optional',
-    })
-    if (existing) return { workerId: existing.id, address: await deriveAddress(existing.id) }
-  } catch {
+    return { ...(await existingPasskey(lookupKey)), signer: 'passkey' }
+  } catch (error) {
     /*
-      No passkey for this site yet, or the person dismissed the picker. Either
-      way the next step is to make one, so this is not an error to report.
+      No passkey for this site yet, or the person dismissed the picker: make one.
+      A passkey from before accounts were derived properly lands here too. It
+      cannot be upgraded, because the browser will not give its key back, so it
+      is replaced and the worker is told why rather than left wondering.
     */
+    if (error?.name === 'LegacyPasskey') legacyReplaced = true
   }
-
-  const credential = await navigator.credentials.create({
-    publicKey: {
-      challenge: crypto.getRandomValues(new Uint8Array(32)),
-      rp: { name: 'Quorum' },
-      user: {
-        // No email, no phone number, no name. A worker should not have to
-        // identify themselves to a stranger in order to be paid by one.
-        id: crypto.getRandomValues(new Uint8Array(16)),
-        name: `worker-${Date.now()}`,
-        displayName: 'Quorum worker',
-      },
-      pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
-      authenticatorSelection: { residentKey: 'required', userVerification: 'preferred' },
-      timeout: 60000,
-    },
-  })
-  if (!credential) throw new Error('The passkey was not created.')
-  return { workerId: credential.id, address: await deriveAddress(credential.id) }
+  return { ...(await createPasskey()), signer: 'passkey' }
 }
 
 const signIn = async () => {
   const existing = session()
   if (existing) return existing
   const identity = await createIdentity()
-  const registered = await post('/v1/worker/register', identity)
-  const saved = { workerId: identity.workerId, address: identity.address, assessment: registered.assessment }
+  const { signer, ...registration } = identity
+  const registered = await post('/v1/worker/register', registration)
+  return remember({
+    workerId: identity.workerId,
+    address: identity.address,
+    signer,
+    ...(identity.publicKey ? { publicKey: identity.publicKey } : {}),
+    assessment: registered.assessment,
+  })
+}
+
+/**
+ * Signs in with Tempo Wallet.
+ *
+ * Wages then go to the Tempo Wallet account itself. The wallet proves the
+ * address is theirs by signing the gateway's challenge while it connects, and
+ * only then does the gateway hand back a worker id.
+ */
+const signInWithTempoWallet = async () => {
+  const health = await get('/health')
+  const { connect } = await loadBundle('tempo-wallet.js', 'QuorumTempoWallet')
+  const signed = await connect({ chainId: health.chainId, authUrl: `${gateway}/v1/auth` })
+  return remember({ workerId: signed.workerId, address: signed.address, signer: 'tempo-wallet', assessment: signed.assessment })
+}
+
+/** Where a worker goes next, by where they stand. See the gateway's skills.ts. */
+const landingFor = (standing) =>
+  standing === 'passed'
+    ? 'app-home.html'
+    : standing === 'choose'
+      ? 'app-skills.html'
+      : standing === 'failed'
+        ? 'app-assessment-failed.html'
+        : 'app-assessment.html'
+
+const remember = (saved) => {
   try {
     localStorage.setItem(SESSION_KEY, JSON.stringify(saved))
   } catch {
@@ -551,6 +566,70 @@ const loadMe = async () => {
 
   renderPayments(me)
   return me
+}
+
+/* ------------------------------------------------------------------ send -- */
+
+/**
+ * Moving money out of a passkey worker's own account.
+ *
+ * Only a passkey worker gets this. Their passkey works on this site alone, so
+ * this is the one place they can sign a transfer. A Tempo Wallet worker's wages
+ * are already in their wallet, and a browser-local identity has no key that
+ * could move anything, so neither is shown a control that cannot work.
+ */
+const initSend = (me) => {
+  const current = session()
+  const sendCard = $('send-card')
+  const tempoCard = $('tempo-wallet-card')
+  if (!current || !me || (!sendCard && !tempoCard)) return
+  if (tempoCard) tempoCard.hidden = me.signer !== 'tempo-wallet'
+  if (!sendCard) return
+  sendCard.hidden = !(me.signer === 'passkey' && current.publicKey)
+  if (sendCard.hidden) return
+
+  const button = $('send')
+  const status = $('send-status')
+  const say = (text, tone = '') => {
+    status.hidden = false
+    status.className = `ap-info${tone ? ` ap-info-${tone}` : ''}`
+    status.textContent = text
+  }
+
+  button.addEventListener('click', async () => {
+    const to = $('send-to').value.trim()
+    const amountCents = Math.round(Number($('send-amount').value) * 100)
+    if (!/^0x[0-9a-fA-F]{40}$/.test(to)) return say('That does not look like a Tempo address. It starts with 0x and has 40 characters after it.', 'bad')
+    if (!(amountCents > 0)) return say('Enter an amount of at least one cent.', 'bad')
+    if (me.balanceCents !== null && amountCents > me.balanceCents)
+      return say(`You hold ${money(me.balanceCents)}, so that is more than is in your account.`, 'bad')
+
+    const was = button.innerHTML
+    button.disabled = true
+    button.textContent = 'Confirm with your passkey…'
+    try {
+      const { sendFromPasskey, explorerTx } = await wallet()
+      const hash = await sendFromPasskey({
+        workerId: current.workerId,
+        publicKey: current.publicKey,
+        chainId: me.chainId,
+        currency: me.currency,
+        relayUrl: `${gateway}/v1/relay`,
+        to,
+        amountCents,
+      })
+      status.hidden = false
+      status.className = 'ap-info ap-info-good'
+      status.innerHTML = `Sent ${money(amountCents)}. <a href="${explorerTx(me.chainId, hash)}" target="_blank" rel="noopener">See it on the public record</a>.`
+      $('send-amount').value = ''
+      await loadMe()
+    } catch (error) {
+      say(`Nothing was sent: ${String(error.shortMessage ?? error.message ?? error)}`, 'bad')
+    } finally {
+      button.disabled = false
+      button.innerHTML = was
+    }
+  })
 }
 
 /** The wage, read from a live assignment or from the catalog rather than typed. */
@@ -712,10 +791,33 @@ const initSignIn = () => {
   if (session()) {
     button.textContent = 'Continue'
     button.addEventListener('click', () => {
-      location.href = 'app-home.html'
+      location.href = landingFor(session()?.assessment)
     })
     return
   }
+
+  const tempoButton = $('tempo-wallet')
+  // Arriving from the site's "Use Tempo Wallet" button: point at it rather than
+  // opening the wallet unasked, which a browser would block as a pop-up anyway.
+  if (tempoButton && location.hash === '#tempo-wallet') tempoButton.focus()
+  if (tempoButton)
+    tempoButton.addEventListener('click', async () => {
+      const was = tempoButton.innerHTML
+      tempoButton.disabled = true
+      tempoButton.textContent = 'Waiting for Tempo Wallet…'
+      try {
+        const signed = await signInWithTempoWallet()
+        location.href = landingFor(signed.assessment)
+      } catch (error) {
+        tempoButton.disabled = false
+        tempoButton.innerHTML = was
+        const box = $('signin-error')
+        if (box) {
+          box.hidden = false
+          box.textContent = `Tempo Wallet did not finish signing you in: ${String(error.message ?? error)}. Nothing was charged. You can try again, or use a passkey on this device.`
+        }
+      }
+    })
 
   button.addEventListener('click', async () => {
     const was = button.innerHTML
@@ -723,7 +825,20 @@ const initSignIn = () => {
     button.textContent = 'Waiting for your device…'
     try {
       const signed = await signIn()
-      location.href = signed.assessment === 'passed' ? 'app-home.html' : 'app-assessment.html'
+      const next = landingFor(signed.assessment)
+      const box = $('signin-error')
+      if (legacyReplaced && box) {
+        // Said before moving on, because it explains why their account looks new.
+        box.hidden = false
+        box.className = 'ap-info'
+        box.textContent =
+          'Your old passkey was made before Quorum could read your account from it, so a new one has been made and your account starts fresh. Taking you in now.'
+        setTimeout(() => {
+          location.href = next
+        }, 5000)
+        return
+      }
+      location.href = next
     } catch (error) {
       button.disabled = false
       button.innerHTML = was
@@ -951,14 +1066,12 @@ const initAssessment = async () => {
   }
 
   const show = (body) => {
-    if (body.status === 'passed') {
-      location.href = 'app-assessment-passed.html'
+    // Nothing left to assess: go wherever their standing now points.
+    if (body.status !== 'in-progress') {
+      location.href = landingFor(body.status)
       return false
     }
-    if (body.status === 'failed') {
-      location.href = 'app-assessment-failed.html'
-      return false
-    }
+    fill('q-skill', `Assessment · ${kindLabel(body.skill)}`)
     fill('q-number', String(body.number))
     fill('q-of', String(body.of))
     fill('prompt', body.question.prompt)
@@ -1014,6 +1127,25 @@ const initAssessmentResult = () => {
     result = null
   }
   if (!result) return
+  const skill = kindLabel(result.skill).toLowerCase()
+  const next = $('result-next')
+  if (result.next && next) {
+    // Another skill they picked is waiting; that comes before anything else.
+    next.href = 'app-assessment-question.html'
+    next.innerHTML = `Next: ${esc(kindLabel(result.next).toLowerCase())} ${icon('arrow')}`
+  }
+  if (result.status === 'passed')
+    fill('passed-note', `Questions about ${skill} can reach you now, and every one of them is paid the moment your answer is accepted.`)
+  if (result.status === 'failed' && result.standing !== 'failed') {
+    fill(
+      'failed-note',
+      `Too many of the five were missed, so questions about ${skill} will not be routed to you. Your other skills are unaffected, and anything you have earned stays in your own account where we cannot reach it.`,
+    )
+    if (!result.next && next) {
+      next.href = 'app-home.html'
+      next.innerHTML = `Back to work ${icon('arrow')}`
+    }
+  }
   fill('score', `${result.correct} of ${result.of}`)
   fill('assessment-correct', String(result.correct))
   fill('assessment-wrong', String(result.of - result.correct))
@@ -1025,6 +1157,91 @@ const initAssessmentResult = () => {
     it, which is the number that actually matters to somebody deciding whether
     to carry on.
   */
+}
+
+/* ----------------------------------------------------------------- skills -- */
+
+/**
+ * Picking skills.
+ *
+ * A skill already passed or not passed is shown as such and cannot be switched:
+ * the gateway would refuse it anyway, and a switch that springs back teaches
+ * nothing. A skill without enough known answers to assess is marked plainly
+ * rather than hidden, because a missing option reads as one that does not exist.
+ */
+const initSkills = async () => {
+  const save = $('skills-save')
+  if (!save) return
+  const current = session()
+  if (!current) {
+    location.href = 'app-signin.html'
+    return
+  }
+
+  const box = $('skills-error')
+  const say = (text) => {
+    box.hidden = false
+    box.textContent = text
+  }
+
+  let view
+  try {
+    view = await get(`/v1/worker/skills?workerId=${encodeURIComponent(current.workerId)}`)
+  } catch {
+    say('Could not reach Quorum to load your skills. This page will work again when your connection is back.')
+    return
+  }
+
+  const toggles = [...document.querySelectorAll('[data-skill-toggle]')]
+  const open = (kind) => {
+    const skill = view.skills.find((entry) => entry.kind === kind)
+    return skill?.assessable && (skill.state === null || skill.state === 'chosen')
+  }
+  const hasPassed = view.skills.some((entry) => entry.state === 'passed')
+
+  const refresh = () => {
+    const picked = toggles.filter((t) => open(t.dataset.skillToggle) && t.getAttribute('aria-checked') === 'true')
+    save.disabled = picked.length === 0 && !hasPassed
+    save.innerHTML = picked.length > 0 ? `Start the assessment ${icon('arrow')}` : `Back to work ${icon('arrow')}`
+  }
+
+  for (const toggle of toggles) {
+    const kind = toggle.dataset.skillToggle
+    const skill = view.skills.find((entry) => entry.kind === kind)
+    const slot = document.querySelector(`[data-skill-state="${kind}"]`)
+    const decided = skill?.state === 'passed' || skill?.state === 'failed'
+    if (decided || !skill?.assessable) {
+      toggle.hidden = true
+      if (slot)
+        slot.innerHTML = !skill?.assessable
+          ? pill('No test yet', '', 'clock')
+          : skill.state === 'passed'
+            ? pill('Passed', 'good', 'check')
+            : pill('Not passed', 'bad', 'x')
+      continue
+    }
+    toggle.setAttribute('aria-checked', String(skill.state === 'chosen'))
+    toggle.addEventListener('click', () => {
+      toggle.setAttribute('aria-checked', String(toggle.getAttribute('aria-checked') !== 'true'))
+      refresh()
+    })
+  }
+  refresh()
+
+  save.addEventListener('click', async () => {
+    const kinds = toggles
+      .filter((t) => open(t.dataset.skillToggle) && t.getAttribute('aria-checked') === 'true')
+      .map((t) => t.dataset.skillToggle)
+    save.disabled = true
+    try {
+      const saved = await post('/v1/worker/skills', { workerId: current.workerId, kinds })
+      remember({ ...current, assessment: saved.standing })
+      location.href = kinds.length > 0 ? 'app-assessment.html' : landingFor(saved.standing)
+    } catch (error) {
+      save.disabled = false
+      say(`Your skills were not saved: ${String(error.message ?? error)}. Nothing has changed, so you can try again.`)
+    }
+  })
 }
 
 /* ------------------------------------------------------------ home state -- */
@@ -1060,12 +1277,16 @@ const initHome = async () => {
 
   try {
     const body = await get(`/v1/worker/next?workerId=${encodeURIComponent(current.workerId)}`, 30000)
+    if (body.blocked === 'skills-required') {
+      setState('Pick what you<em>are good at.</em>', 'Choose the kinds of question you want to answer. Each has a five-question assessment, and passing one brings you that kind of work.')
+      return
+    }
     if (body.blocked === 'assessment-required') {
-      setState('Your assessment<em>is waiting.</em>', 'Five short questions, and you are paid for all five. Work starts reaching you once they are done.')
+      setState('Your assessment<em>is waiting.</em>', 'Five short questions for each skill you picked. They are not paid, because none of them reach a customer; work of that kind starts reaching you once you pass.')
       return
     }
     if (body.blocked === 'assessment-failed') {
-      setState('No more<em>questions.</em>', 'Too many of the assessment questions were missed, so work is not being routed to you. Everything you earned is yours and is already in your own account.')
+      setState('No more<em>questions.</em>', 'Too many questions were missed in every skill you picked, so work is not being routed to you. Everything you earned is yours and is already in your own account.')
       return
     }
     if (body.assignment) {
@@ -1083,10 +1304,18 @@ const initHome = async () => {
 const FEED_COPY = {
   'question.received': (e) => ['A question arrived', `${kindLabel(e.kind)} · ${e.prompt ?? ''}`, 'clipboard', ''],
   'worker.asked': (e) => [
-    `${shortAddress(e.workerId)} was asked`,
-    e.reason ?? (e.exploratory ? 'Chosen to learn what they are good at' : 'Chosen on their record'),
+    e.calibration ? `${shortAddress(e.workerId)} was given a known-answer check` : `${shortAddress(e.workerId)} was asked`,
+    e.calibration
+      ? 'Paid like any question, not billed to the caller, and graded against the truth'
+      : (e.reason ?? (e.exploratory ? 'Chosen to learn what they are good at' : 'Chosen on their record')),
     'user',
     'accent',
+  ],
+  'calibration.answered': (e) => [
+    `${shortAddress(e.workerId)} answered the check`,
+    e.correct ? 'Matched the known answer' : 'Did not match the known answer, and their record says so',
+    'check',
+    e.correct ? 'good' : 'warn',
   ],
   'answer.received': (e) => [
     `${shortAddress(e.workerId)} answered`,
@@ -1906,10 +2135,11 @@ initExport()
 void (async () => {
   await Promise.allSettled([
     loadWage(),
-    loadMe(),
+    loadMe().then(initSend),
     initHome(),
     initQuestion(),
     initAssessment(),
+    initSkills(),
     initConsole(),
     initQuestionDetail(),
     initWorkerDetail(),
