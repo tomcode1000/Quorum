@@ -109,6 +109,9 @@ await copyFile(join(root, 'assets/live.js'), join(out, 'assets/live.js'))
 await copyFile(join(root, 'assets/app.css'), join(out, 'assets/app.css'))
 await copyFile(join(root, 'assets/app.js'), join(out, 'assets/app.js'))
 
+// The brand mark as the tab icon, from the same geometry as every mark on the page.
+await copyFile(join(root, '../../brand/favicon.svg'), join(out, 'assets/favicon.svg'))
+
 // The worker photographs, cropped from the comps.
 for (const photo of ['hero', 'why', 'trust', 'join', 'signin'])
   await copyFile(join(root, `assets/worker-${photo}.webp`), join(out, `assets/worker-${photo}.webp`))

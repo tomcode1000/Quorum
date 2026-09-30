@@ -1794,3 +1794,59 @@ h3 {
     gap: 18px;
   }
 }
+
+/*
+  Moving between pages.
+
+  Every page is its own document, so without this each click is a blank frame
+  and a redraw of the whole screen, sidebar included. Cross-document view
+  transitions let the browser carry the chrome across unchanged (the app's rail,
+  the site's header) and cross-fade only the content, with a short rise so the
+  new page reads as arriving rather than flickering in. Browsers without support
+  simply load the page as before, and anyone who asked for less motion gets none.
+*/
+@view-transition {
+  navigation: auto;
+}
+
+.ap-side {
+  view-transition-name: app-rail;
+}
+
+.nav,
+.w-nav {
+  view-transition-name: site-header;
+}
+
+::view-transition-old(root) {
+  animation: 140ms ease-out both quorum-leave;
+}
+
+::view-transition-new(root) {
+  animation: 200ms ease-out 40ms both quorum-arrive;
+}
+
+::view-transition-group(app-rail),
+::view-transition-group(app-tabs),
+::view-transition-group(site-header) {
+  animation-duration: 0s;
+}
+
+@keyframes quorum-leave {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes quorum-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: none;
+  }
+}

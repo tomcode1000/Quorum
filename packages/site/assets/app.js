@@ -978,6 +978,14 @@ const initQuestion = async () => {
   let answer = null
   let assignment = null
 
+  // Nothing to answer yet, so nothing to answer with. The controls appear with the
+  // question; before that they only invite a worker to press things that do nothing.
+  const controls = [$('sure'), submit, $('skip')].filter(Boolean)
+  const showControls = (on) => {
+    for (const el of controls) el.hidden = !on
+  }
+  showControls(false)
+
   const onPick = (value) => {
     answer = value
     submit.disabled = value === null || value === undefined
@@ -991,6 +999,10 @@ const initQuestion = async () => {
   const waitForWork = async () => {
     try {
       const body = await get(`/v1/worker/next?workerId=${encodeURIComponent(current.workerId)}`, 30000)
+      if (body.blocked === 'skills-required') {
+        location.href = 'app-skills.html'
+        return
+      }
       if (body.blocked === 'assessment-required') {
         location.href = 'app-assessment.html'
         return
@@ -1000,7 +1012,9 @@ const initQuestion = async () => {
         return
       }
       if (!body.assignment) {
-        location.href = 'app-home.html'
+        // The poll ran its course with nothing to hand out. Keep waiting here:
+        // sending the worker back to Home would lose the page they chose to wait on.
+        void waitForWork()
         return
       }
 
@@ -1011,6 +1025,7 @@ const initQuestion = async () => {
       fill('reading', duration(assignment.suggestedReadingMs))
       renderEvidence(assignment.attachments)
       renderOptions(assignment.schema, onPick)
+      showControls(true)
     } catch {
       // The poll timed out or the connection dropped. Both are ordinary here.
       fill('prompt', 'Reconnecting…')
@@ -2160,6 +2175,50 @@ const initExport = () => {
   }
 }
 
+/* ------------------------------------------------------------------- rail -- */
+
+const initRail = () => {
+  const root = document.documentElement
+  const sync = () => {
+    const collapsed = root.getAttribute('data-rail') === 'collapsed'
+    for (const button of document.querySelectorAll('[data-rail-toggle]')) {
+      button.setAttribute('aria-expanded', String(!collapsed))
+      button.setAttribute('aria-label', collapsed ? 'Expand navigation' : 'Collapse navigation')
+    }
+  }
+  for (const button of document.querySelectorAll('[data-rail-toggle]'))
+    button.addEventListener('click', () => {
+      const collapse = root.getAttribute('data-rail') !== 'collapsed'
+      if (collapse) root.setAttribute('data-rail', 'collapsed')
+      else root.removeAttribute('data-rail')
+      try {
+        localStorage.setItem('quorum-rail', collapse ? 'collapsed' : 'open')
+      } catch {
+        /* Not remembered, but still applies to this page. */
+      }
+      sync()
+    })
+  sync()
+}
+
+/* -------------------------------------------------------- back to work -- */
+
+/*
+  After an answer, straight back to Work.
+
+  Work only reaches someone whose app is listening for it. Left on the "Answer
+  sent" screen, a worker stops listening, the gateway counts them as gone within
+  half a minute, and the next question goes elsewhere or nowhere. So these two
+  screens say their piece and then return to Work on their own. No countdown is
+  shown: this is a pause to read, not a clock to beat.
+*/
+const initReturnToWork = () => {
+  if (!document.body.hasAttribute('data-return-to-work')) return
+  setTimeout(() => {
+    location.href = 'app-question.html'
+  }, 4000)
+}
+
 /* ------------------------------------------------------------------- boot -- */
 
 initTheme()
@@ -2167,6 +2226,8 @@ initCopy()
 initClock()
 initSignIn()
 initExport()
+initReturnToWork()
+initRail()
 
 void (async () => {
   await Promise.allSettled([

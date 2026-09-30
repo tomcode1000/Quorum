@@ -2186,3 +2186,212 @@ button.ap-row {
     margin-top: 3px;
   }
 }
+
+/*
+  The worker app on a phone.
+
+  It is used wherever somebody has a spare minute, so the phone is the main
+  screen, not a narrow desktop. The rail becomes two things a thumb can reach:
+  a slim header with the brand and the theme switch, and a tab bar along the
+  bottom with the five places a worker actually goes. Help and Settings stay a
+  tap away inside Home and Profile. The operator console is desktop only by
+  design and keeps its own treatment above.
+*/
+@media (max-width: 900px) {
+  .ap {
+    align-content: start;
+  }
+
+  .ap-side-worker {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    flex-direction: row;
+    height: auto;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: max(10px, env(safe-area-inset-top)) 16px 10px;
+    background: var(--surface);
+  }
+
+  .ap-side-worker .brand {
+    margin: 0;
+  }
+
+  .ap-side-worker .ap-side-foot {
+    display: block;
+    margin: 0;
+  }
+
+  .ap-side-worker .ap-side-foot .ap-note,
+  .ap-side-worker .ap-theme [data-theme-label],
+  .ap-side-worker .ap-theme .caret {
+    display: none;
+  }
+
+  .ap-side-worker .ap-theme {
+    width: 44px;
+    height: 44px;
+    margin: 0;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .ap-side-worker .ap-nav {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 30;
+    display: grid;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+    gap: 2px;
+    padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
+    overflow: visible;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    view-transition-name: app-tabs;
+  }
+
+  .ap-side-worker .ap-nav a {
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    min-height: 54px;
+    padding: 6px 2px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .ap-side-worker .ap-nav a svg {
+    width: 21px;
+    height: 21px;
+  }
+
+  .ap-side-worker .ap-nav a[aria-current]::before {
+    top: -7px;
+    right: 28%;
+    bottom: auto;
+    left: 28%;
+    width: auto;
+    height: 3px;
+    border-radius: 0 0 3px 3px;
+  }
+
+  .ap-side-worker .ap-nav a[href='app-help.html'],
+  .ap-side-worker .ap-nav a[href='app-settings.html'] {
+    display: none;
+  }
+
+  .ap-side-worker + .ap-main {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  }
+}
+
+/*
+  The rail, collapsed to icons.
+
+  A button beside the brand folds the navigation down to its icons and back.
+  Each link keeps its label as a tooltip, and the choice is remembered and set
+  before first paint (see app-shell), so every page opens at the width it was
+  left. Phones use the tab bar instead, so none of this applies there.
+*/
+.ap-side-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 26px;
+}
+
+.ap-side-head .brand {
+  margin-bottom: 0;
+}
+
+.ap-rail-toggle {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border: 0;
+  border-radius: var(--r-md);
+  background: none;
+  color: var(--ink-4);
+  cursor: pointer;
+}
+
+.ap-rail-toggle:hover {
+  background: var(--ground);
+  color: var(--ink);
+}
+
+.ap-rail-toggle svg {
+  width: 18px;
+  height: 18px;
+}
+
+@media (min-width: 901px) {
+  .ap {
+    transition: grid-template-columns 0.18s ease;
+  }
+
+  [data-rail='collapsed'] .ap {
+    grid-template-columns: 76px minmax(0, 1fr);
+  }
+
+  [data-rail='collapsed'] .ap-side {
+    padding-inline: 12px;
+  }
+
+  [data-rail='collapsed'] .ap-side-head {
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  [data-rail='collapsed'] .ap-side-head .brand {
+    padding-inline: 0;
+    font-size: 0;
+    gap: 0;
+  }
+
+  [data-rail='collapsed'] .ap-nav a,
+  [data-rail='collapsed'] .ap-theme {
+    justify-content: center;
+    padding-inline: 0;
+    gap: 0;
+    font-size: 0;
+  }
+
+  [data-rail='collapsed'] .ap-theme .caret,
+  [data-rail='collapsed'] .ap-side-foot .ap-note,
+  [data-rail='collapsed'] .ap-side-label,
+  [data-rail='collapsed'] .ap-who {
+    display: none;
+  }
+
+  [data-rail='collapsed'] .ap-rail-toggle svg {
+    transform: scaleX(-1);
+  }
+}
+
+@media (max-width: 900px) {
+  .ap-rail-toggle {
+    display: none;
+  }
+
+  .ap-side-head {
+    margin-bottom: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ap {
+    transition: none;
+  }
+}

@@ -112,6 +112,12 @@ export type LiveQuestion = {
    */
   calibrations: { workerId: string; assignmentId: string; prompt: string; kind: Question['kind'] }[]
   assignments: Assignment[]
+  /**
+   * Offers that lapsed before an answer came. Kept so a worker who answers a few
+   * seconds late, while the question is still open, is counted rather than turned
+   * away: their answer is no less useful for arriving after the offer's timer.
+   */
+  lapsed: Assignment[]
   /** Answers bought, whether or not they arrived. Drives MAX_RESPONDERS. */
   bought: number
   readonly settled: Promise<Resolution>

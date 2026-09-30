@@ -41,6 +41,7 @@ async function main(): Promise<void> {
     store,
     mail: resendMailer(process.env.RESEND_API_KEY, process.env.QUORUM_EMAIL_FROM ?? 'Quorum <onboarding@resend.dev>'),
     appUrl: process.env.QUORUM_WORKER_APP_URL ?? 'http://localhost:4173/app-home.html',
+    wageCents: config.wageCents,
   })
   const router = new Router({
     store,

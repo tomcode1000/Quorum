@@ -108,7 +108,7 @@ export function answerSchemaFor(check: Check) {
  * specification already says a careful agent should produce: the question it wants
  * to put to a person, and the evidence.
  */
-export function inputRequired(taskId: string, check: Check): InputRequired {
+export function inputRequired(taskId: string, check: Check, maxPrice?: string): InputRequired {
   return {
     id: taskId,
     contextId: 'ctx_ap_week_close',
@@ -129,6 +129,9 @@ export function inputRequired(taskId: string, check: Check): InputRequired {
         kind: check.kind,
         answer_schema: answerSchemaFor(check),
         cost_of_error: check.costOfError,
+        // A ceiling of the agent's own, when it sets one. The price is the lower of
+        // this and what the cost of error advises.
+        ...(maxPrice === undefined ? {} : { max_price: maxPrice }),
         caller_confidence: check.confidence,
         deadline_ms: 30_000,
       },

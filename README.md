@@ -151,7 +151,7 @@ Reputation is a Beta posterior over agreement outcomes, per worker **per questio
 - One question at a time, answered by tapping rather than typing.
 - Paid per answer, direct to their own account, the moment the answer is accepted.
 - **No deposit, no stake, no bond, no minimum payout, and no gas asset to acquire.**
-- An optional email when work in their skills is waiting and they are away, at most once every half hour. Sent through Resend when `RESEND_API_KEY` is set; signing up never asks for an address.
+- An optional email when work in their skills is waiting and they are away, at most once every ten minutes. Sent through Resend when `RESEND_API_KEY` is set; signing up never asks for an address.
 - A way out that costs nothing. A passkey controls a Tempo account directly, but a passkey only works on the site that made it, so the app has a *Send* control and Quorum pays the network fee. A worker who signs in with Tempo Wallet is paid straight into it and has nothing to move.
 
 That last line is the one differentiator no competitor can copy without rebuilding their economics. HUMAN Protocol pays in HMT. Kleros and Reality.eth require a bond. Sapien requires workers to buy and lock SAPIEN to unlock better-paying tasks. Every prior attempt puts a capital requirement on the person doing the work, which is incoherent for someone earning twenty cents an answer.

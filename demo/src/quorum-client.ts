@@ -60,7 +60,7 @@ export async function connectToQuorum(base = process.env.QUORUM_URL ?? 'http://l
       const asked = await fetch(`${base}/v1/questions`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(inputRequired(taskId, check)),
+        body: JSON.stringify(inputRequired(taskId, check, process.env.AGENT_B_MAX_PRICE)),
       })
       if (asked.status === 503)
         throw new Error(`nobody who has passed ${check.kind} questions is online. Sign a worker in, pass that skill, and try again.`)

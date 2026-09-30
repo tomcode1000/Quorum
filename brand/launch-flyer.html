@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Quorum — testnet launch graphic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  /*
+    The first post's graphic, 1600 x 900 for X.
+
+    Built from the site's own parts rather than a template: the brand mark and
+    its diagonal, the app's question card, option buttons and payment toast, the
+    worker photographs from the site, and the site's dark palette. Rendered to PNG
+    with headless Chrome; this file is the source.
+  */
+  :root {
+    --ink: #eef2f9;
+    --ink-2: #c6d0df;
+    --ink-3: #96a3b8;
+    --accent: #4c8dff;
+    --accent-deep: #1f6feb;
+    --good: #41c97a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    width: 1600px;
+    height: 900px;
+    overflow: hidden;
+    font-family: Inter, sans-serif;
+    color: var(--ink);
+    background: #080d18;
+    position: relative;
+  }
+
+  /* Ground: navy, a dot grid that fades out, a blue glow, and the mark as watermark. */
+  .ground {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(900px 620px at 78% 42%, rgba(47, 128, 247, 0.30), transparent 70%),
+      radial-gradient(700px 500px at 8% 110%, rgba(31, 111, 235, 0.18), transparent 70%),
+      linear-gradient(160deg, #0c1426 0%, #080d18 60%);
+  }
+  .dots {
+    position: absolute; inset: 0;
+    background-image: radial-gradient(rgba(150, 175, 220, 0.16) 1.2px, transparent 1.3px);
+    background-size: 26px 26px;
+    -webkit-mask-image: radial-gradient(120% 90% at 30% 40%, #000 30%, transparent 75%);
+            mask-image: radial-gradient(120% 90% at 30% 40%, #000 30%, transparent 75%);
+  }
+  .watermark {
+    position: absolute; right: -150px; bottom: -190px;
+    width: 760px; height: 760px; color: rgba(76, 141, 255, 0.07);
+  }
+
+  /* Left column. */
+  .copy { position: absolute; left: 96px; top: 84px; width: 800px; }
+  .brand { display: flex; align-items: center; gap: 16px; font-size: 34px; font-weight: 700; letter-spacing: -0.04em; }
+  .brand svg { width: 46px; height: 46px; color: var(--accent); }
+  .chip {
+    display: inline-flex; align-items: center; gap: 10px; margin-top: 64px;
+    padding: 10px 16px; border-radius: 999px;
+    background: rgba(76, 141, 255, 0.12); border: 1px solid rgba(76, 141, 255, 0.35);
+    font-size: 16px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #8fb6ff;
+  }
+  .chip i { width: 9px; height: 9px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 5px rgba(65, 201, 122, 0.18); }
+  h1 {
+    margin: 26px 0 0; font-size: 70px; line-height: 1.02; font-weight: 800; letter-spacing: -0.045em;
+  }
+  h1 em { font-style: normal; color: var(--accent); }
+  .lede { margin: 28px 0 0; max-width: 610px; font-size: 24px; line-height: 1.5; color: var(--ink-2); }
+  .promises { display: flex; gap: 12px; margin-top: 38px; }
+  .promise {
+    display: flex; align-items: center; gap: 9px; padding: 12px 16px; border-radius: 12px;
+    background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.09);
+    font-size: 17px; font-weight: 600; color: var(--ink);
+  }
+  .promise svg { width: 18px; height: 18px; color: var(--good); }
+  .note { position: absolute; left: 96px; bottom: 58px; font-size: 15px; color: var(--ink-3); }
+  .note b { color: var(--ink-2); font-weight: 600; }
+
+  /* Right: the photograph and the product on top of it. */
+  .photo {
+    position: absolute; left: 944px; top: 118px; width: 500px; height: 590px;
+    border-radius: 44px 44px 44px 180px; overflow: hidden;
+    box-shadow: 0 40px 90px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  }
+  .photo img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; transform: scale(1.14); transform-origin: 50% 40%; filter: saturate(1.05) contrast(1.03); }
+  .photo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, rgba(8, 13, 24, 0.55)); }
+
+  .card {
+    position: absolute; left: 818px; top: 470px; width: 400px; padding: 22px;
+    border-radius: 22px; background: #ffffff; color: #0f1b35;
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45);
+  }
+  .card-top { display: flex; align-items: center; justify-content: space-between; }
+  .card-chip { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #1f6feb; background: #eaf2fe; padding: 6px 9px; border-radius: 7px; }
+  .card-pay { font-size: 13px; font-weight: 700; color: #16a34a; background: #e8f7ee; padding: 6px 10px; border-radius: 999px; }
+  .card h2 { margin: 16px 0 14px; font-size: 21px; line-height: 1.3; letter-spacing: -0.02em; }
+  .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .opt { padding: 14px; border-radius: 12px; border: 1.5px solid #d9e2ef; font-size: 18px; font-weight: 700; text-align: center; font-family: 'JetBrains Mono', monospace; }
+  .opt.on { border-color: #1f6feb; background: #eaf2fe; color: #1f6feb; }
+
+  .toast {
+    position: absolute; left: 1286px; top: 166px; width: 262px; display: flex; gap: 12px; align-items: center;
+    padding: 14px 16px; border-radius: 16px; background: rgba(19, 25, 35, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(6px);
+  }
+  .toast .tick { flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: rgba(65, 201, 122, 0.16); color: var(--good); }
+  .toast .tick svg { width: 18px; height: 18px; }
+  .toast b { display: block; font-size: 15px; }
+  .toast span { display: block; margin-top: 2px; font-size: 13px; color: var(--ink-3); }
+
+  .people {
+    position: absolute; left: 1250px; top: 734px; display: flex; align-items: center; gap: 14px;
+  }
+  .faces { display: flex; }
+  .faces img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; object-position: 50% 20%; border: 3px solid #0b1220; margin-left: -12px; }
+  .faces img:first-child { margin-left: 0; }
+  .people span { font-size: 15px; line-height: 1.35; color: var(--ink-2); }
+</style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute">
+    <defs>
+      <symbol id="q" viewBox="0 0 40 40">
+        <mask id="m" maskUnits="userSpaceOnUse" x="0" y="0" width="40" height="40"><rect width="40" height="40" fill="#fff"/><polygon points="-2,-2 16.4,-2 -2,16.4" fill="#000"/><line x1="25" y1="41" x2="41" y2="25" stroke="#000" stroke-width="4.4" stroke-linecap="round"/></mask>
+        <g mask="url(#m)" fill="currentColor"><path fill-rule="evenodd" d="M13 2h14a11 11 0 0 1 11 11v14a11 11 0 0 1-11 11H13A11 11 0 0 1 2 27V13A11 11 0 0 1 13 2Zm-.4 10.6a2 2 0 0 0-2 2v10.8a2 2 0 0 0 2 2h14.8a2 2 0 0 0 2-2V14.6a2 2 0 0 0-2-2H12.6Z"/><rect x="26.6" y="26.6" width="11.4" height="11.4" rx="3.6"/></g>
+      </symbol>
+      <symbol id="check" viewBox="0 0 18 18"><path d="m3.6 9.4 3.4 3.4 7.4-7.4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    </defs>
+  </svg>
+
+  <div class="ground"></div>
+  <div class="dots"></div>
+
+  <div class="copy">
+    <div class="brand"><svg><use href="#q"/></svg>Quorum</div>
+    <div class="chip"><i></i>Coming soon · Tempo testnet</div>
+    <h1>Get paid to answer what <em>AI can't check.</em></h1>
+    <p class="lede">When an AI agent can't be sure, the question comes to a person. Answer in seconds, and each answer is paid straight to your own account.</p>
+    <div class="promises">
+      <div class="promise"><svg><use href="#check"/></svg>No deposit</div>
+      <div class="promise"><svg><use href="#check"/></svg>No stake</div>
+      <div class="promise"><svg><use href="#check"/></svg>No minimum payout</div>
+    </div>
+  </div>
+  <p class="note"><b>Testnet first.</b> Wages on testnet are paid in test stablecoin with no cash value.</p>
+
+  <div class="photo"><img src="../packages/site/assets/worker-hero.webp" alt=""></div>
+
+  <div class="toast">
+    <div class="tick"><svg><use href="#check"/></svg></div>
+    <div><b>You were paid 20¢</b><span>Settled on Tempo in 1.1s</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-top"><span class="card-chip">Telling readings apart</span><span class="card-pay">20¢</span></div>
+    <h2>The receipt reads &ldquo;TOTAL 4S.00&rdquo;. Is it 45.00 or 4.50?</h2>
+    <div class="opts"><div class="opt on">45.00</div><div class="opt">4.50</div></div>
+  </div>
+
+  <div class="people">
+    <div class="faces">
+      <img src="../packages/site/assets/worker-signin.webp" alt="">
+      <img src="../packages/site/assets/worker-join.webp" alt="">
+      <img src="../packages/site/assets/worker-why.webp" alt="">
+    </div>
+    <span>People answering,<br>not models guessing.</span>
+  </div>
+</body>
+</html>

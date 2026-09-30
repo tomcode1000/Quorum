@@ -1,5 +1,6 @@
 import type { Kind } from '@quorum/core'
 import type { Store, Worker } from './store.js'
+import { workEmail } from './work-email.js'
 
 /**
  * Telling people that work is waiting, by email, when they asked to be told.
@@ -12,7 +13,7 @@ import type { Store, Worker } from './store.js'
  *
  * So: opt-in, off by default, only for skills the person passed, only while they
  * are away, and at most once in a quiet period. The worker settings promise "One
- * notification when work arrives. Never repeated", and a stream of emails would
+ * notification when work arrives", and a stream of emails would
  * break that promise on the very surface that makes it.
  *
  * Sent through Resend. Without RESEND_API_KEY the notifier logs what it would have
@@ -23,7 +24,7 @@ import type { Store, Worker } from './store.js'
 const AWAY_AFTER_MS = 30_000
 
 /** One email per person per this long, however much work arrives. */
-export const QUIET_PERIOD_MS = 30 * 60_000
+export const QUIET_PERIOD_MS = 10 * 60_000
 
 /** Fewer people online than this for a kind, and waiting work is worth an email. */
 const ENOUGH_ONLINE = 2
@@ -62,8 +63,10 @@ const LABELS: Record<string, string> = {
 export function createNotifier(options: {
   store: Store
   mail: Mailer
-  /** Where the worker app's home screen is, for the link in the email. */
+  /** Where the worker app is, for the links in the email: its Work and Settings screens sit beside this. */
   appUrl: string
+  /** What an answer pays, shown in the email. */
+  wageCents: number
   now?: () => number
 }): Notifier {
   const { store, mail, appUrl } = options
@@ -82,19 +85,14 @@ export function createNotifier(options: {
         if (worker.notifiedAt !== null && now() - worker.notifiedAt < QUIET_PERIOD_MS) continue
         worker.notifiedAt = now()
 
-        const skill = LABELS[kind] ?? kind
-        const text = [
-          `Questions about ${skill} are waiting, and few people who passed it are online.`,
-          '',
-          `Open Quorum to answer them: ${appUrl}`,
-          '',
-          'Each answer is paid to your own account the moment it is accepted.',
-          'This is the only email for the next half hour, however much work arrives.',
-          'Turn these off in Settings whenever you like.',
-        ].join('\n')
-        const html = `<p>Questions about <b>${skill}</b> are waiting, and few people who passed it are online.</p><p><a href="${appUrl}">Open Quorum to answer them</a></p><p style="color:#5b6b85">Each answer is paid to your own account the moment it is accepted. This is the only email for the next half hour, however much work arrives. Turn these off in Settings whenever you like.</p>`
-
-        void mail({ to: worker.email, subject: `Work is waiting: ${skill}`, text, html }).catch((error: unknown) => {
+        const base = appUrl.replace(/[^/]*$/, '')
+        const message = workEmail({
+          skill: LABELS[kind] ?? kind,
+          wageCents: options.wageCents,
+          workUrl: `${base}app-question.html`,
+          settingsUrl: `${base}app-settings.html`,
+        })
+        void mail({ to: worker.email, ...message }).catch((error: unknown) => {
           console.error(`[quorum] ${error instanceof Error ? error.message : String(error)}`)
         })
       }

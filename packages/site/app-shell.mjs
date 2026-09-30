@@ -140,9 +140,15 @@ const navList = (items, current) =>
   `<nav class="ap-nav" aria-label="Sections">${items
     .map(
       ([icon, label, href]) =>
-        `<a href="${href}"${label.toLowerCase() === current ? ' aria-current="page"' : ''}>${ic(icon)}${label}</a>`,
+        `<a href="${href}" title="${label}"${label.toLowerCase() === current ? ' aria-current="page"' : ''}>${ic(icon)}${label}</a>`,
     )
     .join('')}</nav>`
+
+/**
+ * Collapsing the rail to icons, for more room to work. The choice is remembered
+ * and applied before first paint, so no page flashes the other width.
+ */
+const railToggle = `<button class="ap-rail-toggle" type="button" data-rail-toggle aria-label="Collapse navigation" aria-expanded="true">${ic('panel')}</button>`
 
 /**
  * The theme control.
@@ -162,8 +168,8 @@ const themeToggle = () =>
  * careful reader discounts. Replaced with the thing that is both true and
  * unusual: there is no password anywhere, so there is none to leak.
  */
-const workerSide = (current, nav = WORKER_NAV) => `<aside class="ap-side">
-  <a class="brand" href="app-home.html"><span class="mark">${MARK}</span>Quorum</a>
+const workerSide = (current, nav = WORKER_NAV) => `<aside class="ap-side ap-side-worker">
+  <div class="ap-side-head"><a class="brand" href="app-home.html"><span class="mark">${MARK}</span>Quorum</a>${railToggle}</div>
   ${navList(nav, current)}
   <div class="ap-side-foot">
     <div class="ap-note">${ic('shield')}<div><b>Nothing to steal</b><p>You sign in with your device, so there is no password stored anywhere and none to lose.</p></div></div>
@@ -172,7 +178,7 @@ const workerSide = (current, nav = WORKER_NAV) => `<aside class="ap-side">
 </aside>`
 
 const consoleSide = (current) => `<aside class="ap-side">
-  <a class="brand" href="console.html"><span class="mark">${MARK}</span>Quorum</a>
+  <div class="ap-side-head"><a class="brand" href="console.html"><span class="mark">${MARK}</span>Quorum</a>${railToggle}</div>
   <p class="ap-side-label">Operator console</p>
   ${navList(CONSOLE_NAV, current)}
   <div class="ap-side-foot">
@@ -223,6 +229,7 @@ const appPage = ({ title, side, main, script = false, body = '' }) => `<!doctype
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <title>${title} · Quorum</title>
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500${script ? '&family=Caveat:wght@600;700' : ''}&display=swap"/>
@@ -242,6 +249,7 @@ const appPage = ({ title, side, main, script = false, body = '' }) => `<!doctype
   */
   try {
     if (localStorage.getItem('quorum-theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark')
+    if (localStorage.getItem('quorum-rail') === 'collapsed') document.documentElement.setAttribute('data-rail', 'collapsed')
   } catch (e) {}
 </script>
 </head>

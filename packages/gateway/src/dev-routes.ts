@@ -5,6 +5,7 @@ import { z } from 'zod'
 import type { Config } from './config.js'
 import type { Router } from './router.js'
 import type { Store } from './store.js'
+import { SERVABLE_KINDS, type Kind } from '@quorum/core'
 
 /**
  * Development-only routes.
@@ -28,14 +29,16 @@ import type { Store } from './store.js'
 const historySchema = z.object({
   /** Omit to apply to every registered worker, which is usually what you want. */
   workerId: z.string().min(1).optional(),
-  kind: z.enum(['disambiguate', 'verify']).default('disambiguate'),
+  // Every capability a worker can be assessed in, not the two there once were.
+  kind: z.enum(SERVABLE_KINDS as [Kind, ...Kind[]]).default('disambiguate'),
   /** Enough history to be treated as established; see ESTABLISHED_AT in core. */
   agreements: z.number().int().min(0).max(1_000).default(120),
 })
 
 const seedSchema = z.object({
   question: z.string().min(3).max(500).default('Does this receipt total say 45.00 or 4.50?'),
-  kind: z.enum(['disambiguate', 'verify']).default('disambiguate'),
+  // Every capability a worker can be assessed in, not the two there once were.
+  kind: z.enum(SERVABLE_KINDS as [Kind, ...Kind[]]).default('disambiguate'),
   answer_schema: z
     .discriminatedUnion('type', [
       z.object({ type: z.literal('boolean') }),

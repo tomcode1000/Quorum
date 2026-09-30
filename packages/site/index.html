@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Quorum: AI agents ask questions. Real people answer.</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
     <meta
       name="description"
       content="Some mistakes an agent cannot catch, because every check it could run makes them too. Quorum puts that question to a person in about six seconds, priced by what being wrong would cost."
@@ -944,6 +945,62 @@
           animation: none !important;
         }
       }
+    
+      /*
+        Moving between pages.
+      
+        Every page is its own document, so without this each click is a blank frame
+        and a redraw of the whole screen, sidebar included. Cross-document view
+        transitions let the browser carry the chrome across unchanged (the app's rail,
+        the site's header) and cross-fade only the content, with a short rise so the
+        new page reads as arriving rather than flickering in. Browsers without support
+        simply load the page as before, and anyone who asked for less motion gets none.
+      */
+      @view-transition {
+        navigation: auto;
+      }
+      
+      .ap-side {
+        view-transition-name: app-rail;
+      }
+      
+      .nav,
+      .w-nav {
+        view-transition-name: site-header;
+      }
+      
+      ::view-transition-old(root) {
+        animation: 140ms ease-out both quorum-leave;
+      }
+      
+      ::view-transition-new(root) {
+        animation: 200ms ease-out 40ms both quorum-arrive;
+      }
+      
+      ::view-transition-group(app-rail),
+      ::view-transition-group(site-header) {
+        animation-duration: 0s;
+      }
+      
+      @keyframes quorum-leave {
+        to {
+          opacity: 0;
+        }
+      }
+      
+      @keyframes quorum-arrive {
+        from {
+          opacity: 0;
+          transform: translateY(6px);
+        }
+      }
+      
+      @media (prefers-reduced-motion: reduce) {
+        @view-transition {
+          navigation: none;
+        }
+      }
+      
     </style>
   <script>
   /* The stored theme, applied before first paint so no page flashes the other one. */
@@ -958,7 +1015,7 @@
       <div class="shell nav-inner">
         <a class="brand" href="index.html" aria-label="Quorum home">
           <span class="mark" aria-hidden="true">
-            <svg width="100%" height="100%" viewBox="0 0 40 40" fill="none"><defs><mask id="qm20"><rect width="40" height="40" fill="#fff"/><line x1="25" y1="41" x2="41" y2="25" stroke="#000" stroke-width="4.4" stroke-linecap="round"/></mask></defs><g mask="url(#qm20)" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M13 2h14a11 11 0 0 1 11 11v14a11 11 0 0 1-11 11H13A11 11 0 0 1 2 27V13A11 11 0 0 1 13 2Zm-.4 10.6a2 2 0 0 0-2 2v10.8a2 2 0 0 0 2 2h14.8a2 2 0 0 0 2-2V14.6a2 2 0 0 0-2-2H12.6Z"/><rect x="26.6" y="26.6" width="11.4" height="11.4" rx="3.6"/></g></svg>
+            <svg width="100%" height="100%" viewBox="0 0 40 40" fill="none"><defs><mask id="qm20"><rect width="40" height="40" fill="#fff"/><polygon points="-2,-2 16.4,-2 -2,16.4" fill="#000"/><line x1="25" y1="41" x2="41" y2="25" stroke="#000" stroke-width="4.4" stroke-linecap="round"/></mask></defs><g mask="url(#qm20)" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M13 2h14a11 11 0 0 1 11 11v14a11 11 0 0 1-11 11H13A11 11 0 0 1 2 27V13A11 11 0 0 1 13 2Zm-.4 10.6a2 2 0 0 0-2 2v10.8a2 2 0 0 0 2 2h14.8a2 2 0 0 0 2-2V14.6a2 2 0 0 0-2-2H12.6Z"/><rect x="26.6" y="26.6" width="11.4" height="11.4" rx="3.6"/></g></svg>
           </span>
           Quorum
         </a>
@@ -1032,7 +1089,7 @@
             <div class="console">
               <div class="console-bar">
                 <span class="mark" aria-hidden="true">
-                  <svg width="100%" height="100%" viewBox="0 0 40 40" fill="none"><defs><mask id="qm10"><rect width="40" height="40" fill="#fff"/><line x1="25" y1="41" x2="41" y2="25" stroke="#000" stroke-width="4.4" stroke-linecap="round"/></mask></defs><g mask="url(#qm10)" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M13 2h14a11 11 0 0 1 11 11v14a11 11 0 0 1-11 11H13A11 11 0 0 1 2 27V13A11 11 0 0 1 13 2Zm-.4 10.6a2 2 0 0 0-2 2v10.8a2 2 0 0 0 2 2h14.8a2 2 0 0 0 2-2V14.6a2 2 0 0 0-2-2H12.6Z"/><rect x="26.6" y="26.6" width="11.4" height="11.4" rx="3.6"/></g></svg>
+                  <svg width="100%" height="100%" viewBox="0 0 40 40" fill="none"><defs><mask id="qm10"><rect width="40" height="40" fill="#fff"/><polygon points="-2,-2 16.4,-2 -2,16.4" fill="#000"/><line x1="25" y1="41" x2="41" y2="25" stroke="#000" stroke-width="4.4" stroke-linecap="round"/></mask></defs><g mask="url(#qm10)" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M13 2h14a11 11 0 0 1 11 11v14a11 11 0 0 1-11 11H13A11 11 0 0 1 2 27V13A11 11 0 0 1 13 2Zm-.4 10.6a2 2 0 0 0-2 2v10.8a2 2 0 0 0 2 2h14.8a2 2 0 0 0 2-2V14.6a2 2 0 0 0-2-2H12.6Z"/><rect x="26.6" y="26.6" width="11.4" height="11.4" rx="3.6"/></g></svg>
                 </span>
                 <b>Quorum</b>
                 <span class="bar-end" aria-hidden="true">
@@ -1180,7 +1237,7 @@
             <div class="phone">
               <div class="phone-bar">
                 <span class="mark" aria-hidden="true">
-                  <svg width="100%" height="100%" viewBox="0 0 40 40" fill="none"><defs><mask id="qm9"><rect width="40" height="40" fill="#fff"/><line x1="25" y1="41" x2="41" y2="25" stroke="#000" stroke-width="4.4" stroke-linecap="round"/></mask></defs><g mask="url(#qm9)" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M13 2h14a11 11 0 0 1 11 11v14a11 11 0 0 1-11 11H13A11 11 0 0 1 2 27V13A11 11 0 0 1 13 2Zm-.4 10.6a2 2 0 0 0-2 2v10.8a2 2 0 0 0 2 2h14.8a2 2 0 0 0 2-2V14.6a2 2 0 0 0-2-2H12.6Z"/><rect x="26.6" y="26.6" width="11.4" height="11.4" rx="3.6"/></g></svg>
+                  <svg width="100%" height="100%" viewBox="0 0 40 40" fill="none"><defs><mask id="qm9"><rect width="40" height="40" fill="#fff"/><polygon points="-2,-2 16.4,-2 -2,16.4" fill="#000"/><line x1="25" y1="41" x2="41" y2="25" stroke="#000" stroke-width="4.4" stroke-linecap="round"/></mask></defs><g mask="url(#qm9)" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M13 2h14a11 11 0 0 1 11 11v14a11 11 0 0 1-11 11H13A11 11 0 0 1 2 27V13A11 11 0 0 1 13 2Zm-.4 10.6a2 2 0 0 0-2 2v10.8a2 2 0 0 0 2 2h14.8a2 2 0 0 0 2-2V14.6a2 2 0 0 0-2-2H12.6Z"/><rect x="26.6" y="26.6" width="11.4" height="11.4" rx="3.6"/></g></svg>
                 </span>
                 <b>Quorum</b>
                 <span class="bar-end" aria-hidden="true">

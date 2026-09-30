@@ -19,6 +19,11 @@ import { connectToQuorum, explorer, type QuorumClient } from './quorum-client.js
  *
  *   npm run agent-b            forwards input-required to Quorum
  *   npm run agent-b -- --alone goes with its own guess, as agents do today
+ *
+ * AGENT_B_MAX_PRICE sets a price ceiling of B's own, in dollars. At the full $5
+ * a question must reach 0.99 confidence, which takes two independent people; a
+ * lower ceiling lets one proven person settle it, which is what a single-person
+ * test needs.
  */
 
 const PORT = Number(process.env.AGENT_B_PORT ?? 9090)

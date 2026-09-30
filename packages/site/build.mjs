@@ -57,6 +57,7 @@ const I = {
   layers: '<path d="m9 2.2 6.6 3.4L9 9 2.4 5.6 9 2.2Z"/><path d="m2.4 9.4 6.6 3.4 6.6-3.4"/>',
   book: '<path d="M2.6 3.4h4.2A2.2 2.2 0 0 1 9 5.6v9a1.7 1.7 0 0 0-1.7-1.6H2.6V3.4Z"/><path d="M15.4 3.4h-4.2A2.2 2.2 0 0 0 9 5.6v9a1.7 1.7 0 0 1 1.7-1.6h4.7V3.4Z"/>',
   key: '<circle cx="6" cy="10.4" r="3.4"/><path d="m8.5 8 6-6M12.4 4.1l1.7 1.7M10.9 5.6l1.7 1.7"/>',
+  panel: '<rect x="2.4" y="3" width="13.2" height="12" rx="2.2"/><path d="M7.2 3v12"/>',
   gauge: '<path d="M2.4 13.4a7 7 0 1 1 13.2 0"/><path d="m9 9.6 3-3"/>',
   plug: '<rect x="2.2" y="4.6" width="13.6" height="8.8" rx="2"/><path d="M6 4.6V2.4M12 4.6V2.4"/>',
   lock: '<rect x="3.6" y="7.8" width="10.8" height="7.4" rx="2"/><path d="M6 7.8V5.6a3 3 0 0 1 6 0v2.2"/>',
@@ -122,7 +123,7 @@ const ic = (name) =>
 
 /* ------------------------------------------------------------------- mark -- */
 
-const MARK = `<svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><defs><mask id="qm"><rect width="40" height="40" fill="#fff"/><line x1="25" y1="41" x2="41" y2="25" stroke="#000" stroke-width="4.4" stroke-linecap="round"/></mask></defs><g mask="url(#qm)" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M13 2h14a11 11 0 0 1 11 11v14a11 11 0 0 1-11 11H13A11 11 0 0 1 2 27V13A11 11 0 0 1 13 2Zm-.4 10.6a2 2 0 0 0-2 2v10.8a2 2 0 0 0 2 2h14.8a2 2 0 0 0 2-2V14.6a2 2 0 0 0-2-2H12.6Z"/><rect x="26.6" y="26.6" width="11.4" height="11.4" rx="3.6"/></g></svg>`
+const MARK = `<svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><defs><mask id="qm"><rect width="40" height="40" fill="#fff"/><polygon points="-2,-2 16.4,-2 -2,16.4" fill="#000"/><line x1="25" y1="41" x2="41" y2="25" stroke="#000" stroke-width="4.4" stroke-linecap="round"/></mask></defs><g mask="url(#qm)" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M13 2h14a11 11 0 0 1 11 11v14a11 11 0 0 1-11 11H13A11 11 0 0 1 2 27V13A11 11 0 0 1 13 2Zm-.4 10.6a2 2 0 0 0-2 2v10.8a2 2 0 0 0 2 2h14.8a2 2 0 0 0 2-2V14.6a2 2 0 0 0-2-2H12.6Z"/><rect x="26.6" y="26.6" width="11.4" height="11.4" rx="3.6"/></g></svg>`
 
 const caret = `<svg class="caret" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`
 
@@ -173,6 +174,7 @@ const page = ({ title, body, docs = false, script = false }) => `<!doctype html>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>${title} — Quorum</title>
+<link rel="icon" type="image/svg+xml" href="${docs ? '../' : ''}assets/favicon.svg"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700${script ? ';800' : ''}&family=JetBrains+Mono:wght@400;500${script ? '&family=Caveat:wght@600;700' : ''}&display=swap"/>

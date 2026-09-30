@@ -231,6 +231,7 @@ const question = () =>
 const submitted = () =>
   appPage({
     title: 'Answer sent',
+    body: ' data-return-to-work',
     side: workerSide('work'),
     main: `${workerTop(back('Back to questions', 'app-home.html'))}
 <div class="ap-cols">
@@ -286,6 +287,7 @@ const submitted = () =>
 const closed = () =>
   appPage({
     title: 'That one closed',
+    body: ' data-return-to-work',
     side: workerSide('work'),
     main: `${workerTop(back('Back to home', 'app-home.html'))}
 <div class="ap-cols">
@@ -295,12 +297,12 @@ const closed = () =>
         <span class="ap-ok-badge">${ic('clock')}</span>
       </div>
       <h1 class="ap-h1 ap-h1-lg">That one closed</h1>
-      <p class="ap-sub" style="margin-inline:auto">Enough people answered it before you finished reading. Nothing was lost and nothing was counted against you. The next question is on its way.</p>
+      <p class="ap-sub" style="margin-inline:auto">It closed before your answer reached it: enough people had already answered, or its time ran out. Nothing was lost and nothing was counted against you. The next question is on its way.</p>
     </div>
 
     ${info('check', 'This is normal', 'Questions resolve in about six seconds, so a careful reader loses one regularly. It has no effect on your record, your standing or what you are paid.', 'plain')}
 
-    <a class="ap-primary" href="app-home.html">Wait for the next one ${ic('arrow')}</a>
+    <a class="ap-primary" href="app-question.html">Wait for the next one ${ic('arrow')}</a>
   </div>
   <div class="ap-stack">${earningsRail()}</div>
 </div>`,
@@ -671,7 +673,7 @@ const settings = () =>
     ])}
 
     ${settingRow('bell', 'What you are told about', 'Nothing here will nag you.', [
-      `<div class="ap-row" style="align-items:flex-start"><div><b>Work is waiting</b><span>One email when questions in your skills arrive while you are away. At most once every half hour, and only if you add an address. Signing up never asks for one</span>
+      `<div class="ap-row" style="align-items:flex-start"><div><b>Work is waiting</b><span>One email when questions in your skills arrive while you are away. At most once every ten minutes, and only if you add an address. Signing up never asks for one</span>
         <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap"><div class="ap-field" style="flex:1;min-width:220px">${ic('mail')}<input type="email" autocomplete="email" placeholder="you@example.com" data-app="notify-email" aria-label="Email for work notifications"/></div><button class="ap-second" type="button" data-app="notify-save">Save</button></div>
         <p data-app="notify-status" class="ap-info" style="margin:10px 0 0" hidden></p></div></div>`,
       `<div class="ap-row"><div><b>A payment settled</b><span>Every wage appears in Earnings the moment it lands, with its public record. There is no email for each one: however small or large the wage, that would be a stream of noise</span></div>${pill('In the app', '')}</div>`,
@@ -1000,7 +1002,7 @@ const signIn = () =>
   appPage({
     title: 'Sign in',
     script: true,
-    side: `<aside class="ap-side">
+    side: `<aside class="ap-side ap-side-worker">
   <a class="brand" href="index.html"><span class="mark">${MARK}</span>Quorum</a>
   <div class="ap-side-foot">
     <div class="ap-note">${ic('shield')}<div><b>Nothing to steal</b><p>There is no password here, so there is none to leak and none to remember.</p></div></div>

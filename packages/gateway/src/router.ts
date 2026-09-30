@@ -111,6 +111,7 @@ export class Router {
       answers: [],
       calibrations: [],
       assignments: [],
+      lapsed: [],
       bought: 0,
       settled,
       finish,
@@ -235,6 +236,7 @@ export class Router {
         if (worker.busyWith !== assignment.assignmentId) return
         worker.busyWith = null
         live.assignments = live.assignments.filter((a) => a.assignmentId !== assignment.assignmentId)
+        live.lapsed.push(assignment)
         if (!golden) live.bought = Math.max(0, live.bought - 1)
         this.#step(live)
       },
@@ -297,7 +299,7 @@ export class Router {
     const worker = this.#store.workers.get(input.workerId)
     if (!worker) return { accepted: false, reason: 'unknown worker' }
 
-    const found = this.#store.findAssignment(input.assignmentId)
+    const found = this.#store.findAssignment(input.assignmentId) ?? this.#readmit(input.assignmentId, input.workerId)
     // The question finished, or the assignment lapsed, while the worker was reading.
     if (!found) return { accepted: false, reason: 'that assignment is no longer open' }
 
@@ -481,6 +483,35 @@ export class Router {
     live.finish(resolution)
 
     if (live.callbackUrl) void this.#postCallback(live.callbackUrl, resolution)
+  }
+
+  /**
+   * Takes back an offer that lapsed, when its worker answers while the question is
+   * still open.
+   *
+   * The lapse exists so a question can move to someone else when a worker has
+   * wandered off; it was never meant to discard the answer of one who was simply
+   * reading carefully. If the question was offered to them again meanwhile, that
+   * newer offer gives way to this one, so one person is never counted twice.
+   */
+  #readmit(assignmentId: string, workerId: string): { live: LiveQuestion; assignment: Assignment } | null {
+    for (const live of this.#store.live.values()) {
+      const lapsed = live.lapsed.find((a) => a.assignmentId === assignmentId && a.workerId === workerId)
+      if (!lapsed) continue
+      if (live.answers.some((a) => a.workerId === workerId)) return null
+      const newer = live.assignments.find((a) => a.workerId === workerId)
+      if (newer) {
+        live.assignments = live.assignments.filter((a) => a !== newer)
+        if (!newer.golden) live.bought = Math.max(0, live.bought - 1)
+      }
+      live.lapsed = live.lapsed.filter((a) => a !== lapsed)
+      live.assignments.push(lapsed)
+      if (!lapsed.golden) live.bought += 1
+      const worker = this.#store.workers.get(workerId)
+      if (worker) worker.busyWith = lapsed.assignmentId
+      return { live, assignment: lapsed }
+    }
+    return null
   }
 
   /**
