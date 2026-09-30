@@ -33,7 +33,7 @@ function api() {
   const store = new Store()
   const paymaster = new FakePaymaster()
   const router = new Router({ store, paymaster })
-  const app = workerApi({ store, router, paymaster, wageCents: 2, chainId: 42431, currency: CURRENCY })
+  const app = workerApi({ store, router, paymaster, wageCents: 20, chainId: 42431, currency: CURRENCY })
   const register = (body: unknown) =>
     app.request('/register', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
   return { store, app, register }

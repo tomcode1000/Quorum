@@ -77,7 +77,7 @@ describe('the caller-facing view', () => {
     requester: { externalAgentId: 'agent-77', externalTaskId: 'their-task-9' },
     task: 'Read the total',
     state: 'completed',
-    priceCents: 25,
+    priceCents: 250,
     createdAt: Date.now() - 5_000,
     deadlineAt: Date.now() + 25_000,
     workerIds: ['w1'],

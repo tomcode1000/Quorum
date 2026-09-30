@@ -14,7 +14,7 @@ import type { AnswerSchema, Attachment, Kind, Question, WorkerAnswer } from './t
  * phones defeats it. That is stated rather than papered over, because the
  * alternative defence every comparable network reaches for is a worker bond, and a
  * bond is exactly what this product refuses to ask for. Someone answering questions
- * for two cents cannot first acquire and lock a volatile asset, and a "small
+ * for twenty cents cannot first acquire and lock a volatile asset, and a "small
  * deposit to prevent spam" is the same idea wearing a friendlier word. Spam is
  * handled here and in selection, never with the worker's money.
  */

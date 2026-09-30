@@ -152,7 +152,7 @@ const STATS = [
   ['0', 'Workers online', 'workers', 'workers-label'],
   ['Moderato', 'Network', 'network'],
   ['6.1s', 'Avg. response time'],
-  ['$0.02', 'Per answer'],
+  ['$0.20', 'Per answer'],
 ]
 
 const statsStrip = () => `<div class="shell"><hr class="rule"/><div class="stats-strip">

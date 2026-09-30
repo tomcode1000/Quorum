@@ -2,6 +2,14 @@
   The hidden attribute has to win. Components that set their own display, like
   .ap-info, otherwise override it, and an empty error box shows as a bar of colour.
 */
+/*
+  Component text rules below target spans, and icon tiles, avatar badges and
+  status pills are spans too. Written as `.x span` those rules outranked the
+  tile's own styles, so every icon slid into the corner of its tile and turned
+  grey. Each is now `.x :where(span:not(.ap-tile, .ap-av, .ap-pill))`: it
+  styles text only, and :where keeps its specificity where it was.
+*/
+
 [hidden] {
   display: none !important;
 }
@@ -228,7 +236,7 @@
   letter-spacing: -0.01em;
 }
 
-.ap-who span {
+.ap-who :where(span:not(.ap-tile, .ap-av, .ap-pill)) {
   display: block;
   font-size: 11.5px;
   color: var(--ink-4);
@@ -592,7 +600,7 @@
   min-width: 0;
 }
 
-.ap-metric span {
+.ap-metric :where(span:not(.ap-tile, .ap-av, .ap-pill)) {
   display: block;
   font-size: 12.5px;
   color: var(--ink-3);
@@ -639,7 +647,7 @@
   min-width: 0;
 }
 
-.ap-stat span {
+.ap-stat :where(span:not(.ap-tile, .ap-av, .ap-pill)) {
   display: block;
   font-size: 12.5px;
   color: var(--ink-3);
@@ -736,7 +744,7 @@ button.ap-row {
   color: var(--ink);
 }
 
-.ap-row span {
+.ap-row :where(span:not(.ap-tile, .ap-av, .ap-pill)) {
   display: block;
   font-size: 12px;
   line-height: 1.5;
@@ -784,7 +792,7 @@ button.ap-row {
   font-variant-numeric: tabular-nums;
 }
 
-.ap-row-lead span {
+.ap-row-lead :where(span:not(.ap-tile, .ap-av, .ap-pill)) {
   font-size: 12px;
   color: var(--ink-3);
 }
@@ -1101,7 +1109,7 @@ button.ap-row {
   background: var(--accent);
 }
 
-.ap-progress span {
+.ap-progress :where(span:not(.ap-tile, .ap-av, .ap-pill)) {
   flex: none;
   font-size: 12.5px;
   font-weight: 600;
@@ -1654,7 +1662,7 @@ button.ap-row {
   color: var(--ink);
 }
 
-.ap-feed-row span {
+.ap-feed-row :where(span:not(.ap-tile, .ap-av, .ap-pill)) {
   display: block;
   font-size: 11.5px;
   color: var(--ink-4);
@@ -1731,7 +1739,7 @@ button.ap-row {
   color: var(--ink);
 }
 
-.ap-time span {
+.ap-time :where(span:not(.ap-tile, .ap-av, .ap-pill)) {
   display: block;
   font-size: 11.5px;
   line-height: 1.5;
@@ -1828,7 +1836,7 @@ button.ap-row {
   min-width: 0;
 }
 
-.ap-kv span {
+.ap-kv :where(span:not(.ap-tile, .ap-av, .ap-pill)) {
   display: block;
   font-size: 11.5px;
   color: var(--ink-4);
@@ -2034,7 +2042,7 @@ button.ap-row {
   font-variant-numeric: tabular-nums;
 }
 
-.ap-donut span {
+.ap-donut :where(span:not(.ap-tile, .ap-av, .ap-pill)) {
   font-size: 11.5px;
   color: var(--ink-4);
 }

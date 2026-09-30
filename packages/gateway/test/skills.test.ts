@@ -22,7 +22,7 @@ function api() {
   store.golden.push(...GOLDEN_SEED)
   const paymaster = new FakePaymaster()
   const router = new Router({ store, paymaster })
-  const app = workerApi({ store, router, paymaster, wageCents: 2, chainId: 42431, currency: '0x20c0000000000000000000000000000000000000' })
+  const app = workerApi({ store, router, paymaster, wageCents: 20, chainId: 42431, currency: '0x20c0000000000000000000000000000000000000' })
   const send = async (path: string, body: unknown) =>
     (await app.request(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })).json() as Promise<
       Record<string, unknown>

@@ -20,7 +20,7 @@ const config: Config = {
   port: 8787,
   publicUrl: 'https://quorum.example',
   statePath: 'data/workers.json',
-  wageCents: 2,
+  wageCents: 20,
   workerAppOrigins: ['http://localhost:5173'],
   devEndpoints: false,
 }

@@ -5,7 +5,7 @@
   is not minimalism for its own sake: the worker app runs on whatever phone
   somebody has, often on a connection that drops in lifts, and every dependency
   is one more thing that can fail in their hand at the moment they are trying to
-  earn two cents.
+  earn twenty cents.
 
   The rule the whole file is written to: nothing on screen is invented. Every
   figure is filled from the gateway or left as an em dash. The comps this UI was
@@ -70,7 +70,7 @@ const esc = (value) =>
 /*
   Cents, as a worker reads them.
 
-  A wage is two cents, so an evening's work is often under a dollar and the
+  A wage is twenty cents, so an evening's work is often a few dollars and the dollar and the
   usual two-decimal format rounds it to "$0.06" or hides it entirely at
   "$0.00". Three decimals appear only below a dime, where they are carrying
   meaning, so the ordinary case still looks like money rather than telemetry.
@@ -425,7 +425,7 @@ const remember = (saved) => {
 
   A dot only when something is genuinely waiting, and never a count that climbs.
   The comps draw it permanently lit, which on this surface would be a standing
-  demand for attention aimed at somebody earning two cents an answer — and a
+  demand for attention aimed at somebody earning twenty cents an answer — and a
   worker who puts the phone down is not behind on anything.
 
   There are exactly two things worth a dot: work is available for them now, or a
@@ -1240,6 +1240,42 @@ const initSkills = async () => {
     } catch (error) {
       save.disabled = false
       say(`Your skills were not saved: ${String(error.message ?? error)}. Nothing has changed, so you can try again.`)
+    }
+  })
+}
+
+/* ----------------------------------------------------------------- notify -- */
+
+/** The optional email for being told that work is waiting. Empty and saved removes it. */
+const initNotify = (me) => {
+  const field = $('notify-email')
+  const save = $('notify-save')
+  const current = session()
+  if (!field || !save || !current) return
+  if (me?.email) field.value = me.email
+
+  const status = $('notify-status')
+  const say = (text, tone = '') => {
+    status.hidden = false
+    status.className = `ap-info${tone ? ` ap-info-${tone}` : ''}`
+    status.textContent = text
+  }
+
+  save.addEventListener('click', async () => {
+    const email = field.value.trim()
+    save.disabled = true
+    try {
+      const saved = await post('/v1/worker/notify', { workerId: current.workerId, email: email || null })
+      say(
+        saved.email
+          ? `You will be told at ${saved.email} when work in your skills is waiting and you are away.`
+          : 'Removed. You will not be emailed.',
+        'good',
+      )
+    } catch (error) {
+      say(`Not saved: ${String(error.message ?? error)}`, 'bad')
+    } finally {
+      save.disabled = false
     }
   })
 }
@@ -2135,7 +2171,10 @@ initExport()
 void (async () => {
   await Promise.allSettled([
     loadWage(),
-    loadMe().then(initSend),
+    loadMe().then((me) => {
+      initSend(me)
+      initNotify(me)
+    }),
     initHome(),
     initQuestion(),
     initAssessment(),

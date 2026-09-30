@@ -24,7 +24,9 @@
     "setup": "node scripts/setup.mjs",
     "fund": "node --env-file-if-exists=.env scripts/fund.mjs",
     "settle": "node --env-file-if-exists=.env scripts/settle.mjs",
-    "site": "npm run build -w @quorum/site && npm run dev -w @quorum/site"
+    "site": "npm run build -w @quorum/site && npm run dev -w @quorum/site",
+    "agent-a": "npm run agent-a -w @quorum/demo --",
+    "agent-b": "npm run agent-b -w @quorum/demo --"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

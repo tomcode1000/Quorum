@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "build": "tsc --build",
-    "demo": "tsc --build && node --env-file-if-exists=../.env dist/main.js"
+    "demo": "tsc --build && node --env-file-if-exists=../.env dist/main.js",
+    "agent-a": "tsc --build && node --env-file-if-exists=../.env dist/agent-a.js",
+    "agent-b": "tsc --build && node --env-file-if-exists=../.env dist/agent-b.js"
   },
   "dependencies": {
     "@quorum/core": "*",

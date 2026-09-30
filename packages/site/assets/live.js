@@ -10,6 +10,9 @@
   matching the worker app. Override with ?gateway=https://…
 */
 
+/** Cents as a reader says them: 80¢, or $5.00 once past a dollar. */
+const price = (cents) => (cents < 100 ? `${cents}\u00a2` : `$${(cents / 100).toFixed(2)}`)
+
 const gateway = (() => {
   const explicit = new URL(document.baseURI).searchParams.get('gateway')
   if (explicit) return explicit.replace(/\/$/, '')
@@ -61,7 +64,7 @@ async function refresh() {
         badge.textContent = 'Unknown'
         badge.className = 'badge'
       } else if (found.servable) {
-        badge.textContent = `${found.price_cents.min}–${found.price_cents.max}¢ a question`
+        badge.textContent = `${price(found.price_cents.min)}–${price(found.price_cents.max)} a question`
         badge.className = 'badge badge-accent'
       } else {
         badge.textContent = 'No workforce yet'

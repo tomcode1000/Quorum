@@ -10,6 +10,7 @@ import { Events } from './events.js'
 import { operatorApi } from './operator-api.js'
 import { GOLDEN_SEED } from './golden-seed.js'
 import { Router } from './router.js'
+import { createNotifier, resendMailer } from './notifier.js'
 import { createServer } from './server.js'
 import { Store } from './store.js'
 import { walletRoutes } from './wallet-routes.js'
@@ -36,12 +37,18 @@ async function main(): Promise<void> {
   const paymaster = createPaymaster({ client, network: config.network })
 
   const events = new Events()
+  const notifier = createNotifier({
+    store,
+    mail: resendMailer(process.env.RESEND_API_KEY, process.env.QUORUM_EMAIL_FROM ?? 'Quorum <onboarding@resend.dev>'),
+    appUrl: process.env.QUORUM_WORKER_APP_URL ?? 'http://localhost:4173/app-home.html',
+  })
   const router = new Router({
     store,
     paymaster,
     wageCents: config.wageCents,
     onEvent: (event) => {
       events.emit(event)
+      if (event.type === 'question.received') notifier.workWaiting(event.kind)
       console.log(`[quorum] ${event.type} ${'questionId' in event ? event.questionId : ''}`)
     },
   })
@@ -66,7 +73,7 @@ async function main(): Promise<void> {
   app.use('/v1/capabilities', cors({ origin: '*', allowMethods: ['GET', 'OPTIONS'] }))
   app.use('/.well-known/*', cors({ origin: '*', allowMethods: ['GET', 'OPTIONS'] }))
 
-  app.route('/', createServer({ config, store, router, paymaster, events }))
+  app.route('/', createServer({ config, store, router, paymaster, events, notifier }))
   app.route(
     '/v1/worker',
     workerApi({

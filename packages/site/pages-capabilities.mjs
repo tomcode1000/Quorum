@@ -103,7 +103,7 @@ const readings = () => capabilityPage({
   input: `<span class="tag">Your agent sends</span><p style="font-size:12.5px;color:var(--ink-2);margin:12px 0 10px">The printed line reads &ldquo;TOTAL 4S.00&rdquo;. Is the total 45.00 or 4.50?</p>
     ${option('Its reading, 0.41 confident', '4.50')}${option('The other reading', '45.00')}`,
   analysis: asked([
-    ['Priced from the cost of error', 'A $40.50 mistake buys an answer at 0.99 confidence.'],
+    ['Priced from the cost of error', 'A $40.50 mistake buys an answer at 0.96 confidence.'],
     ['Amara looked at the receipt', 'Answered 45.00. One answer reaches 0.926.'],
     ['Joel was asked independently', 'Also 45.00. Together, 0.990.'],
   ]),

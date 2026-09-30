@@ -43,7 +43,7 @@ const seedSchema = z.object({
       z.object({ type: z.literal('number'), unit: z.string().optional(), tolerance: z.number().optional() }),
     ])
     .default({ type: 'enum', options: ['45.00', '4.50'] }),
-  max_price: z.string().default('0.25'),
+  max_price: z.string().default('2.50'),
   deadline_ms: z.number().int().min(5_000).max(120_000).default(60_000),
   context: z.object({ image_url: z.string().optional(), text: z.string().optional(), extracted: z.unknown().optional() }).optional(),
 })

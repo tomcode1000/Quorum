@@ -40,7 +40,7 @@ function question(over: Partial<Question> = {}): Question {
     kind: KIND,
     prompt: 'Does this receipt total say 45.00 or 4.50?',
     schema: { kind: 'choice', options: ['45.00', '4.50'] },
-    priceCents: 25,
+    priceCents: 250,
     timeoutMs: 45_000,
     ...over,
   }
@@ -66,9 +66,9 @@ const novice = blankRecord('novice')
 
 describe('price is the confidence dial', () => {
   it('rises monotonically with what the caller agreed to pay', () => {
-    const cheap = trustTarget({ priceCents: 5 })
-    const mid = trustTarget({ priceCents: 25 })
-    const dear = trustTarget({ priceCents: 50 })
+    const cheap = trustTarget({ priceCents: 50 })
+    const mid = trustTarget({ priceCents: 250 })
+    const dear = trustTarget({ priceCents: 500 })
     assert.ok(cheap < mid && mid < dear, `${cheap} < ${mid} < ${dear}`)
     assert.ok(cheap >= 0.85 && dear <= 0.995)
   })
@@ -77,8 +77,8 @@ describe('price is the confidence dial', () => {
     // The caller's confidence in its own guess describes difficulty, not stakes.
     // Letting it move this number turned hard questions into refunds, so it moves
     // routing instead; see the note on trustTarget.
-    assert.equal(trustTarget({ priceCents: 25 }), trustTarget({ priceCents: 25 }))
-    assert.equal(trustTarget({ priceCents: 8 }), 1 - 0.5 / 8)
+    assert.equal(trustTarget({ priceCents: 250 }), trustTarget({ priceCents: 250 }))
+    assert.equal(trustTarget({ priceCents: 80 }), 1 - 5 / 80)
   })
 })
 
@@ -174,7 +174,7 @@ describe('the escalation ladder', () => {
   })
 
   it('lets one proven worker settle a mid-priced question alone', () => {
-    const q = question({ priceCents: 10 })
+    const q = question({ priceCents: 100 })
     assert.ok(canResolveAlone(q, proven))
     assert.equal(decide(q, state({ answers: [answer('proven', '45.00')], records: records(proven) })).action, 'resolve')
   })
@@ -211,8 +211,8 @@ describe('the escalation ladder', () => {
       available: [worker('c', 200)],
       bought: 2,
     }
-    assert.equal(decide(question({ priceCents: 10 }), state(pool)).action, 'resolve')
-    assert.equal(decide(question({ priceCents: 50 }), state(pool)).action, 'ask')
+    assert.equal(decide(question({ priceCents: 100 }), state(pool)).action, 'resolve')
+    assert.equal(decide(question({ priceCents: 500 }), state(pool)).action, 'ask')
   })
 
   it('waits for an outstanding answer rather than buying a duplicate', () => {
@@ -264,7 +264,7 @@ describe('the escalation ladder', () => {
   it('costs under two answers per question where fixed 3x costs three', () => {
     const pool = ['w0', 'w1', 'w2', 'w3', 'w4'].map((id) => worker(id, 120))
     const recordMap = records(...pool)
-    const prices = [8, 10, 25, 25, 50]
+    const prices = [80, 100, 250, 250, 500]
     let bought = 0
 
     for (const priceCents of prices) {

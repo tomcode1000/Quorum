@@ -30,7 +30,7 @@ import type { Store, Worker } from './store.js'
  * That absence is also the one differentiator that no competitor can copy without
  * rebuilding their economics. Every comparable network asks the worker for capital
  * first — a native token to be paid in, a bond to post, a stake to unlock better
- * work — which is incoherent for someone earning two cents an answer. If a "small
+ * work — which is incoherent for someone earning twenty cents an answer. If a "small
  * deposit to prevent spam" ever appears in this file, the product has been lost;
  * spam is handled by selection and reputation instead.
  */
@@ -84,6 +84,12 @@ const answerSchema = z.object({
 export function assessmentStatus(worker: Pick<Worker, 'skills'>): Standing {
   return standing(worker.skills)
 }
+
+const notifySchema = z.object({
+  workerId: z.string().min(8).max(128),
+  /** An address to be told at, or null to stop. */
+  email: z.string().trim().email().max(254).nullable(),
+})
 
 const skillsSchema = z.object({
   workerId: z.string().min(8).max(128),
@@ -195,6 +201,23 @@ export function workerApi(services: {
     const signer = workerId ? store.workers.get(workerId)?.signer : undefined
     if (signer?.kind !== 'passkey') return c.json({ error: 'no passkey on record for that id' }, 404)
     return c.json({ publicKey: signer.publicKey })
+  })
+
+  /**
+   * Be told, or stop being told, when work in your skills is waiting.
+   *
+   * Opt-in and separate from signing up, which asks for nothing. Setting it back to
+   * null deletes the address rather than switching a flag beside it.
+   */
+  app.post('/notify', async (c) => {
+    const parsed = notifySchema.safeParse(await c.req.json().catch(() => null))
+    if (!parsed.success) return c.json({ error: 'workerId and a valid email, or null, are required' }, 400)
+    const worker = store.workers.get(parsed.data.workerId)
+    if (!worker) return c.json({ error: 'unknown worker; register first' }, 404)
+    worker.email = parsed.data.email
+    worker.notifiedAt = null
+    void store.save()
+    return c.json({ email: worker.email })
   })
 
   /**
@@ -441,6 +464,8 @@ export function workerApi(services: {
       assessment: standing(worker.skills),
       /** Each skill they picked and where it stands. Unpicked skills are absent. */
       skills: worker.skills,
+      /** Where they are told that work is waiting, if anywhere. */
+      email: worker.email,
       /**
        * Every wage, newest first, each with the link that proves it.
        *

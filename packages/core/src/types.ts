@@ -85,10 +85,10 @@ export type Question = {
    * What the caller agreed to pay, in cents.
    *
    * This is the only dial. It sets the price and, through `trustTarget`, how sure
-   * the answer has to be before we will give it to them. A caller paying fifty
-   * cents is buying near-certainty; one paying five is buying a quick single
+   * the answer has to be before we will give it to them. A caller paying five
+   * dollars is buying near-certainty; one paying fifty cents is buying a quick single
    * opinion. Exposing certainty as a second independent knob would invite a
-   * caller to ask for near-certainty at the five-cent price, which we cannot buy.
+   * caller to ask for near-certainty at the fifty-cent price, which we cannot buy.
    */
   readonly priceCents: number
   /** How long the caller is willing to wait, in milliseconds. */

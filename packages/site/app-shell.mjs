@@ -26,7 +26,7 @@ import { MARK, caret, ic } from './build.mjs'
 /**
  * Cents, as a worker reads them.
  *
- * Wages are two cents, so a session total is often under a dollar and the usual
+ * Wages are twenty cents, so a session total is often a few dollar and the usual
  * two-decimal format rounds a real morning's work to "$0.06" or hides it at
  * "$0.00". Three decimals appear only where they are load-bearing — under a
  * dime — so the common case still looks like money rather than like telemetry.

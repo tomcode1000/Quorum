@@ -36,7 +36,7 @@ import {
  * things that are not true of this system. The layout, spacing, panels and
  * geometry are reproduced exactly; the claims inside them are corrected:
  *
- *   $2.50 an answer        The wage is two cents. Every amount is rendered from
+ *   $2.50 an answer        The wage is twenty cents. Every amount is rendered from
  *                          the gateway rather than typed, so it cannot drift
  *                          again.
  *   "your balance"         We hold no balance. A wage goes to an account only
@@ -671,9 +671,11 @@ const settings = () =>
     ])}
 
     ${settingRow('bell', 'What you are told about', 'Nothing here will nag you.', [
-      toggleRow('A question is available', 'One notification when work arrives. Never repeated'),
-      toggleRow('A payment settled', 'When a wage lands in your account'),
-      `<div class="ap-row"><div><b>Security notices</b><span>A new device signing in, or a change to your account. These cannot be switched off, because they are the ones that matter</span></div>${pill('Always on', 'accent')}</div>`,
+      `<div class="ap-row" style="align-items:flex-start"><div><b>Work is waiting</b><span>One email when questions in your skills arrive while you are away. At most once every half hour, and only if you add an address. Signing up never asks for one</span>
+        <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap"><div class="ap-field" style="flex:1;min-width:220px">${ic('mail')}<input type="email" autocomplete="email" placeholder="you@example.com" data-app="notify-email" aria-label="Email for work notifications"/></div><button class="ap-second" type="button" data-app="notify-save">Save</button></div>
+        <p data-app="notify-status" class="ap-info" style="margin:10px 0 0" hidden></p></div></div>`,
+      `<div class="ap-row"><div><b>A payment settled</b><span>Every wage appears in Earnings the moment it lands, with its public record. There is no email for each one: however small or large the wage, that would be a stream of noise</span></div>${pill('In the app', '')}</div>`,
+      `<div class="ap-row"><div><b>Security notices</b><span>Not sent yet. Your passkey never leaves your device, and Quorum cannot move anything in your account, so there is no account change for us to warn you about</span></div>${pill('Not sent yet', '')}</div>`,
     ])}
 
     ${settingRow('power', 'Account', 'Leaving, and what happens to what you earned.', [

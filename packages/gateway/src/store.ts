@@ -75,6 +75,10 @@ export type Worker = {
    * signs through Tempo's hosted wallet, so there is no key of theirs to keep.
    */
   signer: { kind: 'passkey'; publicKey: `0x${string}` } | { kind: 'tempo-wallet' } | null
+  /** Where to say work is waiting, if they asked to be told. Nobody is asked for this to sign up. */
+  email: string | null
+  /** When they were last emailed, so they are emailed at most once in a quiet period. */
+  notifiedAt: number | null
 }
 
 /** One question offered to one worker. */
@@ -127,6 +131,8 @@ type Snapshot = {
     skills?: Skills
     payments?: WagePayment[]
     signer?: Worker['signer']
+    email?: string | null
+    notifiedAt?: number | null
   }[]
 }
 
@@ -167,6 +173,8 @@ export class Store {
           skills: entry.skills ?? legacySkills(entry.record, entry.assessmentFailed ?? false),
           payments: entry.payments ?? [],
           signer: entry.signer ?? null,
+          email: entry.email ?? null,
+          notifiedAt: entry.notifiedAt ?? null,
         })
     } catch {
       // No saved roster, or an unreadable one. Either way, start clean.
@@ -188,6 +196,8 @@ export class Store {
         skills: w.skills,
         payments: w.payments,
         signer: w.signer,
+        email: w.email,
+        notifiedAt: w.notifiedAt,
       })),
     }
     this.#writing = this.#writing.then(async () => {
@@ -219,6 +229,8 @@ export class Store {
       skills: {},
       payments: [],
       signer,
+      email: null,
+      notifiedAt: null,
     }
     this.workers.set(workerId, worker)
     return worker

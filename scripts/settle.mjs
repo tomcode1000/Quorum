@@ -13,9 +13,12 @@ import { randomBytes } from 'node:crypto'
  * The recipient is generated here and holds nothing beforehand — no gas asset, no
  * prior balance, no account with us. That is the point being demonstrated rather than
  * an incidental detail: on a chain with no native gas token, and with the treasury
- * co-signing the fee, a total stranger can be paid two cents without first acquiring
+ * co-signing the fee, a total stranger can be paid a wage without first acquiring
  * anything at all. No other rail in this category can do that.
  */
+
+/** The wage the gateway pays, so the proof sends what a worker actually receives. */
+const WAGE = Number(process.env.QUORUM_WAGE_CENTS ?? 20)
 
 async function main() {
   const privateKey = process.env.QUORUM_TREASURY_KEY
@@ -49,14 +52,14 @@ async function main() {
   console.log(`  Balance now: ${before}c`)
   console.log('')
 
-  process.stdout.write('  Paying 2c… ')
+  process.stdout.write(`  Paying ${WAGE}c… `)
   const started = Date.now()
   const receipt = await paymaster.payWorker({
     questionId,
     assignmentId,
     workerId: 'proof-worker',
     to: worker.address,
-    amountCents: 2,
+    amountCents: WAGE,
   })
   const elapsed = Date.now() - started
   console.log(`landed in ${(elapsed / 1000).toFixed(2)}s`)

@@ -92,7 +92,7 @@ const devSection = () => `<section class="section"><div class="shell split">
     <h1 class="h-xl">One tool call.<br/>Real people. Real answers.</h1>
     <p class="lede">Call it at the moment your agent is about to act on something it cannot check: forward the <code>input-required</code> status it already emits, or send the question directly. Say what a mistake would cost, and the price follows.</p>
     <ul class="feats">
-      ${[['bolt', 'A2A, MCP or HTTP', 'Forward input-required, call a tool, or POST.'], ['clock', 'About six seconds', 'Blocking, like any other call your agent makes.'], ['money', 'From 5\u00a2 a question', 'Set by what being wrong would cost, up to 50\u00a2.'], ['check', 'Confidence you can check', 'Who answered, how they agreed, and every payment on chain.']]
+      ${[['bolt', 'A2A, MCP or HTTP', 'Forward input-required, call a tool, or POST.'], ['clock', 'About six seconds', 'Blocking, like any other call your agent makes.'], ['money', 'From 50\u00a2 a question', 'Set by what being wrong would cost, up to $5.'], ['check', 'Confidence you can check', 'Who answered, how they agreed, and every payment on chain.']]
         .map(([i, t, d]) => `<li class="feat"><span class="ico ico-sm">${ic(i)}</span><b>${t}</b><span>${d}</span></li>`).join('')}
     </ul>
   </div>

@@ -66,7 +66,7 @@ describe('asking with a cost of error', () => {
 
   it('declines before charging when a person is not worth it', async () => {
     const { priceAsk } = await import('../src/pricing.js')
-    const priced = priceAsk({ kind: 'verify', schema: { kind: 'boolean' }, maxPriceCents: 50, costOfErrorCents: 200, callerConfidence: 0.97 })
+    const priced = priceAsk({ kind: 'verify', schema: { kind: 'boolean' }, maxPriceCents: 500, costOfErrorCents: 200, callerConfidence: 0.97 })
     assert.equal(priced.kind, 'not-worth-asking')
   })
 })

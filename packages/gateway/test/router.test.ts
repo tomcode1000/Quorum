@@ -26,7 +26,7 @@ function question(over: Partial<Question> = {}): Question {
     kind: 'disambiguate',
     prompt: 'Does this receipt total say 45.00 or 4.50? Look at the printed line, not the handwriting.',
     schema: { kind: 'choice', options: ['45.00', '4.50'] },
-    priceCents: 25,
+    priceCents: 250,
     timeoutMs: 6_000,
     ...over,
   }
@@ -102,14 +102,14 @@ describe('resolving a question', () => {
     h.addWorker('w1', proven('w1'))
     h.autoAnswer('w1', '45.00')
 
-    const resolution = await h.router.resolve(question({ priceCents: 10 }))
+    const resolution = await h.router.resolve(question({ priceCents: 100 }))
 
     assert.equal(resolution.status, 'resolved')
     assert.equal(resolution.value, '45.00')
     assert.equal(resolution.responders, 1, 'a proven worker should not need a second opinion at this price')
     assert.equal(resolution.agreement, 'unanimous')
     assert.equal(h.paymaster.wages.length, 1)
-    assert.equal(h.paymaster.wages[0]?.amountCents, 2)
+    assert.equal(h.paymaster.wages[0]?.amountCents, 20)
     assert.equal(h.paymaster.refunds.length, 0)
   })
 
@@ -118,7 +118,7 @@ describe('resolving a question', () => {
     h.addWorker('w1', proven('w1'))
     h.autoAnswer('w1', '45.00')
 
-    const q = question({ priceCents: 10 })
+    const q = question({ priceCents: 100 })
     await h.router.resolve(q)
 
     assert.ok(h.paymaster.wages[0]?.memo.includes(q.id.slice(0, 8)), 'the memo must tie the payment to the question')
@@ -136,7 +136,7 @@ describe('resolving a question', () => {
     h.autoAnswer('novice_b', '45.00')
     h.autoAnswer('novice_c', '45.00')
 
-    const resolution = await h.router.resolve(question({ priceCents: 10, timeoutMs: 8_000 }))
+    const resolution = await h.router.resolve(question({ priceCents: 100, timeoutMs: 8_000 }))
 
     assert.equal(resolution.status, 'resolved')
     assert.equal(resolution.responders, 3)
@@ -150,7 +150,7 @@ describe('resolving a question', () => {
     h.autoAnswer('novice', '45.00')
     h.autoAnswer('w2', '45.00')
 
-    const resolution = await h.router.resolve(question({ priceCents: 10 }))
+    const resolution = await h.router.resolve(question({ priceCents: 100 }))
 
     assert.equal(resolution.responders, 1)
     assert.equal(resolution.evidence[0]?.workerId, 'w2')
@@ -167,7 +167,7 @@ describe('resolving a question', () => {
 
     // At fifty cents the caller is buying near-certainty, which one worker cannot
     // supply alone however good their record, so the disagreement actually surfaces.
-    const resolution = await h.router.resolve(question({ priceCents: 50, timeoutMs: 8_000 }))
+    const resolution = await h.router.resolve(question({ priceCents: 500, timeoutMs: 8_000 }))
 
     assert.equal(resolution.responders, 3, `expected a tiebreak, got ${resolution.responders} answers`)
     assert.equal(h.paymaster.wages.length, 3, 'the dissenter is paid too')
@@ -182,7 +182,7 @@ describe('resolving a question', () => {
     h.autoAnswer('b', '4.50')
     h.autoAnswer('c', '45.00')
 
-    const resolution = await h.router.resolve(question({ priceCents: 50, timeoutMs: 8_000 }))
+    const resolution = await h.router.resolve(question({ priceCents: 500, timeoutMs: 8_000 }))
 
     assert.equal(resolution.evidence.length, 3)
     assert.ok(resolution.evidence.some((e) => e.value === '4.50'), 'a caller should see that somebody disagreed')
@@ -200,7 +200,7 @@ describe('failing honestly', () => {
 
     assert.equal(resolution.status, 'timeout')
     assert.equal(resolution.value, null, 'a question that did not resolve must not return a value')
-    assert.equal(resolution.refund?.amountCents, 25)
+    assert.equal(resolution.refund?.amountCents, 250)
     assert.equal(h.paymaster.refunds.length, 1)
     assert.equal(h.paymaster.wages.length, 0)
   })
@@ -213,15 +213,15 @@ describe('failing honestly', () => {
     h.autoAnswer('a', '45.00')
     h.autoAnswer('b', '4.50')
 
-    const resolution = await h.router.resolve(question({ priceCents: 50, timeoutMs: 5_000 }), { payer: WORKER_ADDRESS })
+    const resolution = await h.router.resolve(question({ priceCents: 500, timeoutMs: 5_000 }), { payer: WORKER_ADDRESS })
 
     assert.equal(resolution.status, 'no_consensus')
     assert.equal(resolution.value, null)
     assert.equal(resolution.agreement, 'split')
     assert.equal(h.paymaster.wages.length, 2, 'both workers did the work and must be paid')
     assert.equal(h.paymaster.refunds.length, 1, 'the caller did not get an answer and must be refunded')
-    assert.equal(resolution.refund?.amountCents, 50, 'the refund is the full price, not the price minus wages')
-    assert.equal(resolution.wagesCents, 4)
+    assert.equal(resolution.refund?.amountCents, 500, 'the refund is the full price, not the price minus wages')
+    assert.equal(resolution.wagesCents, 40)
   })
 
   it('does not hold an unresolved question against the workers who answered it', async () => {
@@ -231,7 +231,7 @@ describe('failing honestly', () => {
     h.autoAnswer('a', '45.00')
     h.autoAnswer('b', '4.50')
 
-    await h.router.resolve(question({ priceCents: 50, timeoutMs: 5_000 }), { payer: WORKER_ADDRESS })
+    await h.router.resolve(question({ priceCents: 500, timeoutMs: 5_000 }), { payer: WORKER_ADDRESS })
 
     const record = h.store.workers.get('b')?.record.byKind.disambiguate
     assert.equal(record?.disagreements, 0, 'penalising the dissenter teaches the pool to guess the popular answer')
@@ -254,7 +254,7 @@ describe('failing honestly', () => {
     h.addWorker('w1', proven('w1'))
     h.autoAnswer('w1', '45.00')
 
-    const resolution = await h.router.resolve(question({ priceCents: 10 }))
+    const resolution = await h.router.resolve(question({ priceCents: 100 }))
 
     assert.equal(resolution.status, 'resolved')
     assert.equal(resolution.value, '45.00')
@@ -269,7 +269,7 @@ describe('reputation and abuse signals', () => {
     h.addWorker('w1', proven('w1'))
     h.autoAnswer('w1', '45.00')
 
-    await h.router.resolve(question({ priceCents: 10 }))
+    await h.router.resolve(question({ priceCents: 100 }))
 
     assert.equal(h.store.workers.get('w1')?.record.byKind.disambiguate?.agreements, 201)
   })
@@ -280,7 +280,7 @@ describe('reputation and abuse signals', () => {
     // Answering a fifteen-word question in a millisecond is not reading it.
     h.autoAnswer('fast', '45.00', { delayMs: 0 })
 
-    await h.router.resolve(question({ priceCents: 10 }))
+    await h.router.resolve(question({ priceCents: 100 }))
 
     assert.equal(h.store.workers.get('fast')?.tooFastCount, 1)
     // One fast answer is not an accusation, and does not withhold the wage.

@@ -42,7 +42,7 @@ Call it instead of:
 Do not call it for permission or approval. It answers questions about data, not
 questions about what you are allowed to do. It cannot see or touch your systems.
 
-You pay per question, from five to fifty cents. The price you set is also how sure
+You pay per question, from fifty cents to five dollars. The price you set is also how sure
 the answer has to be: pay more when a wrong answer would be expensive. If nobody
 can answer, you are refunded and told so — you will never receive an invented
 answer with a confidence score attached.`
@@ -96,7 +96,7 @@ export function createMcpServer(services: {
         max_price: z
           .string()
           .optional()
-          .describe('Your ceiling in dollars. Also sets how sure the answer must be: more money, surer answer. Defaults to 0.25 when cost_of_error is not given.'),
+          .describe('Your ceiling in dollars. Also sets how sure the answer must be: more money, surer answer. Defaults to 2.50 when cost_of_error is not given.'),
         cost_of_error: z
           .string()
           .optional()
@@ -115,7 +115,7 @@ export function createMcpServer(services: {
     },
     async (input) => {
       const { maxPriceCents, costOfErrorCents } = readPricing(
-        input.max_price ?? (input.cost_of_error === undefined ? '0.25' : undefined),
+        input.max_price ?? (input.cost_of_error === undefined ? '2.50' : undefined),
         input.cost_of_error,
       )
       const pricing = priceAsk({

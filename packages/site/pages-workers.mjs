@@ -45,7 +45,7 @@ const wNav = (current) => `<header class="w-nav"><div class="shell w-nav-in">
 /** The floating earnings card that sits over the photograph in every comp. */
 const earningsCard = (position) => `<div class="w-float ${position}">
   <span class="w-tile" style="width:42px;height:42px;border-radius:12px">${ic('db')}</span>
-  <div><b>$0.02</b><span>per answered question</span></div>
+  <div><b>$0.20</b><span>per answered question</span></div>
 </div>`
 
 /*
@@ -75,7 +75,7 @@ const heroSection = () => `<section class="w-band"><div class="shell w-grid">
   <div class="w-copy">
     <p class="w-eyebrow">Real people. Real answers. Real income.</p>
     <h1 class="w-h">Turn your time into<em>real earnings.</em></h1>
-    <p class="w-lede">Quorum connects people like you with short questions from software that has got stuck. Answer from your phone or computer, get paid $0.02 per answer, and help the things you already use make fewer mistakes.</p>
+    <p class="w-lede">Quorum connects people like you with short questions from software that has got stuck. Answer from your phone or computer, get paid $0.20 per answer, and help the things you already use make fewer mistakes.</p>
     <div class="w-cta">
       <a class="w-btn" href="${WORKER_APP}">${CTA} ${ic('arrow')}</a>
       <a class="w-play" href="for-workers.html#how"><span>${ic('play')}</span>See how it works</a>
@@ -88,7 +88,7 @@ const heroSection = () => `<section class="w-band"><div class="shell w-grid">
 
 const WHY = [
   ['phone', 'Work from anywhere', 'Use your phone or computer. No special equipment, no office, no shift. A stable connection and a few spare minutes is the whole requirement.'],
-  ['db', 'Get paid per answer', 'Earn $0.02 for every question you answer. Each payment is sent as soon as the answer is accepted, not batched up until some threshold.'],
+  ['db', 'Get paid per answer', 'Earn $0.20 for every question you answer. Each payment is sent as soon as the answer is accepted, not batched up until some threshold.'],
   ['shield', 'Your money, your control', 'Quorum never holds your money. Wages are sent straight to your own account, and every one of them has a public record you can check.'],
   ['users', 'Real people, real impact', 'Your answers settle questions that software could not, for the products and services people rely on every day.'],
 ]
@@ -119,7 +119,7 @@ const STEPS = [
   ['user', 'Sign in with a passkey', 'Your device makes one for you. There is no password to choose, nothing to confirm by email, and nothing to write down and keep safe.'],
   ['gear', 'Take a short assessment', 'A handful of questions whose answers are already known, so your judgment can be measured. It is short, it is not paid, and every real question after it is.'],
   ['chat', 'Answer questions', 'Work reaches you based on your record for that kind of judgment. Every question is a few seconds of reading and one decision.'],
-  ['wallet', 'Get paid per answer', '$0.02 lands in your own account for each accepted answer, with no fee taken out of it and nothing to claim.'],
+  ['wallet', 'Get paid per answer', '$0.20 lands in your own account for each accepted answer, with no fee taken out of it and nothing to claim.'],
 ]
 
 const howItWorksSection = () => `<section class="w-band" id="how"><div class="shell w-grid">

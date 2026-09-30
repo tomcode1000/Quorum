@@ -20,6 +20,7 @@ import { agentCard, serviceManifest } from './agent-card.js'
 import type { Config } from './config.js'
 import type { Router } from './router.js'
 import type { Store } from './store.js'
+import type { Notifier } from './notifier.js'
 
 /**
  * The agent-facing surface.
@@ -43,13 +44,15 @@ export type Services = {
   paymaster: Paymaster
   /** Live event feed for the demo view. */
   events: { subscribe(listener: (event: unknown) => void): () => void }
+  /** Emails away workers when work in their skills is waiting. */
+  notifier?: Notifier
 }
 
 /** How long a quote is held before the caller must ask again. */
 const QUOTE_TTL_MS = 60_000
 
 export function createServer(services: Services): Hono {
-  const { config, store, router, paymaster } = services
+  const { config, store, router, paymaster, notifier } = services
   const app = new Hono()
 
   /**
@@ -139,11 +142,14 @@ export function createServer(services: Services): Hono {
 
     // Refusing here rather than after taking payment: a caller should not pay to
     // discover that nobody was online.
-    if (store.availableWorkers(parsed.kind).length === 0)
+    if (store.availableWorkers(parsed.kind).length === 0) {
+      // Turned away for want of people: exactly when an away worker should hear of it.
+      notifier?.workWaiting(parsed.kind)
       return c.json(
         { error: `nobody who has passed ${parsed.kind} questions is online right now`, status: 'refused', retry_after_ms: 15_000 },
         503,
       )
+    }
 
     const question: Question = {
       id: `q_${randomUUID().replaceAll('-', '').slice(0, 20)}`,

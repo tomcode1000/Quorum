@@ -5,8 +5,8 @@ import { SERVABLE_KINDS, type AnswerSchema, type Kind } from './types.js'
  * Pricing.
  *
  * The price is set by what the caller's error would have cost, not by what the
- * labour costs. An agent developer will pay twenty-five cents to stop a billing
- * agent confidently invoicing the wrong amount; the same twenty-five cents buys
+ * labour costs. An agent developer will pay two dollars fifty to stop a billing
+ * agent confidently invoicing the wrong amount; the same two dollars fifty buys
  * several seconds of a person's attention with change left over. The gap between
  * those two numbers is the margin, and it is wide because what is being sold is
  * correctness rather than time.
@@ -25,16 +25,16 @@ import { SERVABLE_KINDS, type AnswerSchema, type Kind } from './types.js'
  */
 export const PRICE_FLOOR_CENTS: Record<Kind, number> = {
   // Roughly ordered by how much reading each takes before an answer is possible.
-  verify: 5,
-  match: 8,
-  disambiguate: 8,
-  categorise: 8,
-  compare: 12,
-  extract: 12,
+  verify: 50,
+  match: 80,
+  disambiguate: 80,
+  categorise: 80,
+  compare: 120,
+  extract: 120,
 }
 
 /** The most we will charge. Above this, extra spend buys no reachable confidence. */
-export const PRICE_CEILING_CENTS = 50
+export const PRICE_CEILING_CENTS = 500
 
 export type Quote =
   | { readonly ok: true; readonly priceCents: number; readonly floorCents: number }
@@ -74,8 +74,8 @@ export function quote(input: { kind: Kind; maxPriceCents: number; schema: Answer
  */
 export function priceFloor(kind: Kind, schema: AnswerSchema): number {
   const base = PRICE_FLOOR_CENTS[kind]
-  if (schema.kind === 'choice' && schema.options.length > 4) return base + 2
-  if (schema.kind === 'number') return base + 2
+  if (schema.kind === 'choice' && schema.options.length > 4) return base + 20
+  if (schema.kind === 'number') return base + 20
   return base
 }
 
@@ -88,9 +88,9 @@ export function maxWageBillCents(wageCents = WAGE_CENTS): number {
  * Gross margin on a resolved question.
  *
  * Passed the number of answers actually bought, because that is the variable the
- * adaptive engine exists to keep small. At the twenty-five cent price a
- * single-answer resolution nets about twenty-three cents; the same question under
- * fixed three-way voting nets nineteen.
+ * adaptive engine exists to keep small. At the $2.50 price a single-answer
+ * resolution nets about $2.30; the same question under
+ * fixed three-way voting nets $1.90.
  */
 export function marginCents(priceCents: number, answersBought: number, wageCents = WAGE_CENTS, feeCents = 0.1): number {
   return priceCents - answersBought * wageCents - answersBought * feeCents

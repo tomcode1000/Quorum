@@ -17,13 +17,13 @@ const proofSection = () => `<section class="section"><div class="shell split">
     <h1 class="h-xl">Real performance.<br/>Settlement you can check.</h1>
     <p class="lede">Nothing here is projected. The latency is from the recorded demo run, and every wage is a transaction on a public ledger, so you can open any answer and see who was paid, how much, and when.</p>
     <ul class="feats">
-      ${[['bolt', 'Latency', 'Seconds, not a ticket queue'], ['money', 'Price', '5\u201350\u00a2 a question, set by the cost of error'], ['cube', 'On-chain', 'Every wage is inspectable']].map(([i, t, d]) => `<li class="feat"><span class="ico ico-sm">${ic(i)}</span><b>${t}</b><span>${d}</span></li>`).join('')}
+      ${[['bolt', 'Latency', 'Seconds, not a ticket queue'], ['money', 'Price', '50\u00a2\u2013$5 a question, set by the cost of error'], ['cube', 'On-chain', 'Every wage is inspectable']].map(([i, t, d]) => `<li class="feat"><span class="ico ico-sm">${ic(i)}</span><b>${t}</b><span>${d}</span></li>`).join('')}
     </ul>
   </div>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px">
     ${[
       ['clock', 'Latency', 'Two people, one answer', '5.5s', 'From the recorded demo run'],
-      ['money', 'Wage', 'Paid to each person who answers', '$0.02', 'Sent on chain the moment it is accepted'],
+      ['money', 'Wage', 'Paid to each person who answers', '$0.20', 'Sent on chain the moment it is accepted'],
     ].map(([i, t, s, v, n]) => `<div class="card card-lg"><div style="display:flex;gap:10px;align-items:center"><span class="ico ico-sm">${ic(i)}</span><div><b style="font-size:13px;display:block">${t}</b><span class="dim" style="font-size:11.5px">${s}</span></div></div><div style="font-size:28px;font-weight:700;letter-spacing:-.03em;margin:18px 0 4px;font-variant-numeric:tabular-nums">${v}</div><span class="dim" style="font-size:11.5px">${n}</span></div>`).join('')}
     <div class="card card-lg">
       <div style="display:flex;gap:10px;align-items:center"><span class="ico ico-sm">${ic('cube')}</span><div><b style="font-size:13px;display:block">Settlement</b><span class="dim" style="font-size:11.5px">Verifiable on the explorer</span></div></div>

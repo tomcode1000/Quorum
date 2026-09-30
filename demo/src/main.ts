@@ -1,10 +1,9 @@
 import { inputRequiredResponse, parseInputRequired, priceAsk, type Question, type Resolution } from '@quorum/core'
 import { Router, Store, GOLDEN_SEED } from '@quorum/gateway'
-import { CHAIN_IDS, chainFor, createQuorumClient, fundFromFaucet, type Network } from '@quorum/paymaster'
-import { Mppx, tempo } from 'mppx/client'
-import { randomBytes, randomUUID } from 'node:crypto'
-import { privateKeyToAccount } from 'viem/accounts'
+import { chainFor } from '@quorum/paymaster'
+import { randomUUID } from 'node:crypto'
 import { CHECKS, inputRequired, runAlone, show, type Check, type Outcome } from './chain.js'
+import { connectToQuorum, network } from './quorum-client.js'
 import { FakePaymaster } from './fake-paymaster.js'
 import { startSimulatedWorker } from './worker-sim.js'
 
@@ -158,106 +157,22 @@ async function runInProcess(seed: number | null): Promise<Settled[]> {
 
 /** Run 2, against a live gateway: real 402s, real credentials, real wages on chain. */
 async function runLive(): Promise<Settled[]> {
-  const base = process.env.QUORUM_URL ?? 'http://localhost:8787'
-  const network: Network = process.env.QUORUM_NETWORK === 'mainnet' ? 'mainnet' : 'testnet'
-
-  // The agent pays from its own account, never the gateway's treasury: a resolver that
-  // paid itself would prove nothing about the 402. Without a configured key, it is a
-  // wallet that did not exist a moment ago, funded from the testnet faucet.
-  const payer = await payerAccount(network)
-  const mppx = Mppx.create({
-    methods: [tempo({ account: payer.account, expectedChainId: CHAIN_IDS[network] })],
-    // Leave global fetch alone: each first request must see the raw 402.
-    polyfill: false,
-  })
-  console.log(`  The agent pays from ${payer.account.address}${payer.fresh ? ', funded from the faucet seconds ago' : ''}.`)
+  const quorum = await connectToQuorum()
+  console.log(`  The agent pays from ${quorum.payer}${quorum.fresh ? ', funded from the faucet seconds ago' : ''}.`)
   console.log('')
 
   const settled: Settled[] = []
   for (const check of CHECKS) {
-    const asked = await fetch(`${base}/v1/questions`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(inputRequired(`a2a:task:${randomUUID()}`, check)),
-    })
-    if (asked.status === 503)
-      throw new Error(`nobody who has passed ${check.kind} questions is online. Sign a worker in, pass that skill, and try again.`)
-    if (asked.status !== 402) throw new Error(`expected a 402 payment challenge, got ${asked.status}: ${await asked.text()}`)
-    const challenge = (await asked.json()) as { quote_cents: number; claim_url: string; advice?: { reason: string } }
-
-    // mppx sees the claim's own 402, signs a TIP-20 transfer for exactly the quoted
-    // amount to the advertised recipient, and retries with the credential attached.
-    const claimed = await mppx.fetch(challenge.claim_url, { method: 'POST' })
-    if (!claimed.ok) throw new Error(`claim failed with ${claimed.status}: ${await claimed.text()}`)
-    const body = (await claimed.json()) as Record<string, unknown>
-    const metadata = (body.metadata as Record<string, Record<string, unknown>> | undefined)?.['dev.quorum.resolver'] ?? {}
-    const status = String(metadata.status ?? 'unknown')
-    const resolution = resolutionFromTask(metadata, status, extractAnswer(body))
-    const reason = challenge.advice?.reason ?? 'priced by the gateway'
+    const asked = await quorum.ask(check)
+    if (asked.status !== 'answered') throw new Error(`the demo expected ${check.id} to be worth asking: ${asked.reason}`)
     settled.push({
-      outcome: outcomeOf(check, resolution, challenge.quote_cents, reason, ['payment verified; a person answered.']),
-      resolution,
-      priceCents: challenge.quote_cents,
-      reason,
+      outcome: outcomeOf(check, asked.resolution, asked.priceCents, asked.reason, ['payment verified; a person answered.']),
+      resolution: asked.resolution,
+      priceCents: asked.priceCents,
+      reason: asked.reason,
     })
   }
   return settled
-}
-
-/**
- * The resolver's evidence block, read back out of the A2A task it answered with.
- *
- * A forwarded `input-required` task is answered as a task, so the resolution travels
- * under the extension's metadata key in snake case rather than as the plain object
- * the in-process run gets.
- */
-function resolutionFromTask(metadata: Record<string, unknown>, status: string, answer: string): Resolution {
-  const receipts = (metadata.receipts as { tx_hash: string; memo: string; amount_cents: number }[] | undefined) ?? []
-  const refundTx = metadata.refund_tx as string | undefined
-  return {
-    questionId: '',
-    status: status as Resolution['status'],
-    value: status === 'resolved' ? answer : null,
-    confidence: Number(metadata.confidence ?? 0),
-    responders: Number(metadata.responders ?? 0),
-    agreement: (metadata.agreement as Resolution['agreement']) ?? 'none',
-    evidence: (metadata.evidence as Resolution['evidence']) ?? [],
-    latencyMs: Number(metadata.latency_ms ?? 0),
-    wagesCents: receipts.reduce((sum, r) => sum + r.amount_cents, 0),
-    receipts: receipts.map((r, index) => ({
-      workerId: `worker ${index + 1}`,
-      to: '0x' as `0x${string}`,
-      amountCents: r.amount_cents,
-      txHash: r.tx_hash,
-      memo: r.memo as `0x${string}`,
-      feeSponsored: true,
-    })),
-    ...(refundTx === undefined ? {} : { refund: { to: '0x', amountCents: 0, txHash: refundTx, memo: '0x' } }),
-    resolvedAt: Date.now(),
-  } as Resolution
-}
-
-/** The agent's wallet: configured, or created and funded on the spot on testnet. */
-async function payerAccount(network: Network): Promise<{ account: ReturnType<typeof privateKeyToAccount>; fresh: boolean }> {
-  const configured = process.env.QUORUM_DEMO_PAYER_KEY
-  if (configured && configured !== '0x') return { account: privateKeyToAccount(configured as `0x${string}`), fresh: false }
-  if (network !== 'testnet')
-    throw new Error('set QUORUM_DEMO_PAYER_KEY to a funded account; a fresh payer can only be funded on testnet')
-
-  const key = `0x${randomBytes(32).toString('hex')}` as const
-  const client = createQuorumClient({
-    network,
-    privateKey: key,
-    ...(process.env.QUORUM_RPC_URL ? { rpcUrl: process.env.QUORUM_RPC_URL } : {}),
-  })
-  await fundFromFaucet(client, client.account.address)
-  return { account: privateKeyToAccount(key), fresh: true }
-}
-
-function extractAnswer(body: Record<string, unknown>): string {
-  if (typeof body.answer === 'string') return body.answer
-  const status = body.status as { message?: { parts?: { text?: string }[] } } | undefined
-  return status?.message?.parts?.[0]?.text ?? '(none)'
 }
 
 const rule = () => console.log('  ' + '─'.repeat(68))
@@ -287,7 +202,6 @@ function report(title: string, outcomes: readonly Outcome[]): void {
 }
 
 function settlement(settled: readonly Settled[], live: boolean, seed: number | null): void {
-  const network: Network = process.env.QUORUM_NETWORK === 'mainnet' ? 'mainnet' : 'testnet'
   const explorer = chainFor(network).blockExplorers?.default.url ?? ''
   const spent = settled.reduce((sum, s) => sum + s.priceCents, 0)
   const refunded = settled.filter((s) => s.resolution.refund).reduce((sum, s) => sum + s.priceCents, 0)

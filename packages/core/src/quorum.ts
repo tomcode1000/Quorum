@@ -52,7 +52,12 @@ import type {
 export const MAX_RESPONDERS = 5
 
 /** What one answer costs the platform, in cents. */
-export const WAGE_CENTS = 2
+/**
+ * What one answer pays, in cents: twenty. Prices are set around it (floors of
+ * 50c to $1.20, a $5 ceiling) so that every ordinary question still pays for the
+ * people it takes, with the same margins as before at ten times the scale.
+ */
+export const WAGE_CENTS = 20
 
 /** An ask is not worth starting if the worker cannot plausibly answer in time. */
 export const MIN_ASK_WINDOW_MS = 1_500
@@ -113,9 +118,9 @@ export type EngineState = {
  * How sure an answer has to be before the caller gets it, derived only from the
  * price they agreed to pay.
  *
- * Price and confidence are one dial, exposed once. A caller paying five cents is
- * buying a quick single opinion; one paying fifty is buying near-certainty, and the
- * extra forty-five cents is what funds the extra answers that certainty costs.
+ * Price and confidence are one dial, exposed once. A caller paying fifty cents is
+ * buying a quick single opinion; one paying five dollars is buying near-certainty,
+ * and the extra four fifty is what funds the extra answers that certainty costs.
  *
  * `callerConfidence` deliberately does not appear here, and an earlier version of
  * this function was wrong to use it. Letting a caller's self-doubt raise the bar
@@ -128,8 +133,8 @@ export type EngineState = {
  * `selectWorker` uses it to put the best worker on the question first.
  */
 export function trustTarget(question: Pick<Question, 'priceCents'>): number {
-  // 5c maps to 0.90, 10c to 0.95, 25c to 0.98, 50c to 0.99, asymptotic thereafter.
-  return clamp(1 - 0.5 / Math.max(1, question.priceCents), 0.85, 0.995)
+  // 50c maps to 0.90, $1 to 0.95, $2.50 to 0.98, $5 to 0.99, asymptotic thereafter.
+  return clamp(1 - 5 / Math.max(1, question.priceCents), 0.85, 0.995)
 }
 
 /** Computes the posterior over possible answers. */
