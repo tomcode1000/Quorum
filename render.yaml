@@ -19,7 +19,7 @@ services:
       - key: QUORUM_NETWORK
         value: testnet
       - key: QUORUM_PUBLIC_URL
-        value: https://quorum-gateway.onrender.com
+        value: https://quorum-2gup.onrender.com
       # The site on Vercel, plus local development.
       - key: QUORUM_WORKER_APP_ORIGINS
         value: https://quorumhq.vercel.app,http://localhost:4173
@@ -31,12 +31,14 @@ services:
       - key: QUORUM_DEV_ENDPOINTS
         value: "false"
       - key: QUORUM_EMAIL_FROM
-        value: Quorum <onboarding@resend.dev>
+        value: Quorum <tolulopetns@gmail.com>
       - key: QUORUM_TREASURY_KEY
         sync: false
       - key: QUORUM_RECIPIENT
         sync: false
       - key: MPP_SECRET_KEY
+        sync: false
+      - key: BREVO_API_KEY
         sync: false
       - key: RESEND_API_KEY
         sync: false

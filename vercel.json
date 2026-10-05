@@ -2,6 +2,6 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
   "installCommand": "npm ci",
-  "buildCommand": "QUORUM_GATEWAY_URL=https://quorum-gateway.onrender.com npm run build -w @quorum/site",
+  "buildCommand": "QUORUM_GATEWAY_URL=https://quorum-2gup.onrender.com npm run build -w @quorum/site",
   "outputDirectory": "packages/site/dist"
 }
