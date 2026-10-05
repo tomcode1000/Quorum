@@ -12,3 +12,5 @@ dist-test/
 # brief carries the competitive analysis, the schedule and the list of things
 # still unverified, none of which belongs in a public repo before the deadline.
 docs/
+.vercel
+.env.local

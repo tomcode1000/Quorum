@@ -22,9 +22,9 @@ services:
         value: https://quorum-2gup.onrender.com
       # The site on Vercel, plus local development.
       - key: QUORUM_WORKER_APP_ORIGINS
-        value: https://quorumhq.vercel.app,http://localhost:4173
+        value: https://quorumhq-eight.vercel.app,http://localhost:4173
       - key: QUORUM_WORKER_APP_URL
-        value: https://quorumhq.vercel.app/app-home.html
+        value: https://quorumhq-eight.vercel.app/app-home.html
       - key: QUORUM_WAGE_CENTS
         value: "20"
       # Never on a public deployment: these routes fabricate work and reputation.
