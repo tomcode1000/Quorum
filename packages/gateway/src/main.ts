@@ -10,7 +10,7 @@ import { Events } from './events.js'
 import { operatorApi } from './operator-api.js'
 import { GOLDEN_SEED } from './golden-seed.js'
 import { Router } from './router.js'
-import { createNotifier, resendMailer } from './notifier.js'
+import { createNotifier, mailerFromEnv } from './notifier.js'
 import { createServer } from './server.js'
 import { fileStore, upstashStore } from './persistence.js'
 import { Store } from './store.js'
@@ -47,7 +47,7 @@ async function main(): Promise<void> {
   const events = new Events()
   const notifier = createNotifier({
     store,
-    mail: resendMailer(process.env.RESEND_API_KEY, process.env.QUORUM_EMAIL_FROM ?? 'Quorum <onboarding@resend.dev>'),
+    mail: mailerFromEnv(process.env),
     appUrl: process.env.QUORUM_WORKER_APP_URL ?? 'http://localhost:4173/app-home.html',
     wageCents: config.wageCents,
   })

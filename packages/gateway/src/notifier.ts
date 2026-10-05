@@ -64,6 +64,42 @@ export function resendMailer(apiKey: string | undefined, from: string): Mailer {
   }
 }
 
+/**
+ * Brevo's transactional API.
+ *
+ * Unlike Resend, Brevo can send from a single verified address with no domain of
+ * your own, such as a personal Gmail: you confirm the address once in Brevo under
+ * Senders, and it can send to anyone. `from` is "Name <address>" or a bare address.
+ */
+export function brevoMailer(apiKey: string, from: string): Mailer {
+  const match = from.match(/^\s*(.*?)\s*<([^>]+)>\s*$/)
+  const sender = match ? { name: match[1] || 'Quorum', email: match[2] } : { name: 'Quorum', email: from.trim() }
+  return async (message) => {
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: { 'api-key': apiKey, 'content-type': 'application/json', accept: 'application/json' },
+      body: JSON.stringify({
+        sender,
+        to: [{ email: message.to }],
+        subject: message.subject,
+        htmlContent: message.html,
+        textContent: message.text,
+      }),
+    })
+    if (!response.ok) throw new Error(`Brevo refused the email: ${response.status} ${await response.text()}`)
+  }
+}
+
+/**
+ * The mailer for this deployment: Brevo when its key is set, then Resend, and a
+ * logger when neither is.
+ */
+export function mailerFromEnv(env: NodeJS.ProcessEnv): Mailer {
+  const from = env.QUORUM_EMAIL_FROM ?? 'Quorum <onboarding@resend.dev>'
+  if (env.BREVO_API_KEY) return brevoMailer(env.BREVO_API_KEY, from)
+  return resendMailer(env.RESEND_API_KEY, from)
+}
+
 const LABELS: Record<string, string> = {
   disambiguate: 'telling readings apart',
   verify: 'checking something is real',
