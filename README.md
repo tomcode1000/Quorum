@@ -153,7 +153,7 @@ Reputation is a Beta posterior over agreement outcomes, per worker **per questio
 - One question at a time, answered by tapping rather than typing.
 - Paid per answer, direct to their own account, the moment the answer is accepted.
 - **No deposit, no stake, no bond, no minimum payout, and no gas asset to acquire.**
-- An optional email when work in their skills is waiting and they are away, at most once every ten minutes. Sent through Resend when `RESEND_API_KEY` is set; signing up never asks for an address.
+- An optional email when work in their skills is waiting and they are away, at most once every ten minutes. Sent through Brevo (from a single verified address, no domain needed) or Resend, whichever is configured; signing up never asks for an address. A question that can wait emails them straight away and says how long it stays open.
 - A way out that costs nothing. A passkey controls a Tempo account directly, but a passkey only works on the site that made it, so the app has a *Send* control and Quorum pays the network fee. A worker who signs in with Tempo Wallet is paid straight into it and has nothing to move.
 
 That last line is the one differentiator no competitor can copy without rebuilding their economics. HUMAN Protocol pays in HMT. Kleros and Reality.eth require a bond. Sapien requires workers to buy and lock SAPIEN to unlock better-paying tasks. Every prior attempt puts a capital requirement on the person doing the work, which is incoherent for someone earning twenty cents an answer.
@@ -180,7 +180,9 @@ quorum/
 │   │   ├── router.ts        routes to people by skill, settles wages and refunds
 │   │   ├── worker-api.ts    sign-up, skills, assessments, work, earnings
 │   │   ├── wallet-routes.ts Tempo Wallet sign-in and the worker fee relay
-│   │   ├── notifier.ts      opt-in email when work is waiting (Resend)
+│   │   ├── notifier.ts      opt-in email when work is waiting (Brevo or Resend)
+│   │   ├── work-email.ts    that email, in the site's own design
+│   │   ├── persistence.ts   where the worker roster is kept: a file, or Upstash Redis
 │   │   └── mcp.ts           the ask_human tool
 │   ├── paymaster/       the only code that knows a chain exists: TIP-20 wages on Tempo
 │   ├── site/            marketing site, docs, worker app (app-*.html), operator console
@@ -268,7 +270,7 @@ The recipient held nothing beforehand: no gas asset, no prior balance, no accoun
 ### Tests
 
 ```bash
-npm test          # 115 tests
+npm test          # 118 tests
 npm run typecheck
 npm run demo      # the two-run comparison, no keys or network needed
 ```
@@ -327,6 +329,19 @@ Together those give the sentence the category does not otherwise have: **an agen
 
 Paying people per task in stablecoins — Sapien does it on Base. Human-in-the-loop APIs — several exist, including Apify's. Crowd judgment settled on-chain — Kleros and Reality.eth have done it for years. This is not a new idea, and the pitch does not need it to be: it is the first time the pieces are assembled at a protocol state transition, at conversational latency, with nothing asked of the worker.
 
+## Deploying
+
+The gateway is one long-running Node process (live questions, long polls and held questions all live in memory), so it runs on a host that keeps a process up, not on serverless functions. The site is static.
+
+| Part | Where | Notes |
+|---|---|---|
+| Gateway | Render (free plan) | `render.yaml` is a Blueprint. Secrets are entered in the dashboard. A free uptime monitor on `/health` every five minutes stops the free plan sleeping. |
+| Worker roster | Upstash Redis (free) | Render's free disk is wiped on restart, so set `UPSTASH_REDIS_REST_URL` and the **full-access** `UPSTASH_REDIS_REST_TOKEN`. The first start moves an existing local roster across. |
+| Site | Vercel | `vercel.json` builds `packages/site` with `QUORUM_GATEWAY_URL` set to the gateway's public address. |
+| Email | Brevo or Resend | `BREVO_API_KEY` sends from a single verified address such as a Gmail; Resend needs a verified domain to reach anyone but the account owner. |
+
+On the gateway, set `QUORUM_PUBLIC_URL` to its own public address, `QUORUM_WORKER_APP_ORIGINS` to the site's address (otherwise browsers are refused), and `QUORUM_WORKER_APP_URL` to the site's `app-home.html` for links in emails. Keep `QUORUM_DEV_ENDPOINTS` off: those routes fabricate work and reputation. `.env.example` lists every setting.
+
 ## Known limits
 
 Stated plainly because judges penalise pretending more than an acknowledged gap.
@@ -337,7 +352,8 @@ Stated plainly because judges penalise pretending more than an acknowledged gap.
 - **Account recovery is not built.** A passkey synced through iCloud Keychain or Google Password Manager survives a lost phone, which covers most people most of the time. A device-bound one does not, and the earnings behind it would be unreachable. Tempo smart accounts support multiple authorised keys, so the production answer is a second key registered at sign-up — that is designed and not implemented.
 - **Cross-border worker payments raise KYC and labour questions** not solved here.
 - **Cheap fees are not a moat.** Base, Solana and Polygon are also cheap. Tempo is the best *fit* — no gas asset, session vouchers, Stripe-backed 402 SDKs — not a defensible technical edge.
-- **Tempo Wallet sign-in has not been completed by a person yet.** It is built on Tempo's Accounts SDK and the gateway side is tested, but the wallet's own sign-in window has only been exercised by code, not tapped through on a phone. The passkey path — sign in, be paid, send it on with the fee covered — has been run against Moderato.
+- **Tempo Wallet sign-in is proven on localhost only.** A person has signed in with Tempo Wallet against Moderato and been registered as a worker. Tempo's Accounts SDK keeps a list of trusted sites, though, and a newly deployed domain is not on it, so sign-in from the hosted site is untested. Passkey sign-in has no such dependency.
+- **The free hosting has edges.** After a restart the first request takes about a minute while the free plan wakes, and a question live at that moment is lost (the roster survives in Upstash). Work emails sent from a Gmail address through Brevo land in spam more often than mail from a domain of our own.
 - **Session mode is not built.** Charge mode works end to end first, because that is the one a caller hits.
 
 ## Licence

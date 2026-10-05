@@ -398,6 +398,11 @@ The connection is held open until the question resolves. Statuses are
 \`resolved\`, \`no_consensus\`, \`timeout\` and \`refused\`; the last three refund you.
 \`not_worth_asking\` comes back before any payment.
 
+A question that can wait: send \`"mode": "callback"\` with a \`callback_url\`
+and a \`deadline_ms\` of up to 24 hours. The claim returns 202 once payment
+clears, the question is held even when nobody with the skill is online, and the
+answer is posted to your callback. Unanswered by the deadline, it is refunded.
+
 You may also POST an A2A \`input-required\` task status unmodified, with a
 \`dev.quorum.resolver\` entry in its metadata carrying \`answer_schema\` and
 \`cost_of_error\` or \`max_price\`. The response is the task status to resume with.
