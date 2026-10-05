@@ -16,6 +16,10 @@ const price = (cents) => (cents < 100 ? `${cents}\u00a2` : `$${(cents / 100).toF
 const gateway = (() => {
   const explicit = new URL(document.baseURI).searchParams.get('gateway')
   if (explicit) return explicit.replace(/\/$/, '')
+  // Set at build time from QUORUM_GATEWAY_URL for a deployed site (see render.mjs);
+  // left as the placeholder in development, where the gateway is on port 8787.
+  const configured = '__QUORUM_GATEWAY_URL__'
+  if (!configured.startsWith('__')) return configured.replace(/\/$/, '')
   if (location.port === '8787') return location.origin
   return `${location.protocol}//${location.hostname}:8787`
 })()

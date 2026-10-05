@@ -96,18 +96,30 @@ const PAGES = {
   'console-settings.html': consoleSettings,
 }
 
+/*
+  Where the deployed site finds the gateway. A static host such as Vercel serves
+  the pages and the gateway runs elsewhere, so its address is written into the
+  two scripts that call it. Unset, they keep their placeholder and look for the
+  gateway on port 8787 of the same host, which is the development setup.
+*/
+const GATEWAY_URL = process.env.QUORUM_GATEWAY_URL ?? ''
+const copyWithGateway = async (file) => {
+  const text = await readFile(join(root, file), 'utf8')
+  await writeFile(join(out, file), GATEWAY_URL ? text.replaceAll('__QUORUM_GATEWAY_URL__', GATEWAY_URL) : text)
+}
+
 await mkdir(join(out, 'docs'), { recursive: true })
 await mkdir(join(out, 'assets'), { recursive: true })
 await copyFile(join(root, 'assets/quorum.css'), join(out, 'assets/quorum.css'))
 
 // Every page loads this: it is what replaces the rendered fallbacks with the
 // gateway's real figures. Forgetting to copy it fails silently as a 404.
-await copyFile(join(root, 'assets/live.js'), join(out, 'assets/live.js'))
+await copyWithGateway('assets/live.js')
 
 // The two product surfaces share one stylesheet and one client. Both are copied
 // rather than inlined so a browser caches them once across twenty-odd pages.
 await copyFile(join(root, 'assets/app.css'), join(out, 'assets/app.css'))
-await copyFile(join(root, 'assets/app.js'), join(out, 'assets/app.js'))
+await copyWithGateway('assets/app.js')
 
 // The brand mark as the tab icon, from the same geometry as every mark on the page.
 await copyFile(join(root, '../../brand/favicon.svg'), join(out, 'assets/favicon.svg'))

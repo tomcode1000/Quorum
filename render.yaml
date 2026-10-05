@@ -1,0 +1,46 @@
+# The Quorum gateway on Render, as a Blueprint: Dashboard > New > Blueprint, pick
+# this repository. Values marked sync: false are secrets; Render asks for them on
+# first deploy, and they never appear in this file.
+#
+# On the free plan the service sleeps after about 15 idle minutes, so point a free
+# uptime monitor (UptimeRobot, cron-job.org) at /health every 5 minutes. Its disk
+# is wiped on restart, which is why the worker roster lives in Upstash.
+services:
+  - type: web
+    name: quorum-gateway
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npx tsc --build packages/gateway
+    startCommand: node packages/gateway/dist/main.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: QUORUM_NETWORK
+        value: testnet
+      - key: QUORUM_PUBLIC_URL
+        value: https://quorum-gateway.onrender.com
+      # The site on Vercel, plus local development.
+      - key: QUORUM_WORKER_APP_ORIGINS
+        value: https://quorumhq.vercel.app,http://localhost:4173
+      - key: QUORUM_WORKER_APP_URL
+        value: https://quorumhq.vercel.app/app-home.html
+      - key: QUORUM_WAGE_CENTS
+        value: "20"
+      # Never on a public deployment: these routes fabricate work and reputation.
+      - key: QUORUM_DEV_ENDPOINTS
+        value: "false"
+      - key: QUORUM_EMAIL_FROM
+        value: Quorum <onboarding@resend.dev>
+      - key: QUORUM_TREASURY_KEY
+        sync: false
+      - key: QUORUM_RECIPIENT
+        sync: false
+      - key: MPP_SECRET_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false
