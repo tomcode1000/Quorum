@@ -3,5 +3,13 @@
   "framework": null,
   "installCommand": "npm ci",
   "buildCommand": "QUORUM_GATEWAY_URL=https://quorum-2gup.onrender.com npm run build -w @quorum/site",
-  "outputDirectory": "packages/site/dist"
+  "outputDirectory": "packages/site/dist",
+  "cleanUrls": true,
+  "redirects": [
+    {
+      "source": "/docs",
+      "destination": "/docs/",
+      "permanent": true
+    }
+  ]
 }

@@ -48,7 +48,7 @@ async function main(): Promise<void> {
   const notifier = createNotifier({
     store,
     mail: mailerFromEnv(process.env),
-    appUrl: process.env.QUORUM_WORKER_APP_URL ?? 'http://localhost:4173/app-home.html',
+    appUrl: process.env.QUORUM_WORKER_APP_URL ?? 'http://localhost:4173/app-home',
     wageCents: config.wageCents,
   })
   const router = new Router({

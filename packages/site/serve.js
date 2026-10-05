@@ -25,7 +25,20 @@ const types = {
 
 createServer(async (req, res) => {
   const requested = decodeURIComponent((req.url ?? '/').split('?')[0])
-  const target = requested === '/' ? 'index.html' : requested.slice(1)
+
+  // Same addressing as the deployed site: /docs is a folder, so it gets its
+  // slash, and its pages' relative links then resolve inside it.
+  if (requested === '/docs') {
+    res.writeHead(308, { location: '/docs/' })
+    res.end()
+    return
+  }
+  // A folder serves its index; a path with no extension is a page.
+  const target = requested.endsWith('/')
+    ? `${requested.slice(1)}index.html`
+    : extname(requested) === ''
+      ? `${requested.slice(1)}.html`
+      : requested.slice(1)
   const file = resolve(root, target)
 
   // Never serve outside the site directory, however the path was spelled.
@@ -49,7 +62,7 @@ createServer(async (req, res) => {
 })
   .listen(port, () => {
     console.log(`[quorum] site on http://localhost:${port}`)
-    console.log('[quorum] marketing site at /, worker app at /app-signin.html, console at /console.html')
+    console.log('[quorum] marketing site at /, worker app at /app-signin, console at /console')
     console.log('[quorum] the app and console read the gateway on :8787 — start it with npm run gateway')
   })
   .on('error', (error) => {

@@ -24,7 +24,7 @@ services:
       - key: QUORUM_WORKER_APP_ORIGINS
         value: https://askquorum.vercel.app,http://localhost:4173
       - key: QUORUM_WORKER_APP_URL
-        value: https://askquorum.vercel.app/app-home.html
+        value: https://askquorum.vercel.app/app-home
       - key: QUORUM_WAGE_CENTS
         value: "20"
       # Never on a public deployment: these routes fabricate work and reputation.

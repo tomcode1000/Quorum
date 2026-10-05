@@ -2283,8 +2283,8 @@ button.ap-row {
     border-radius: 0 0 3px 3px;
   }
 
-  .ap-side-worker .ap-nav a[href='app-help.html'],
-  .ap-side-worker .ap-nav a[href='app-settings.html'] {
+  .ap-side-worker .ap-nav a[href='app-help'],
+  .ap-side-worker .ap-nav a[href='app-settings'] {
     display: none;
   }
 

@@ -185,7 +185,7 @@ quorum/
 │   │   ├── persistence.ts   where the worker roster is kept: a file, or Upstash Redis
 │   │   └── mcp.ts           the ask_human tool
 │   ├── paymaster/       the only code that knows a chain exists: TIP-20 wages on Tempo
-│   ├── site/            marketing site, docs, worker app (app-*.html), operator console
+│   ├── site/            marketing site, docs, worker app (app-*), operator console
 │   │   └── wallet/          passkey accounts and Tempo Wallet, bundled on demand
 │   └── worker-app/      a bare debug client for the worker API; not for real work
 └── demo/
@@ -212,7 +212,7 @@ npm run gateway   # :8787
 npm run site      # :4173
 ```
 
-Open **http://localhost:4173/app-signin.html**. Sign in — no password, nothing to fund. The app finds the gateway on port 8787 of whatever host served it, so no query string is needed; pass `?gateway=https://…` if yours is elsewhere.
+Open **http://localhost:4173/app-signin**. Sign in — no password, nothing to fund. The app finds the gateway on port 8787 of whatever host served it, so no query string is needed; pass `?gateway=https://…` if yours is elsewhere.
 
 ### Putting a question in front of yourself
 
@@ -340,7 +340,7 @@ The gateway is one long-running Node process (live questions, long polls and hel
 | Site | Vercel | `vercel.json` builds `packages/site` with `QUORUM_GATEWAY_URL` set to the gateway's public address. |
 | Email | Brevo or Resend | `BREVO_API_KEY` sends from a single verified address such as a Gmail; Resend needs a verified domain to reach anyone but the account owner. |
 
-On the gateway, set `QUORUM_PUBLIC_URL` to its own public address, `QUORUM_WORKER_APP_ORIGINS` to the site's address (otherwise browsers are refused), and `QUORUM_WORKER_APP_URL` to the site's `app-home.html` for links in emails. Keep `QUORUM_DEV_ENDPOINTS` off: those routes fabricate work and reputation. `.env.example` lists every setting.
+On the gateway, set `QUORUM_PUBLIC_URL` to its own public address, `QUORUM_WORKER_APP_ORIGINS` to the site's address (otherwise browsers are refused), and `QUORUM_WORKER_APP_URL` to the site's `/app-home` page for links in emails. Keep `QUORUM_DEV_ENDPOINTS` off: those routes fabricate work and reputation. `.env.example` lists every setting.
 
 ## Known limits
 

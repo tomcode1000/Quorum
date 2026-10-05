@@ -138,8 +138,8 @@ export function createNotifier(options: {
         const message = workEmail({
           skill: LABELS[kind] ?? kind,
           wageCents: options.wageCents,
-          workUrl: `${base}app-question.html`,
-          settingsUrl: `${base}app-settings.html`,
+          workUrl: `${base}app-question`,
+          settingsUrl: `${base}app-settings`,
           ...(heldUntil === undefined ? {} : { openForMs: heldUntil - now() }),
         })
         void mail({ to: worker.email, ...message }).catch((error: unknown) => {

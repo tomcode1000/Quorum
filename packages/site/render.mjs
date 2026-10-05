@@ -144,4 +144,21 @@ for (const [file, render] of Object.entries(PAGES)) {
   await writeFile(join(out, file), render())
   n += 1
 }
+
+// Pages are addressed without their extension (/app-home, not /app-home.html),
+// so every link is written that way here rather than in each template. Vercel
+// serves them with cleanUrls; serve.js does the same locally.
+const clean = (text) =>
+  text
+    .replace(/((?:\.\.\/)?(?:docs\/)?)index\.html(?=["'`?#])/g, (_, before) => before || './')
+    .replace(/([A-Za-z0-9_-]+)\.html(?=["'`?#])/g, '$1')
+for (const file of [
+  'index.html',
+  ...Object.keys(PAGES),
+  'assets/app.js',
+  'assets/live.js',
+]) {
+  const path = join(out, file)
+  await writeFile(path, clean(await readFile(path, 'utf8')))
+}
 console.log(`rendered ${n} pages into dist/`)

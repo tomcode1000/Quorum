@@ -113,7 +113,7 @@ describe('the email for a held question', () => {
       sent.push(`${to}: ${subject}`)
     }
     const store = new Store()
-    const notifier = createNotifier({ store, mail, appUrl: 'https://quorum.example/app-home.html', wageCents: 20, now: () => clock })
+    const notifier = createNotifier({ store, mail, appUrl: 'https://quorum.example/app-home', wageCents: 20, now: () => clock })
     const away = store.upsertWorker('away-01', ADDRESS)
     away.email = 'away@example.com'
     away.skills.match = 'passed'
@@ -130,8 +130,8 @@ describe('the email for a held question', () => {
     const email = workEmail({
       skill: 'matching records',
       wageCents: 20,
-      workUrl: 'https://quorum.example/app-question.html',
-      settingsUrl: 'https://quorum.example/app-settings.html',
+      workUrl: 'https://quorum.example/app-question',
+      settingsUrl: 'https://quorum.example/app-settings',
       openForMs: 45 * 60_000,
     })
     assert.match(email.html, /being held for you/)

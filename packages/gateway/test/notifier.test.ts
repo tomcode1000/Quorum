@@ -21,7 +21,7 @@ function setup() {
     sent.push(to)
   }
   const store = new Store()
-  const notifier = createNotifier({ store, mail, appUrl: 'https://quorum.example/app-home.html', wageCents: 20, now: () => clock })
+  const notifier = createNotifier({ store, mail, appUrl: 'https://quorum.example/app-home', wageCents: 20, now: () => clock })
   const worker = (id: string, options: { email?: string; skill?: boolean; online?: boolean }) => {
     const w = store.upsertWorker(id, ADDRESS)
     w.email = options.email ?? null
