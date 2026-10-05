@@ -21,6 +21,17 @@ import { PRICE_CEILING_CENTS } from './pricing.js'
 export const MIN_DEADLINE_MS = 5_000
 export const MAX_DEADLINE_MS = 300_000
 
+/**
+ * The longest a caller may wait in callback mode: a day.
+ *
+ * A caller that is not holding a socket can afford to wait for a person to come
+ * back, and plenty of agent work is not urgent: an invoice due Friday, a batch of
+ * records to merge tonight. Such a question is held even when nobody is online,
+ * and the people who passed that skill are emailed. A day is long enough for
+ * that, and short enough that a caller's money is not tied up indefinitely.
+ */
+export const MAX_CALLBACK_DEADLINE_MS = 24 * 60 * 60_000
+
 /** Answer schemas, minus free text: see the note on `AnswerSchema`. */
 export const answerSchemaSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('boolean') }),
@@ -101,8 +112,10 @@ export function parseAsk(body: unknown): ParsedAsk {
       400,
       `a deadline of ${ask.deadline_ms}ms is not servable by a person; the floor is ${MIN_DEADLINE_MS}ms`,
     )
-  if (ask.deadline_ms > MAX_DEADLINE_MS)
+  if (ask.mode === 'blocking' && ask.deadline_ms > MAX_DEADLINE_MS)
     throw new AskError(400, `a deadline over ${MAX_DEADLINE_MS}ms should use callback mode rather than holding a socket`)
+  if (ask.deadline_ms > MAX_CALLBACK_DEADLINE_MS)
+    throw new AskError(400, `a deadline over ${MAX_CALLBACK_DEADLINE_MS}ms is longer than any question is held`)
   if (ask.mode === 'callback' && !ask.callback_url)
     throw new AskError(400, 'callback mode requires callback_url')
 

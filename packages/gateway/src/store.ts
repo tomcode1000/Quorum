@@ -104,6 +104,8 @@ export type LiveQuestion = {
   readonly payer: `0x${string}` | null
   /** Set for callback-mode callers, who are not holding a socket. */
   readonly callbackUrl?: string
+  /** Held until its deadline for somebody to come online; see `hold` in core's EngineState. */
+  readonly hold: boolean
   answers: WorkerAnswer[]
   /**
    * Known-answer checks answered while this question was live. Paid like any other

@@ -1,3 +1,4 @@
+import type { Resolution } from '@quorum/core'
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
 import { randomUUID } from 'node:crypto'
 import { CHECKS, show, type Check } from './chain.js'
@@ -18,6 +19,11 @@ import { connectToQuorum, explorer, type QuorumClient } from './quorum-client.js
  * `--alone` to see the same agent with nobody on `input-required`.
  *
  *   npm run agent-b            forwards input-required to Quorum
+ *
+ * A step that can wait (see `canWait` in chain.ts) is handed to Quorum with a
+ * callback instead: Quorum holds it for AGENT_B_HOLD_MINUTES (30 by default) even
+ * when nobody is online, emails the people who passed that skill, and posts the
+ * answer back here. Agent A is told the task is still working, and checks back.
  *   npm run agent-b -- --alone goes with its own guess, as agents do today
  *
  * AGENT_B_MAX_PRICE sets a price ceiling of B's own, in dollars. At the full $5
@@ -27,6 +33,27 @@ import { connectToQuorum, explorer, type QuorumClient } from './quorum-client.js
  */
 
 const PORT = Number(process.env.AGENT_B_PORT ?? 9090)
+const HOLD_MS = Number(process.env.AGENT_B_HOLD_MINUTES ?? 30) * 60_000
+
+type Task = {
+  id: string
+  contextId: string
+  check: Check
+  state: 'working' | 'completed' | 'failed'
+  result?: Record<string, unknown>
+  priceCents?: number
+}
+
+/** Tasks that are waiting for a person, by id. Agent A reads them with tasks/get. */
+const tasks = new Map<string, Task>()
+
+const taskBody = (task: Task) => ({
+  kind: 'task',
+  id: task.id,
+  contextId: task.contextId,
+  status: { state: task.state, timestamp: new Date().toISOString() },
+  ...(task.result ? { artifacts: [{ artifactId: randomUUID(), name: task.check.id, parts: [{ kind: 'data', data: task.result }] }] } : {}),
+})
 const alone = process.argv.includes('--alone')
 
 const card = {
@@ -73,6 +100,11 @@ async function handle(check: Check, quorum: QuorumClient | null): Promise<Record
 
   const { resolution, priceCents, reason } = asked
   log(`  Quorum priced it at $${(priceCents / 100).toFixed(2)}: ${reason}.`)
+  return fromResolution(check, resolution, priceCents)
+}
+
+/** B's result for a step, from the answer Quorum gave: on the connection, or by callback. */
+function fromResolution(check: Check, resolution: Resolution, priceCents: number): Record<string, unknown> {
   if (resolution.status !== 'resolved') {
     log(`  No answer (${resolution.status}); refunded. I report that I could not tell, rather than guess.`)
     log()
@@ -128,18 +160,61 @@ async function main(): Promise<void> {
     if (req.method === 'GET' && req.url === '/.well-known/agent-card.json') return send(res, 200, card)
     if (req.method !== 'POST') return send(res, 404, { error: 'not found' })
 
+    // Quorum posting the answer to a step that waited.
+    const callback = req.url?.match(/^\/quorum\/answers\/([\w-]+)$/)
+    if (callback) {
+      const task = tasks.get(callback[1] ?? '')
+      const resolution = (await body(req).catch(() => null)) as Resolution | null
+      if (!task || !resolution) return send(res, 404, { error: 'unknown task' })
+      log(`Quorum answered ${task.check.id}, which I had held for a person.`)
+      task.result = fromResolution(task.check, resolution, task.priceCents ?? 0)
+      task.state = 'completed'
+      return send(res, 200, { ok: true })
+    }
+
     const rpc = (await body(req).catch(() => null)) as {
       id?: unknown
       method?: string
-      params?: { message?: { contextId?: string; parts?: { kind: string; data?: { step?: string } }[] } }
+      params?: { id?: string; message?: { contextId?: string; parts?: { kind: string; data?: { step?: string } }[] } }
     } | null
     const reply = (result: unknown) => send(res, 200, { jsonrpc: '2.0', id: rpc?.id ?? null, result })
     const fail = (code: number, message: string) => send(res, 200, { jsonrpc: '2.0', id: rpc?.id ?? null, error: { code, message } })
 
+    if (rpc?.method === 'tasks/get') {
+      const task = tasks.get(rpc.params?.id ?? '')
+      return task ? reply(taskBody(task)) : fail(-32001, 'task not found')
+    }
     if (rpc?.method !== 'message/send') return fail(-32601, 'method not found')
     const step = rpc.params?.message?.parts?.find((p) => p.kind === 'data')?.data?.step
     const check = CHECKS.find((c) => c.id === step)
     if (!check) return fail(-32602, `unknown step: ${String(step)}`)
+
+    // A step that can wait is held for a person rather than needing one this second.
+    if (quorum && check.canWait) {
+      const id = `task_${randomUUID()}`
+      const task: Task = { id, contextId: rpc.params?.message?.contextId ?? `ctx_${randomUUID()}`, check, state: 'working' }
+      try {
+        log(`A asked me to handle ${check.id}.`)
+        log(`  My own read: ${show(check.guess)}, ${Math.round(check.confidence * 100)}% sure. This one can wait: ${check.canWait}.`)
+        const held = await quorum.askLater(check, `http://localhost:${PORT}/quorum/answers/${id}`, HOLD_MS)
+        if (held.status === 'not_worth_asking') {
+          task.state = 'completed'
+          task.result = { answer: check.guess, confidence: check.confidence, escalated: false, reason: held.reason }
+        } else {
+          task.priceCents = held.priceCents
+          log(`  Quorum priced it at $${(held.priceCents / 100).toFixed(2)} and is holding it for a person until ${new Date(held.deadlineAt).toLocaleTimeString()}.`)
+          log('  People who passed this skill are emailed if nobody is online. I tell A the task is still working.')
+          log()
+        }
+        tasks.set(id, task)
+        return reply(taskBody(task))
+      } catch (error) {
+        log(`  Failed: ${error instanceof Error ? error.message : String(error)}`)
+        log()
+        task.state = 'failed'
+        return reply({ ...taskBody(task), status: { state: 'failed', message: { role: 'agent', parts: [{ kind: 'text', text: error instanceof Error ? error.message : String(error) }] } } })
+      }
+    }
 
     try {
       const result = await handle(check, quorum)

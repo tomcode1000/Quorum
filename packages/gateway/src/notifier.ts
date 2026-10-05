@@ -26,12 +26,24 @@ const AWAY_AFTER_MS = 30_000
 /** One email per person per this long, however much work arrives. */
 export const QUIET_PERIOD_MS = 10 * 60_000
 
+/**
+ * The shorter gap for a held question.
+ *
+ * A held question waits for exactly the person this email reaches, so it is sent
+ * straight away rather than after the usual quiet period. The floor stops a burst
+ * of held questions from becoming a burst of emails.
+ */
+export const HELD_QUIET_PERIOD_MS = 2 * 60_000
+
 /** Fewer people online than this for a kind, and waiting work is worth an email. */
 const ENOUGH_ONLINE = 2
 
 export type Notifier = {
-  /** A question of this kind arrived, or was turned away for want of people. */
-  workWaiting(kind: Kind): void
+  /**
+   * A question of this kind arrived, or was turned away for want of people.
+   * `heldUntil` is set when it is held for people to arrive, and is when it closes.
+   */
+  workWaiting(kind: Kind, heldUntil?: number): void
 }
 
 export type Mailer = (message: { to: string; subject: string; text: string; html: string }) => Promise<void>
@@ -76,13 +88,14 @@ export function createNotifier(options: {
   const online = (worker: Worker) => now() - worker.lastSeenAt < AWAY_AFTER_MS
 
   return {
-    workWaiting(kind) {
+    workWaiting(kind, heldUntil) {
       const skilled = [...store.workers.values()].filter((worker) => passed(worker, kind))
       if (skilled.filter(online).length >= ENOUGH_ONLINE) return
 
       for (const worker of skilled) {
         if (!worker.email || online(worker)) continue
-        if (worker.notifiedAt !== null && now() - worker.notifiedAt < QUIET_PERIOD_MS) continue
+        const quiet = heldUntil === undefined ? QUIET_PERIOD_MS : HELD_QUIET_PERIOD_MS
+        if (worker.notifiedAt !== null && now() - worker.notifiedAt < quiet) continue
         worker.notifiedAt = now()
 
         const base = appUrl.replace(/[^/]*$/, '')
@@ -91,6 +104,7 @@ export function createNotifier(options: {
           wageCents: options.wageCents,
           workUrl: `${base}app-question.html`,
           settingsUrl: `${base}app-settings.html`,
+          ...(heldUntil === undefined ? {} : { openForMs: heldUntil - now() }),
         })
         void mail({ to: worker.email, ...message }).catch((error: unknown) => {
           console.error(`[quorum] ${error instanceof Error ? error.message : String(error)}`)

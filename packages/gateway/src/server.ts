@@ -141,8 +141,10 @@ export function createServer(services: Services): Hono {
       )
 
     // Refusing here rather than after taking payment: a caller should not pay to
-    // discover that nobody was online.
-    if (store.availableWorkers(parsed.kind).length === 0) {
+    // discover that nobody was online. A caller in callback mode is the exception:
+    // it said it can wait, so its question is held and the people who passed the
+    // skill are emailed to come back for it.
+    if (parsed.callbackUrl === undefined && store.availableWorkers(parsed.kind).length === 0) {
       // Turned away for want of people: exactly when an away worker should hear of it.
       notifier?.workWaiting(parsed.kind)
       return c.json(
@@ -225,13 +227,18 @@ export function createServer(services: Services): Hono {
 
     store.pending.delete(id)
     const payer = payerOf(c.req.raw)
-    const resolution = await router.resolve(pending.question, {
+    const resolving = router.resolve(pending.question, {
       ...(payer === null ? {} : { payer }),
       ...(pending.callbackUrl === undefined ? {} : { callbackUrl: pending.callbackUrl }),
     })
 
     // Callback mode returns as soon as payment clears; the resolution is posted.
-    if (pending.callbackUrl) return paid.withReceipt(c.json({ question_id: id, status: 'accepted' }, 202))
+    // Not awaited: a held question can take hours, and that is the whole point.
+    if (pending.callbackUrl)
+      return paid.withReceipt(
+        c.json({ question_id: id, status: 'accepted', deadline_at: new Date(Date.now() + pending.question.timeoutMs).toISOString() }, 202),
+      )
+    const resolution = await resolving
 
     return paid.withReceipt(
       c.json(

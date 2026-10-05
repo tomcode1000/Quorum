@@ -1,5 +1,14 @@
 import { z } from 'zod'
-import { AskError, MIN_DEADLINE_MS, answerSchemaSchema, readPricing, toAnswerSchema, type ParsedAsk } from './request.js'
+import {
+  AskError,
+  MAX_CALLBACK_DEADLINE_MS,
+  MAX_DEADLINE_MS,
+  MIN_DEADLINE_MS,
+  answerSchemaSchema,
+  readPricing,
+  toAnswerSchema,
+  type ParsedAsk,
+} from './request.js'
 import { KINDS } from './types.js'
 import type { Attachment, Kind, Resolution } from './types.js'
 
@@ -67,6 +76,12 @@ const extensionSchema = z.object({
   /** What acting on a wrong answer would cost, in dollars. See `adviseFromCost`. */
   cost_of_error: z.union([z.string(), z.number()]).optional(),
   deadline_ms: z.number().int().default(45_000),
+  /**
+   * Where to post the answer, for an agent that will not hold the connection.
+   * With it the question is held until the deadline, even when nobody is online,
+   * and the claim returns as soon as payment clears.
+   */
+  callback_url: z.string().url().optional(),
   caller_confidence: z.number().min(0).max(1).optional(),
 })
 
@@ -131,6 +146,10 @@ export function parseInputRequired(body: unknown): ParsedAsk & { taskId: string 
 
   if (config.deadline_ms < MIN_DEADLINE_MS)
     throw new AskError(400, `a deadline of ${config.deadline_ms}ms is not servable by a person`)
+  if (config.callback_url === undefined && config.deadline_ms > MAX_DEADLINE_MS)
+    throw new AskError(400, `a deadline over ${MAX_DEADLINE_MS}ms needs a callback_url rather than a held connection`)
+  if (config.deadline_ms > MAX_CALLBACK_DEADLINE_MS)
+    throw new AskError(400, `a deadline over ${MAX_CALLBACK_DEADLINE_MS}ms is longer than any question is held`)
 
   const attachments: Attachment[] = []
   // Extra text parts are context the agent chose to send with its question.
@@ -156,7 +175,8 @@ export function parseInputRequired(body: unknown): ParsedAsk & { taskId: string 
     maxPriceCents,
     ...(costOfErrorCents === undefined ? {} : { costOfErrorCents }),
     timeoutMs: config.deadline_ms,
-    mode: 'blocking',
+    mode: config.callback_url === undefined ? 'blocking' : 'callback',
+    ...(config.callback_url === undefined ? {} : { callbackUrl: config.callback_url }),
     // The task id is the caller's own reference, carried through to the receipt.
     taskRef: task.id,
     ...(config.caller_confidence === undefined ? {} : { callerConfidence: config.caller_confidence }),

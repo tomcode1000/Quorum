@@ -55,7 +55,15 @@ export type RouterOptions = {
 }
 
 export type RouterEvent =
-  | { type: 'question.received'; questionId: string; prompt: string; priceCents: number; kind: Question['kind'] }
+  | {
+      type: 'question.received'
+      questionId: string
+      prompt: string
+      priceCents: number
+      kind: Question['kind']
+      /** Set when the question is held for people to arrive: when it closes. */
+      heldUntil?: number
+    }
   | {
       type: 'worker.asked'
       questionId: string
@@ -87,7 +95,10 @@ export class Router {
     this.#store = options.store
     this.#paymaster = options.paymaster
     this.#wageCents = options.wageCents ?? WAGE_CENTS
-    this.#assignmentTtlMs = options.assignmentTtlMs ?? 20_000
+    // A minute to read and answer once offered. Long enough for somebody who has
+    // just arrived from an email to read carefully; a worker who has wandered off
+    // still frees the question for someone else well within most deadlines.
+    this.#assignmentTtlMs = options.assignmentTtlMs ?? 60_000
     this.#onEvent = options.onEvent ?? (() => {})
     this.#random = options.random ?? Math.random
   }
@@ -108,6 +119,8 @@ export class Router {
       startedAt,
       deadlineAt: startedAt + question.timeoutMs,
       payer: options.payer ?? null,
+      // A caller that is not holding a connection can wait for people to come back.
+      hold: options.callbackUrl !== undefined,
       answers: [],
       calibrations: [],
       assignments: [],
@@ -124,6 +137,7 @@ export class Router {
       prompt: question.prompt,
       priceCents: question.priceCents,
       kind: question.kind,
+      ...(live.hold ? { heldUntil: live.deadlineAt } : {}),
     })
 
     // The deadline is enforced here rather than trusted to the worker side, so the
@@ -166,6 +180,7 @@ export class Router {
       bought: live.bought,
       remainingMs: live.deadlineAt - Date.now(),
       random: this.#random,
+      hold: live.hold,
     })
 
     switch (decision.action) {

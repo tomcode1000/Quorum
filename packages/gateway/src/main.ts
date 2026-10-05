@@ -49,7 +49,7 @@ async function main(): Promise<void> {
     wageCents: config.wageCents,
     onEvent: (event) => {
       events.emit(event)
-      if (event.type === 'question.received') notifier.workWaiting(event.kind)
+      if (event.type === 'question.received') notifier.workWaiting(event.kind, event.heldUntil)
       console.log(`[quorum] ${event.type} ${'questionId' in event ? event.questionId : ''}`)
     },
   })

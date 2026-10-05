@@ -42,6 +42,11 @@ export type Check = {
   readonly alone: string
   /** What it does with the right answer. */
   readonly answered: string
+  /**
+   * Set when this step is not urgent, and why. Agent B then holds the question
+   * for a person to come back to, rather than needing someone online this second.
+   */
+  readonly canWait?: string
 }
 
 export const CHECKS: readonly Check[] = [
@@ -73,6 +78,7 @@ export const CHECKS: readonly Check[] = [
     costOfError: '4800.00',
     alone: 'treats the 0.93 name match as the same supplier and sends $4,800.00 to the new account',
     answered: 'holds the invoice and asks the real supplier to confirm the change',
+    canWait: 'the invoice is not due until Friday',
   },
   {
     id: 'payment-link',
@@ -108,7 +114,13 @@ export function answerSchemaFor(check: Check) {
  * specification already says a careful agent should produce: the question it wants
  * to put to a person, and the evidence.
  */
-export function inputRequired(taskId: string, check: Check, maxPrice?: string): InputRequired {
+export function inputRequired(
+  taskId: string,
+  check: Check,
+  maxPrice?: string,
+  /** For a step that can wait: where the answer is posted, and how long to hold it. */
+  wait?: { callbackUrl: string; deadlineMs: number },
+): InputRequired {
   return {
     id: taskId,
     contextId: 'ctx_ap_week_close',
@@ -133,7 +145,8 @@ export function inputRequired(taskId: string, check: Check, maxPrice?: string): 
         // this and what the cost of error advises.
         ...(maxPrice === undefined ? {} : { max_price: maxPrice }),
         caller_confidence: check.confidence,
-        deadline_ms: 30_000,
+        deadline_ms: wait?.deadlineMs ?? 30_000,
+        ...(wait === undefined ? {} : { callback_url: wait.callbackUrl }),
       },
     },
   }

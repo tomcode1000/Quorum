@@ -18,6 +18,7 @@ const log = (line = '') => console.log(line ? `  ${line}` : '')
 
 type Rpc = {
   result?: {
+    id?: string
     status: { state: string; message?: { parts?: { text?: string }[] } }
     artifacts?: { parts: { kind: string; data?: Record<string, unknown> }[] }[]
   }
@@ -35,38 +36,25 @@ async function main(): Promise<void> {
   const contextId = `ctx_week_${randomUUID().slice(0, 8)}`
   let wrong = 0
   let unresolved = 0
+  /** Steps B is still working on, held for a person; A comes back to them. */
+  const working: { check: (typeof CHECKS)[number]; id: string }[] = []
 
-  for (const check of CHECKS) {
-    log(`→ B: ${check.id}`)
-    const response = (await fetch(card.url, {
+  const rpc = (method: string, params: unknown) =>
+    fetch(card.url, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: randomUUID(),
-        method: 'message/send',
-        params: {
-          message: {
-            role: 'user',
-            messageId: randomUUID(),
-            contextId,
-            parts: [
-              { kind: 'text', text: check.question },
-              { kind: 'data', data: { step: check.id } },
-            ],
-          },
-        },
-      }),
-    }).then((r) => r.json())) as Rpc
+      body: JSON.stringify({ jsonrpc: '2.0', id: randomUUID(), method, params }),
+    }).then((r) => r.json()) as Promise<Rpc>
 
+  /** What A does with B's finished task. */
+  const act = (check: (typeof CHECKS)[number], response: Rpc) => {
     if (response.error || response.result?.status.state !== 'completed') {
       unresolved += 1
       const why = response.error?.message ?? response.result?.status.message?.parts?.[0]?.text ?? 'no reason given'
       log(`← B failed: ${why.replace(/\.$/, '')}. Holding this step.`)
       log()
-      continue
+      return
     }
-
     const data = response.result.artifacts?.[0]?.parts.find((p) => p.kind === 'data')?.data ?? {}
     const answer = (data.answer ?? null) as boolean | string | null
     if (answer === null) {
@@ -79,6 +67,41 @@ async function main(): Promise<void> {
       log(`  Agent A ${right ? check.answered : check.alone}.`)
     }
     log()
+  }
+
+  for (const check of CHECKS) {
+    log(`→ B: ${check.id}`)
+    const response = await rpc('message/send', {
+      message: {
+        role: 'user',
+        messageId: randomUUID(),
+        contextId,
+        parts: [
+          { kind: 'text', text: check.question },
+          { kind: 'data', data: { step: check.id } },
+        ],
+      },
+    })
+    if (response.result?.status.state === 'working' && response.result.id) {
+      log(`← B is still working on it: ${check.canWait ?? 'it can wait'}, so a person will look when they can.`)
+      log('  Moving on, and coming back to it.')
+      log()
+      working.push({ check, id: response.result.id })
+      continue
+    }
+    act(check, response)
+  }
+
+  // Back to the steps that waited for a person. They are held until B's deadline.
+  for (const { check, id } of working) {
+    log(`… waiting on ${check.id}`)
+    let response = await rpc('tasks/get', { id })
+    while (response.result?.status.state === 'working') {
+      await new Promise((r) => setTimeout(r, 3_000))
+      response = await rpc('tasks/get', { id })
+    }
+    log(`← B finished ${check.id}`)
+    act(check, response)
   }
 
   log('─'.repeat(66))

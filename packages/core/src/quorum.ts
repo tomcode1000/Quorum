@@ -112,6 +112,12 @@ export type EngineState = {
   readonly remainingMs: number
   /** Injectable randomness, so the exploration share is testable. */
   readonly random?: () => number
+  /**
+   * Held for people to arrive, rather than settled when nobody is available.
+   * Set for a caller in callback mode, which is not holding a connection and has
+   * said how long it can wait.
+   */
+  readonly hold?: boolean
 }
 
 /**
@@ -233,6 +239,9 @@ export function decide(question: Question, state: EngineState): Decision {
     }
 
   const next = selectWorker(question, state)
+  // A held question waits for somebody with the skill to come online; the
+  // deadline above still ends it, and the caller is refunded if nobody came.
+  if (!next && state.hold) return { action: 'wait', reason: 'held until somebody with this skill is online' }
   if (!next)
     return state.answers.length > 0
       ? { action: 'stop', status: 'no_consensus', reason: 'no further worker available' }

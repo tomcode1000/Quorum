@@ -25,10 +25,21 @@ export type Asked =
     }
   | { readonly status: 'not_worth_asking'; readonly reason: string }
 
+export type Held =
+  | { readonly status: 'held'; readonly priceCents: number; readonly reason: string; readonly deadlineAt: string }
+  | { readonly status: 'not_worth_asking'; readonly reason: string }
+
 export type QuorumClient = {
   readonly payer: `0x${string}`
   readonly fresh: boolean
+  /** Ask and wait on the connection for the answer: for a step that cannot wait. */
   ask(check: Check, taskId?: string): Promise<Asked>
+  /**
+   * Ask and be called back: for a step that can wait. Quorum holds the question
+   * until `holdMs` has passed, even with nobody online, and posts the answer to
+   * `callbackUrl` whenever a person gives it.
+   */
+  askLater(check: Check, callbackUrl: string, holdMs: number, taskId?: string): Promise<Held>
 }
 
 /**
@@ -53,29 +64,59 @@ export async function connectToQuorum(base = process.env.QUORUM_URL ?? 'http://l
       polyfill: false,
     }).fetch
 
+  /** Quote, pay the 402, claim. Returns the claim's response, or the reason it was declined. */
+  const quoteAndClaim = async (task: ReturnType<typeof inputRequired>, check: Check) => {
+    const asked = await fetch(`${base}/v1/questions`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(task),
+    })
+    if (asked.status === 503)
+      throw new Error(`nobody who has passed ${check.kind} questions is online. Sign a worker in, pass that skill, and try again.`)
+    if (asked.status === 200) {
+      const declined = (await asked.json()) as { status: string; reason: string }
+      if (declined.status === 'not_worth_asking') return { declined: declined.reason } as const
+    }
+    if (asked.status !== 402) throw new Error(`expected a 402 payment challenge, got ${asked.status}: ${await asked.text()}`)
+    const challenge = (await asked.json()) as { quote_cents: number; claim_url: string; advice?: { reason: string } }
+
+    // mppx sees the claim's own 402, signs a TIP-20 transfer for exactly the quoted
+    // amount to the advertised recipient, and retries with the credential attached.
+    const claimed = await payingFetch()(challenge.claim_url, { method: 'POST' }).catch((error: unknown) => {
+      /*
+        mppx occasionally fails inside the client with "Body has already been
+        consumed" (seen on about one paid call in six). The wallet is a local key,
+        so mppx runs in pull mode: the agent only signs, and the gateway broadcasts
+        once it holds the credential. A failure here therefore moved no money, and
+        one retry with a fresh client is safe.
+      */
+      if (!(error instanceof Error) || !/already been consumed/i.test(error.message)) throw error
+      return payingFetch()(challenge.claim_url, { method: 'POST' })
+    })
+    if (!claimed.ok) throw new Error(`claim failed with ${claimed.status}: ${await claimed.text()}`)
+    return { challenge, body: (await claimed.json()) as Record<string, unknown> } as const
+  }
+
   return {
     payer: account.address,
     fresh,
-    async ask(check, taskId = `a2a:task:${randomUUID()}`) {
-      const asked = await fetch(`${base}/v1/questions`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(inputRequired(taskId, check, process.env.AGENT_B_MAX_PRICE)),
-      })
-      if (asked.status === 503)
-        throw new Error(`nobody who has passed ${check.kind} questions is online. Sign a worker in, pass that skill, and try again.`)
-      if (asked.status === 200) {
-        const declined = (await asked.json()) as { status: string; reason: string }
-        if (declined.status === 'not_worth_asking') return { status: 'not_worth_asking', reason: declined.reason }
+    async askLater(check, callbackUrl, holdMs, taskId = `a2a:task:${randomUUID()}`) {
+      const claimed = await quoteAndClaim(
+        inputRequired(taskId, check, process.env.AGENT_B_MAX_PRICE, { callbackUrl, deadlineMs: holdMs }),
+        check,
+      )
+      if ('declined' in claimed) return { status: 'not_worth_asking', reason: claimed.declined }
+      return {
+        status: 'held',
+        priceCents: claimed.challenge.quote_cents,
+        reason: claimed.challenge.advice?.reason ?? 'priced by the gateway',
+        deadlineAt: String(claimed.body.deadline_at ?? ''),
       }
-      if (asked.status !== 402) throw new Error(`expected a 402 payment challenge, got ${asked.status}: ${await asked.text()}`)
-      const challenge = (await asked.json()) as { quote_cents: number; claim_url: string; advice?: { reason: string } }
-
-      // mppx sees the claim's own 402, signs a TIP-20 transfer for exactly the quoted
-      // amount to the advertised recipient, and retries with the credential attached.
-      const claimed = await payingFetch()(challenge.claim_url, { method: 'POST' })
-      if (!claimed.ok) throw new Error(`claim failed with ${claimed.status}: ${await claimed.text()}`)
-      const body = (await claimed.json()) as Record<string, unknown>
+    },
+    async ask(check, taskId = `a2a:task:${randomUUID()}`) {
+      const claimed = await quoteAndClaim(inputRequired(taskId, check, process.env.AGENT_B_MAX_PRICE), check)
+      if ('declined' in claimed) return { status: 'not_worth_asking', reason: claimed.declined }
+      const { challenge, body } = claimed
       const metadata = (body.metadata as Record<string, Record<string, unknown>> | undefined)?.['dev.quorum.resolver'] ?? {}
       return {
         status: 'answered',

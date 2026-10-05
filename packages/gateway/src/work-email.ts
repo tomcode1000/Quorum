@@ -23,6 +23,14 @@ export type WorkEmail = { subject: string; text: string; html: string }
 
 const money = (cents: number) => `$${(cents / 100).toFixed(2)}`
 
+/** "45 minutes", "2 hours", rounded the way a person would say it. */
+const openFor = (ms: number) => {
+  const minutes = Math.max(1, Math.round(ms / 60_000))
+  if (minutes < 90) return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`
+  const hours = Math.round(minutes / 60)
+  return `${hours} hours`
+}
+
 const escape = (value: string) =>
   value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
@@ -34,19 +42,31 @@ export function workEmail(input: {
   workUrl: string
   /** Where to turn these off. */
   settingsUrl: string
+  /** Set when the question is held for people to arrive: how long it stays open. */
+  openForMs?: number
 }): WorkEmail {
   const skill = escape(input.skill)
   const wage = money(input.wageCents)
   const subject = `A question is waiting: ${input.skill}`
+  const held = input.openForMs !== undefined
+  const open = held ? openFor(input.openForMs ?? 0) : ''
+  const heading = held ? `A question about ${skill} is being held for you.` : `A question about ${skill} is waiting for you.`
+  const why = held
+    ? `Nobody who passed this skill is online, so it is being kept open for the next ${open}. The first person with the skill to arrive answers it.`
+    : 'You passed this skill, and too few people who did are online to answer it. It is yours if you get there first.'
+  const infoTitle = held ? `Open for ${open}` : 'Questions close in under a minute'
+  const infoBody = held
+    ? 'Open Work any time before then and it comes straight to you. If someone else answers it first, nothing is lost and nothing counts against you.'
+    : 'Keep Work open and the next one comes straight to you, with no email needed. If this one has closed by the time you arrive, nothing is lost and nothing counts against you.'
 
   const text = [
-    `A question about ${input.skill} is waiting for you on Quorum.`,
+    held ? `A question about ${input.skill} is being held for you on Quorum for the next ${open}.` : `A question about ${input.skill} is waiting for you on Quorum.`,
     '',
     `It pays ${wage}, sent to your own account the moment your answer is accepted.`,
     '',
     `Open Work to answer it: ${input.workUrl}`,
     '',
-    'Questions close in under a minute. Keep Work open and the next one comes straight to you.',
+    held ? 'Open Work any time before then and it comes straight to you.' : 'Questions close in under a minute. Keep Work open and the next one comes straight to you.',
     '',
     `You asked to be told at this address. Turn these emails off in Settings: ${input.settingsUrl}`,
   ].join('\n')
@@ -90,11 +110,11 @@ export function workEmail(input: {
                 </td>
               </tr>
               <tr>
-                <td style="font-family:${FONT};font-size:28px;line-height:1.15;font-weight:700;letter-spacing:-0.035em;color:${INK};">A question about ${skill} is waiting for you.</td>
+                <td style="font-family:${FONT};font-size:28px;line-height:1.15;font-weight:700;letter-spacing:-0.035em;color:${INK};">${heading}</td>
               </tr>
               <tr>
                 <td style="padding-top:14px;font-family:${FONT};font-size:15px;line-height:1.6;color:${INK_3};">
-                  You passed this skill, and too few people who did are online to answer it. It is yours if you get there first.
+                  ${why}
                 </td>
               </tr>
 
@@ -132,8 +152,8 @@ export function workEmail(input: {
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${WASH};border-radius:12px;">
                     <tr>
                       <td style="padding:16px 18px;font-family:${FONT};">
-                        <div style="font-size:14px;font-weight:600;color:${INK};">Questions close in under a minute</div>
-                        <div style="padding-top:5px;font-size:13px;line-height:1.55;color:${INK_3};">Keep Work open and the next one comes straight to you, with no email needed. If this one has closed by the time you arrive, nothing is lost and nothing counts against you.</div>
+                        <div style="font-size:14px;font-weight:600;color:${INK};">${infoTitle}</div>
+                        <div style="padding-top:5px;font-size:13px;line-height:1.55;color:${INK_3};">${infoBody}</div>
                       </td>
                     </tr>
                   </table>
@@ -146,7 +166,7 @@ export function workEmail(input: {
         <!-- Footer -->
         <tr>
           <td style="padding:20px 8px 0;font-family:${FONT};font-size:12px;line-height:1.6;color:${INK_4};">
-            You asked to be told at this address when work in your skills is waiting. We send at most one of these every ten minutes. <a href="${escape(input.settingsUrl)}" style="color:${ACCENT};text-decoration:none;">Turn them off in Settings</a>.
+            You asked to be told at this address when work in your skills is waiting. We send at most one of these every few minutes. <a href="${escape(input.settingsUrl)}" style="color:${ACCENT};text-decoration:none;">Turn them off in Settings</a>.
           </td>
         </tr>
       </table>

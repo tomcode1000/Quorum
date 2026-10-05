@@ -116,6 +116,8 @@ The connection is held open until the question resolves. Terminal statuses are `
 
 You can also POST an A2A `input-required` task status **unmodified**, with a `dev.quorum.resolver` entry in its metadata carrying `answer_schema` and `cost_of_error` or `max_price`. The response is the task status to resume with. Your agent does not restate its question in our vocabulary — it forwards the thing it was already going to emit.
 
+**Questions that can wait.** Not every step is urgent: an invoice due Friday can wait an hour for a person. Send `"mode": "callback"` with a `callback_url` (or `callback_url` in the A2A extension) and a deadline of up to 24 hours. The claim returns `202` as soon as payment clears; the question is held even when nobody with the skill is online, the people who passed it are emailed straight away, and the answer is posted to your callback when someone gives it. Unanswered by the deadline, it is refunded. In the demo, Agent B holds the supplier check this way and Agent A carries on and comes back for it.
+
 Most agents will reach it through MCP instead, via one tool, `ask_human`.
 
 ### What it answers
@@ -266,7 +268,7 @@ The recipient held nothing beforehand: no gas asset, no prior balance, no accoun
 ### Tests
 
 ```bash
-npm test          # 108 tests
+npm test          # 115 tests
 npm run typecheck
 npm run demo      # the two-run comparison, no keys or network needed
 ```
