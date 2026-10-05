@@ -12,6 +12,7 @@ import { GOLDEN_SEED } from './golden-seed.js'
 import { Router } from './router.js'
 import { createNotifier, resendMailer } from './notifier.js'
 import { createServer } from './server.js'
+import { fileStore, upstashStore } from './persistence.js'
 import { Store } from './store.js'
 import { walletRoutes } from './wallet-routes.js'
 import { workerApi } from './worker-api.js'
@@ -25,7 +26,14 @@ import { workerApi } from './worker-api.js'
 async function main(): Promise<void> {
   const config = loadConfig()
 
-  const store = new Store({ persistTo: config.statePath })
+  // Upstash when configured, so a host that wipes its disk on restart (Render's
+  // free plan) keeps the roster; the local file otherwise. Moving to Upstash
+  // carries the local roster across the first time.
+  const upstashUrl = process.env.UPSTASH_REDIS_REST_URL
+  const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN
+  const persistence =
+    upstashUrl && upstashToken ? upstashStore({ url: upstashUrl, token: upstashToken }) : fileStore(config.statePath)
+  const store = new Store({ persistence, migrateFrom: fileStore(config.statePath) })
   await store.load()
   store.golden.push(...GOLDEN_SEED)
 
@@ -135,6 +143,7 @@ async function main(): Promise<void> {
   const server = serve({ fetch: app.fetch, port: config.port }, (info) => {
     console.log(`[quorum] gateway on http://localhost:${info.port}`)
     console.log(`[quorum] network ${config.network}, fees sponsored: ${paymaster.feesSponsored}`)
+    console.log(`[quorum] roster kept in ${persistence.label}, ${store.workers.size} workers loaded`)
     console.log(`[quorum] agent card at ${config.publicUrl}/.well-known/agent-card.json`)
     console.log('[quorum] workers pay no chain fee on any network: the treasury sends, they only receive')
   })

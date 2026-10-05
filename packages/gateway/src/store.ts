@@ -1,7 +1,6 @@
 import { blankRecord, type Kind } from '@quorum/core'
 import type { AssessmentState, GoldenQuestion, Question, RateState, Resolution, WorkerAnswer, WorkerRecord } from '@quorum/core'
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
-import { dirname } from 'node:path'
+import { fileStore, type Persistence } from './persistence.js'
 import { legacySkills, standing, type Skills } from './skills.js'
 
 /**
@@ -154,18 +153,33 @@ export class Store {
   /** Golden questions available for seeding, by kind. */
   readonly golden: GoldenQuestion[] = []
 
-  readonly #path: string | undefined
+  readonly #persistence: Persistence | undefined
+  /** Read only when the main store has nothing yet: where an earlier roster may be. */
+  readonly #migrateFrom: Persistence | undefined
   #writing: Promise<void> = Promise.resolve()
 
-  constructor(options: { persistTo?: string } = {}) {
-    this.#path = options.persistTo
+  constructor(options: { persistTo?: string; persistence?: Persistence; migrateFrom?: Persistence } = {}) {
+    this.#persistence = options.persistence ?? (options.persistTo === undefined ? undefined : fileStore(options.persistTo))
+    this.#migrateFrom = options.migrateFrom
   }
 
-  /** Reloads the roster. A missing or corrupt file is not an error. */
+  /**
+   * Reloads the roster. A missing or corrupt one is not an error.
+   *
+   * When the store is empty and an older roster exists elsewhere (the local file,
+   * on first moving to Upstash), that one is loaded and written straight back, so
+   * nobody has to sign up or be assessed again.
+   */
   async load(): Promise<void> {
-    if (!this.#path) return
+    if (!this.#persistence) return
     try {
-      const snapshot = JSON.parse(await readFile(this.#path, 'utf8')) as Snapshot
+      let text = await this.#persistence.read()
+      if (text === null && this.#migrateFrom) {
+        text = await this.#migrateFrom.read()
+        if (text !== null) await this.#persistence.write(text)
+      }
+      if (text === null) return
+      const snapshot = JSON.parse(text) as Snapshot
       for (const entry of snapshot.workers)
         this.workers.set(entry.workerId, {
           workerId: entry.workerId,
@@ -184,15 +198,17 @@ export class Store {
           email: entry.email ?? null,
           notifiedAt: entry.notifiedAt ?? null,
         })
-    } catch {
-      // No saved roster, or an unreadable one. Either way, start clean.
+    } catch (error) {
+      // Start clean rather than not at all, but say so: an empty roster from a
+      // storage fault looks exactly like a fresh install otherwise.
+      console.error(`[quorum] could not load the roster, starting empty: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
 
   /** Writes the roster. Serialised so concurrent resolutions cannot interleave. */
   save(): Promise<void> {
-    if (!this.#path) return Promise.resolve()
-    const path = this.#path
+    const persistence = this.#persistence
+    if (!persistence) return Promise.resolve()
     const snapshot: Snapshot = {
       workers: [...this.workers.values()].map((w) => ({
         workerId: w.workerId,
@@ -208,10 +224,13 @@ export class Store {
         notifiedAt: w.notifiedAt,
       })),
     }
-    this.#writing = this.#writing.then(async () => {
-      await mkdir(dirname(path), { recursive: true })
-      await writeFile(path, JSON.stringify(snapshot, null, 2))
-    })
+    // A failed write is logged rather than left to reject the chain, which would
+    // stop every later save from running at all.
+    this.#writing = this.#writing.then(() =>
+      persistence.write(JSON.stringify(snapshot)).catch((error: unknown) => {
+        console.error(`[quorum] could not save the roster: ${error instanceof Error ? error.message : String(error)}`)
+      }),
+    )
     return this.#writing
   }
 
