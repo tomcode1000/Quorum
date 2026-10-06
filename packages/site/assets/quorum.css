@@ -2221,3 +2221,9 @@ button.search:hover {
     margin-top: -48px;
   }
 }
+
+@media (max-width: 560px) {
+  .wl-theme span {
+    display: none;
+  }
+}

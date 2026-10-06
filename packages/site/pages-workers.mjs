@@ -283,7 +283,10 @@ const WAITLIST_SKILLS = [
 /* The waitlist's own header: the brand, and a way in for anyone already invited. */
 const waitlistNav = () => `<header class="w-nav"><div class="shell w-nav-in" style="justify-content:space-between">
   <a class="brand" href="for-workers.html"><span class="mark">${MARK}</span>Quorum</a>
-  <a class="btn btn-ghost" style="height:42px" href="${WORKER_APP}">Have an invite? Sign in</a>
+  <div style="display:flex;align-items:center;gap:10px">
+    <button class="btn btn-ghost wl-theme" type="button" data-theme-toggle aria-pressed="false" aria-label="Switch colour theme" style="height:42px">${ic('moon')}<span data-theme-label>Dark mode</span></button>
+    <a class="btn btn-ghost" style="height:42px" href="${WORKER_APP}">Have an invite? Sign in</a>
+  </div>
 </div></header>`
 
 const workerWaitlist = () => page({
