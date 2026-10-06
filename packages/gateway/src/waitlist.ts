@@ -5,6 +5,7 @@ import { randomBytes, timingSafeEqual } from 'node:crypto'
 import { z } from 'zod'
 import type { Mailer } from './notifier.js'
 import type { Store } from './store.js'
+import { escapeHtml, renderEmail } from './email-layout.js'
 
 /**
  * Letting people in a cohort at a time.
@@ -40,8 +41,8 @@ const redeemSchema = z.object({ workerId: z.string().min(8).max(128), code: z.st
 const admitSchema = z.object({ emails: z.array(z.string().trim().toLowerCase().email()).min(1).max(200) })
 
 /** Waitlist sign-up, from the public site. */
-export function waitlistRoutes(services: { store: Store }): Hono {
-  const { store } = services
+export function waitlistRoutes(services: { store: Store; mail?: Mailer }): Hono {
+  const { store, mail } = services
   const app = new Hono()
   app.use('*', cors({ origin: '*', allowMethods: ['POST', 'OPTIONS'] }))
   app.post('/', async (c) => {
@@ -53,6 +54,11 @@ export function waitlistRoutes(services: { store: Store }): Hono {
     if (!existing) {
       store.waitlist.set(email, { email, kinds, note: note ?? null, joinedAt: Date.now(), invitedAt: null, code: null, redeemedBy: null })
       void store.save()
+      // Confirmed by email, not awaited: a slow mail provider should not hold the page.
+      if (mail)
+        void mail({ to: email, ...joinedEmail(kinds) }).catch((error: unknown) =>
+          console.error(`[quorum] waitlist confirmation not sent to ${email}: ${error instanceof Error ? error.message : String(error)}`),
+        )
     }
     return c.json({ joined: true, position: [...store.waitlist.values()].filter((e) => e.invitedAt === null).length })
   })
@@ -164,31 +170,78 @@ function summary(store: Store, workerId: string) {
   return { workerId, passed, failed, answers: worker.answerCount }
 }
 
+const KIND_LABELS: Record<Kind, string> = {
+  disambiguate: 'Telling readings apart',
+  verify: 'Checking something is real',
+  match: 'Matching records',
+  categorise: 'Categorising',
+  compare: 'Comparing',
+  extract: 'Extracting',
+}
+
+/** Sent the moment someone joins, so they know it worked and what to expect. */
+function joinedEmail(kinds: Kind[]) {
+  const picked = kinds.length ? kinds.map((k) => KIND_LABELS[k] ?? k).join(', ') : null
+  const subject = 'You’re on the Quorum waitlist'
+  const text = `You're on the Quorum waitlist.
+
+We're opening Quorum a group at a time, so everyone admitted together has real questions to answer. We'll email you an invite link when your group is admitted.
+${picked ? `\nYou said you'd like to answer: ${picked}.\n` : ''}
+What happens next:
+1. Get your invite: a personal link, by email, when your group opens.
+2. Pass a short assessment: five questions per skill, four right to pass.
+3. Answer in test sessions: we'll email you before each one.
+
+There's nothing else to do for now. This is the testnet: wages are paid in test tokens, not real money.`
+  const html = renderEmail({
+    preheader: 'You’re on the list. We’ll email your invite when your group opens.',
+    eyebrow: 'Waitlist',
+    heading: 'You’re on the list.',
+    body: [
+      'Thanks for joining. We&rsquo;re opening Quorum a group at a time, so everyone admitted together has real questions to answer and people to agree with.',
+      'We&rsquo;ll email you a personal invite link when your group is admitted. There&rsquo;s nothing else you need to do until then.',
+      ...(picked ? [`You said you&rsquo;d like to answer: <b style="color:#0f1b35">${escapeHtml(picked)}</b>.`] : []),
+    ],
+    steps: [
+      { title: 'Get your invite', text: 'A personal link, by email, when your group opens.' },
+      { title: 'Pass a short assessment', text: 'Five questions per skill. Four right opens that skill.' },
+      { title: 'Answer in test sessions', text: 'We email you before each one.' },
+    ],
+    footnote: 'This is the testnet: wages are paid in test tokens, not real money.',
+  })
+  return { subject, text, html }
+}
+
 function inviteEmail(link: string, code: string) {
-  const subject = 'You’re in: your Quorum testnet invite'
+  const subject = 'You’re in: your Quorum invite'
   const text = `You're off the Quorum waitlist.
 
-Sign in here: ${link}
+Accept your invite: ${link}
 
 Your invite code is ${code}, in case you need to type it.
 
 What happens next:
 1. Sign in with a passkey on your phone. No password, no deposit.
-2. Pick the capabilities you want to answer and take the short assessment: five questions, four right to pass.
-3. Once you pass, questions start reaching you during test sessions. We'll email you before each one.
+2. Pick the skills you want and take the short assessment: five questions, four right to pass.
+3. Once you pass, questions reach you during test sessions. We'll email you before each one.
 
+You only need this link once. After that, sign in with the same passkey.
 This is the testnet: wages are paid in test tokens, not real money.`
-  const html = `<div style="font-family:Inter,Arial,sans-serif;max-width:520px;margin:0 auto;color:#0f1b35">
-  <h2 style="font-size:20px;margin:0 0 12px">You&rsquo;re off the waitlist.</h2>
-  <p style="font-size:14px;line-height:1.6;color:#33415c">Sign in, take the short assessment, and questions will start reaching you during test sessions.</p>
-  <p style="margin:22px 0"><a href="${link}" style="background:#1f6feb;color:#fff;text-decoration:none;padding:11px 18px;border-radius:9px;font-weight:600;font-size:14px">Accept your invite</a></p>
-  <p style="font-size:13px;color:#5b6b85">Invite code: <b style="font-family:monospace">${code}</b></p>
-  <ol style="font-size:13px;line-height:1.7;color:#33415c;padding-left:18px">
-    <li>Sign in with a passkey. No password, no deposit.</li>
-    <li>Pick your capabilities and take the assessment: five questions, four right to pass.</li>
-    <li>Once you pass, we&rsquo;ll email you before each test session.</li>
-  </ol>
-  <p style="font-size:12px;color:#8a97b0">This is the testnet: wages are paid in test tokens, not real money.</p>
-</div>`
+  const html = renderEmail({
+    preheader: 'Your place has opened. Accept your invite to get started.',
+    eyebrow: 'Invite',
+    heading: 'You’re in.',
+    body: [
+      'Your group has been admitted to the Quorum testnet. Accept your invite to sign in, pick what you&rsquo;d like to answer, and take the short assessment.',
+    ],
+    button: { label: 'Accept your invite', href: link },
+    detail: { label: 'Invite code', value: code },
+    steps: [
+      { title: 'Sign in with a passkey', text: 'Your face, fingerprint or device PIN. No password, no deposit.' },
+      { title: 'Take the assessment', text: 'Five questions per skill. Four right opens that skill.' },
+      { title: 'Answer in test sessions', text: 'We email you before each one.' },
+    ],
+    footnote: 'You only need this link once. After that, sign in with the same passkey. This is the testnet: wages are paid in test tokens, not real money.',
+  })
   return { subject, text, html }
 }

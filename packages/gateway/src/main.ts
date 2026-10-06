@@ -103,7 +103,7 @@ async function main(): Promise<void> {
 
   // The waitlist: joined from the public site, redeemed from the worker app, and
   // admitted by the operator, behind a token, a cohort at a time.
-  app.route('/v1/waitlist', waitlistRoutes({ store }))
+  app.route('/v1/waitlist', waitlistRoutes({ store, mail: mailerFromEnv(process.env) }))
   app.route('/v1/worker', redeemRoute({ store }))
   if (config.operatorToken)
     app.route(
