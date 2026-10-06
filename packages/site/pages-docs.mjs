@@ -139,7 +139,7 @@ const docsToc = (body) => {
 const docsNav = () => `<header class="docs-nav"><div class="docs-nav-in">
   <a class="brand" href="../index.html"><span class="mark">${MARK}</span>Quorum</a>
   <nav class="docs-tabs"><a href="index.html" aria-current="page">Docs</a><a href="endpoints.html">API Reference</a><a href="capability-reference.html">Guides</a><a href="first-request.html">Examples</a><a href="help.html">Help</a></nav>
-  <span class="search">${ic('search')} Search docs… <kbd>⌘K</kbd></span>
+  <button class="search" type="button" data-docs-search>${ic('search')} Search docs… <kbd>⌘K</kbd></button>
 </div></header>`
 
 const docsPage = ({ title, current, body }) =>

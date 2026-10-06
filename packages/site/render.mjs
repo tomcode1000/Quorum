@@ -169,4 +169,32 @@ for (const file of [
   const path = join(out, file)
   await writeFile(path, clean(await readFile(path, 'utf8')))
 }
+// The docs search index: every docs page, split at its headings.
+const strip = (html) =>
+  html
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&rsquo;/g, '’')
+    .replace(/&amp;/g, '&')
+    .replace(/&[a-z]+;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+const searchIndex = []
+for (const file of Object.keys(PAGES).filter((f) => f.startsWith('docs/'))) {
+  const html = await readFile(join(out, file), 'utf8')
+  const main = html.match(/<main class="docs-main">([\s\S]*?)<\/main>/)?.[1] ?? ''
+  const pageTitle = strip(main.match(/<h1[^>]*>([\s\S]*?)<\/h1>/)?.[1] ?? '')
+  const href = file.slice('docs/'.length).replace(/\.html$/, '').replace(/^index$/, './')
+  for (const part of main.split(/(?=<h2\b)/)) {
+    const h = part.match(/^<h2[^>]*id="([^"]+)"[^>]*>([\s\S]*?)<\/h2>/)
+    searchIndex.push({
+      page: pageTitle,
+      heading: h ? strip(h[2]) : '',
+      href: h ? `${href}#${h[1]}` : href,
+      text: strip(h ? part.slice(h[0].length) : part.replace(/<h1[\s\S]*?<\/h1>/, '')),
+    })
+  }
+}
+await writeFile(join(out, 'docs/search.json'), JSON.stringify(searchIndex))
+await copyFile(join(root, 'assets/docs-search.js'), join(out, 'assets/docs-search.js'))
+
 console.log(`rendered ${n} pages into dist/`)

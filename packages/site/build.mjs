@@ -189,6 +189,7 @@ const page = ({ title, body, docs = false, script = false }) => `<!doctype html>
 <body>
 ${body}
 <script src="${docs ? '../assets/live.js' : 'assets/live.js'}"></script>
+${docs ? '<script src="../assets/docs-search.js"></script>' : ''}
 </body>
 </html>`
 
