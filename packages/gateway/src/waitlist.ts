@@ -1,5 +1,5 @@
 import { SERVABLE_KINDS, type Kind } from '@quorum/core'
-import { Hono } from 'hono'
+import { Hono, type MiddlewareHandler } from 'hono'
 import { cors } from 'hono/cors'
 import { randomBytes, timingSafeEqual } from 'node:crypto'
 import { z } from 'zod'
@@ -89,6 +89,16 @@ const sameToken = (given: string | undefined, expected: string) => {
   return a.length === b.length && timingSafeEqual(a, b)
 }
 
+/** Middleware: the operator's bearer token, or 401. Preflights pass through. */
+export function requireOperator(token: string): MiddlewareHandler {
+  return async (c, next) => {
+    if (c.req.method === 'OPTIONS') return next()
+    const given = c.req.header('authorization')?.replace(/^Bearer\s+/i, '')
+    if (!sameToken(given, token)) return c.json({ error: 'operator token required' }, 401)
+    return next()
+  }
+}
+
 /**
  * The operator's side: who is waiting, and admitting them.
  *
@@ -107,12 +117,7 @@ export function operatorWaitlistRoutes(services: {
   const { store, mail } = services
   const app = new Hono()
   app.use('*', cors({ origin: services.origins, allowMethods: ['GET', 'POST', 'OPTIONS'], allowHeaders: ['authorization', 'content-type'] }))
-  app.use('*', async (c, next) => {
-    if (c.req.method === 'OPTIONS') return next()
-    const given = c.req.header('authorization')?.replace(/^Bearer\s+/i, '')
-    if (!sameToken(given, services.token)) return c.json({ error: 'operator token required' }, 401)
-    return next()
-  })
+  app.use('*', requireOperator(services.token))
 
   app.get('/', (c) =>
     c.json({

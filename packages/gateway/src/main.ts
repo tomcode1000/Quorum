@@ -13,7 +13,7 @@ import { Router } from './router.js'
 import { createNotifier, mailerFromEnv } from './notifier.js'
 import { createServer } from './server.js'
 import { mediaRoutes } from './media.js'
-import { operatorWaitlistRoutes, redeemRoute, waitlistRoutes } from './waitlist.js'
+import { operatorWaitlistRoutes, redeemRoute, requireOperator, waitlistRoutes } from './waitlist.js'
 import { fileStore, upstashStore } from './persistence.js'
 import { Store } from './store.js'
 import { walletRoutes } from './wallet-routes.js'
@@ -127,7 +127,13 @@ async function main(): Promise<void> {
   // whole roster and every worker's earnings, which is the most sensitive thing
   // this gateway knows, and a wildcard here would hand it to any page a browser
   // happens to be on.
-  app.use('/v1/operator/*', cors({ origin: config.workerAppOrigins, allowMethods: ['GET', 'OPTIONS'] }))
+  app.use(
+    '/v1/operator/*',
+    cors({ origin: config.workerAppOrigins, allowMethods: ['GET', 'OPTIONS'], allowHeaders: ['authorization'] }),
+  )
+  // The same token as the waitlist. CORS only stops other sites' pages; it does
+  // not stop anyone opening the console itself or calling these routes directly.
+  if (config.operatorToken) app.use('/v1/operator/*', requireOperator(config.operatorToken))
   app.route('/v1/operator', operatorApi({ store, events, paymaster, escalations }))
 
   // Mounted only when asked for, and refused outside testnet even then. This is the

@@ -28,8 +28,22 @@ const gateway = (() => {
   return `${location.protocol}//${location.hostname}:8787`
 })()
 
+/* The console's token, sent with every operator read; see initOperatorGate. */
+const operatorToken = () => {
+  try {
+    return localStorage.getItem('quorum-operator-token') ?? ''
+  } catch {
+    return ''
+  }
+}
+
 const get = async (path, timeout = 8000) => {
-  const response = await fetch(`${gateway}${path}`, { signal: AbortSignal.timeout(timeout) })
+  const operator = path.startsWith('/v1/operator')
+  const response = await fetch(`${gateway}${path}`, {
+    signal: AbortSignal.timeout(timeout),
+    ...(operator ? { headers: { authorization: `Bearer ${operatorToken()}` } } : {}),
+  })
+  if (operator && response.status === 401) showOperatorGate()
   // An account that has not redeemed an invite can do nothing yet; see initInvite.
   if (response.status === 403 && path.startsWith('/v1/worker') && !location.pathname.includes('app-invite')) location.href = 'app-invite.html'
   if (!response.ok) throw new Error(`${response.status} ${await response.text()}`)
@@ -2229,6 +2243,43 @@ const initReturnToWork = () => {
   }, 4000)
 }
 
+/* ---------------------------------------------------------- operator gate -- */
+
+/*
+  The console is the operator's alone. Its reads carry the gateway's
+  QUORUM_OPERATOR_TOKEN, typed once here and kept in this browser; without it
+  every console page shows this and nothing else.
+*/
+let gateShown = false
+const showOperatorGate = () => {
+  if (gateShown || !document.querySelector('.ap-side .ap-side-label')) return
+  gateShown = true
+  const gate = document.createElement('div')
+  gate.style.cssText = 'position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;background:var(--ground)'
+  gate.innerHTML = `<section class="ap-card" style="width:100%;max-width:400px"><div class="ap-pad">
+    <h2 class="ap-h3" style="margin:0 0 6px">Operator console</h2>
+    <p style="margin:0 0 16px;font-size:13px;line-height:1.6;color:var(--ink-3)">Enter the operator token to continue. It is kept in this browser only.</p>
+    <form><div class="ap-field"><input type="password" autocomplete="current-password" placeholder="Operator token" aria-label="Operator token" required/></div>
+    <button class="ap-primary" type="submit" style="margin-top:14px">Open the console</button></form>
+    <p class="ap-info ap-info-bad" style="margin-top:14px" hidden>That token was not accepted.</p>
+  </div></section>`
+  document.body.append(gate)
+  const input = gate.querySelector('input')
+  if (operatorToken()) gate.querySelector('.ap-info').hidden = false
+  gate.querySelector('form').addEventListener('submit', (event) => {
+    event.preventDefault()
+    try {
+      localStorage.setItem('quorum-operator-token', input.value.trim())
+    } catch {}
+    location.reload()
+  })
+  input.focus()
+}
+
+const initOperatorGate = () => {
+  if (document.querySelector('.ap-side .ap-side-label') && !operatorToken()) showOperatorGate()
+}
+
 /* ------------------------------------------------------- console waitlist -- */
 
 const TOKEN_KEY = 'quorum-operator-token'
@@ -2441,6 +2492,7 @@ initCopy()
 initClock()
 initSignIn()
 initExport()
+initOperatorGate()
 initReturnToWork()
 initRail()
 initInvite()
