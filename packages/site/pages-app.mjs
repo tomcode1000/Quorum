@@ -173,7 +173,7 @@ const question = () =>
     <div>
       ${chip('Real question')}
       <h1 class="ap-h1">Your question</h1>
-      <p class="ap-sub" style="margin-bottom:18px"><span class="ap-pill ap-pill-accent ap-pill-icon">${ic('db')}<span data-app="wage">Loading</span></span> <span style="margin-left:8px">for this answer</span></p>
+      <p class="ap-sub" style="margin-bottom:18px"><span class="ap-pill ap-pill-accent ap-pill-icon">${ic('db')}<span data-app="wage">Loading</span></span> <span style="margin-left:8px">for this answer</span> <span class="ap-pill ap-pill-icon ap-countdown" data-app="countdown" hidden style="margin-left:10px">${ic('clock')}<span data-app="countdown-left">1:00</span> left</span></p>
     </div>
 
     <hr class="ap-divide"/>

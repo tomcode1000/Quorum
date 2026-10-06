@@ -1050,6 +1050,7 @@ const initQuestion = async () => {
       renderEvidence(assignment.attachments)
       renderOptions(assignment.schema, onPick)
       showControls(true)
+      startCountdown(assignment.expiresInMs)
     } catch {
       // The poll timed out or the connection dropped. Both are ordinary here.
       fill('prompt', 'Reconnecting…')
@@ -1057,7 +1058,33 @@ const initQuestion = async () => {
     }
   }
 
+  /*
+    How long is left on this question. Each question has its own window (longer
+    for more to read), and when it runs out the question goes to someone else,
+    so the worker is shown it rather than left to find out.
+  */
+  let countdownTimer = null
+  const startCountdown = (ms) => {
+    clearInterval(countdownTimer)
+    const pill = $('countdown')
+    if (!pill || !ms) return
+    const endsAt = Date.now() + ms
+    const tick = () => {
+      const left = Math.max(0, Math.round((endsAt - Date.now()) / 1000))
+      fill('countdown-left', `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`)
+      pill.classList.toggle('ap-pill-warn', left <= 10)
+      if (left === 0) {
+        clearInterval(countdownTimer)
+        location.href = 'app-closed.html'
+      }
+    }
+    pill.hidden = false
+    tick()
+    countdownTimer = setInterval(tick, 1000)
+  }
+
   submit.addEventListener('click', async () => {
+    clearInterval(countdownTimer)
     if (!assignment || answer === null) return
     submit.disabled = true
     submit.textContent = 'Sending…'
