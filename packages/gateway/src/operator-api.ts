@@ -269,18 +269,21 @@ export function operatorApi(services: {
     if (!live && !settled) return c.json({ error: 'unknown question' }, 404)
 
     const trail = [...events.recent()].filter((e) => 'questionId' in e && e.questionId === id)
+    // Once answered, the question is no longer live, but its page still shows
+    // what was asked and the evidence beside the answer.
+    const asked = live ?? store.settledQuestions.get(id)
 
     return c.json({
       questionId: id,
-      question: live
+      question: asked
         ? {
-            kind: live.question.kind,
-            prompt: live.question.prompt,
-            schema: live.question.schema,
-            attachments: live.question.attachments ?? [],
-            priceCents: live.question.priceCents,
-            startedAt: live.startedAt,
-            deadlineAt: live.deadlineAt,
+            kind: asked.question.kind,
+            prompt: asked.question.prompt,
+            schema: asked.question.schema,
+            attachments: asked.question.attachments ?? [],
+            priceCents: asked.question.priceCents,
+            startedAt: asked.startedAt,
+            deadlineAt: asked.deadlineAt,
           }
         : null,
       live: live

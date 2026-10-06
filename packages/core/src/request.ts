@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { KINDS } from './types.js'
 import type { Attachment, Kind, Question } from './types.js'
 import { PRICE_CEILING_CENTS } from './pricing.js'
+import { contextImageUrl } from './media.js'
 
 /**
  * The request boundary.
@@ -42,6 +43,8 @@ export const answerSchemaSchema = z.discriminatedUnion('type', [
 const attachmentsSchema = z
   .object({
     image_url: z.string().url().optional(),
+    /** The image itself, base64 or a `data:` URI, for a caller with nowhere to host it. */
+    image_base64: z.string().optional(),
     text: z.string().optional(),
     extracted: z.unknown().optional(),
   })
@@ -122,7 +125,8 @@ export function parseAsk(body: unknown): ParsedAsk {
   const { maxPriceCents, costOfErrorCents } = readPricing(ask.max_price, ask.cost_of_error)
 
   const attachments: Attachment[] = []
-  if (ask.context?.image_url) attachments.push({ type: 'image', url: ask.context.image_url })
+  const imageUrl = contextImageUrl(ask.context)
+  if (imageUrl) attachments.push({ type: 'image', url: imageUrl })
   if (ask.context?.text) attachments.push({ type: 'text', body: ask.context.text })
   if (ask.context?.extracted !== undefined)
     attachments.push({ type: 'json', body: ask.context.extracted, caption: 'What the agent read' })

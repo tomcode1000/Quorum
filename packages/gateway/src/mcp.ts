@@ -1,4 +1,5 @@
-import { KINDS, centsToDollars, priceAsk, readPricing, type Question } from '@quorum/core'
+import { KINDS, centsToDollars, contextImageUrl, priceAsk, readPricing, type Question } from '@quorum/core'
+import { hostImages } from './media.js'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { randomUUID } from 'node:crypto'
@@ -90,7 +91,15 @@ export function createMcpServer(services: {
           ])
           .describe('The answer space. Required, and constrained: free text cannot be checked for agreement.'),
         context: z
-          .object({ image_url: z.string().optional(), text: z.string().optional(), extracted: z.unknown().optional() })
+          .object({
+            image_url: z.string().optional().describe('A link to the image, if it is already on the web.'),
+            image_base64: z
+              .string()
+              .optional()
+              .describe('The image itself (PNG, JPEG, WebP or GIF, up to 5 MB), base64 or a data: URI. Send a screenshot this way; nothing needs hosting.'),
+            text: z.string().optional(),
+            extracted: z.unknown().optional(),
+          })
           .optional()
           .describe('The evidence the person needs. Without it they are guessing too.'),
         max_price: z
@@ -151,7 +160,7 @@ export function createMcpServer(services: {
           ],
         }
 
-      const question: Question = {
+      const question: Question = hostImages({
         id: `q_${randomUUID().replaceAll('-', '').slice(0, 20)}`,
         kind: input.kind,
         prompt: input.question,
@@ -161,7 +170,7 @@ export function createMcpServer(services: {
         ...(buildAttachments(input.context).length > 0 ? { attachments: buildAttachments(input.context) } : {}),
         ...(input.task_ref === undefined ? {} : { taskRef: input.task_ref }),
         ...(input.caller_confidence === undefined ? {} : { callerConfidence: input.caller_confidence }),
-      }
+      }, store.media, services.publicUrl)
 
       const resolution = await router.resolve(question)
 
@@ -221,10 +230,11 @@ function toSchema(
 }
 
 function buildAttachments(
-  context: { image_url?: string | undefined; text?: string | undefined; extracted?: unknown } | undefined,
+  context: { image_url?: string | undefined; image_base64?: string | undefined; text?: string | undefined; extracted?: unknown } | undefined,
 ): NonNullable<Question['attachments']>[number][] {
   const attachments: NonNullable<Question['attachments']>[number][] = []
-  if (context?.image_url) attachments.push({ type: 'image', url: context.image_url })
+  const imageUrl = contextImageUrl(context)
+  if (imageUrl) attachments.push({ type: 'image', url: imageUrl })
   if (context?.text) attachments.push({ type: 'text', body: context.text })
   if (context?.extracted !== undefined)
     attachments.push({ type: 'json', body: context.extracted, caption: 'What the agent read' })

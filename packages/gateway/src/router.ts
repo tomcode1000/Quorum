@@ -486,7 +486,15 @@ export class Router {
     void this.#store.save()
 
     this.#store.recent.set(resolution.questionId, resolution)
-    setTimeout(() => this.#store.recent.delete(resolution.questionId), 300_000).unref?.()
+    this.#store.settledQuestions.set(resolution.questionId, {
+      question: live.question,
+      startedAt: live.startedAt,
+      deadlineAt: live.deadlineAt,
+    })
+    setTimeout(() => {
+      this.#store.recent.delete(resolution.questionId)
+      this.#store.settledQuestions.delete(resolution.questionId)
+    }, 300_000).unref?.()
 
     this.#onEvent({
       type: 'question.settled',

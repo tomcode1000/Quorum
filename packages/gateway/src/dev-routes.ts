@@ -1,4 +1,5 @@
-import { quote, type Question } from '@quorum/core'
+import { contextImageUrl, quote, type Question } from '@quorum/core'
+import { hostImages } from './media.js'
 import { Hono } from 'hono'
 import { randomUUID } from 'node:crypto'
 import { z } from 'zod'
@@ -48,7 +49,7 @@ const seedSchema = z.object({
     .default({ type: 'enum', options: ['45.00', '4.50'] }),
   max_price: z.string().default('2.50'),
   deadline_ms: z.number().int().min(5_000).max(120_000).default(60_000),
-  context: z.object({ image_url: z.string().optional(), text: z.string().optional(), extracted: z.unknown().optional() }).optional(),
+  context: z.object({ image_url: z.string().optional(), image_base64: z.string().optional(), text: z.string().optional(), extracted: z.unknown().optional() }).optional(),
 })
 
 export function devRoutes(services: { config: Config; router: Router; store: Store }): Hono {
@@ -129,12 +130,13 @@ export function devRoutes(services: { config: Config; router: Router; store: Sto
     if (!priced.ok) return c.json({ error: priced.reason }, 409)
 
     const attachments: NonNullable<Question['attachments']>[number][] = []
-    if (seed.context?.image_url) attachments.push({ type: 'image', url: seed.context.image_url })
+    const imageUrl = contextImageUrl(seed.context)
+    if (imageUrl) attachments.push({ type: 'image', url: imageUrl })
     if (seed.context?.text) attachments.push({ type: 'text', body: seed.context.text })
     if (seed.context?.extracted !== undefined)
       attachments.push({ type: 'json', body: seed.context.extracted, caption: 'What the agent read' })
 
-    const question: Question = {
+    const question: Question = hostImages({
       id: `q_dev_${randomUUID().replaceAll('-', '').slice(0, 14)}`,
       kind: seed.kind,
       prompt: seed.question,
@@ -142,7 +144,7 @@ export function devRoutes(services: { config: Config; router: Router; store: Sto
       priceCents: priced.priceCents,
       timeoutMs: seed.deadline_ms,
       ...(attachments.length > 0 ? { attachments } : {}),
-    }
+    }, store.media, config.publicUrl)
 
     // No payer, so nothing is refundable: this question was never paid for.
     const resolution = await router.resolve(question)

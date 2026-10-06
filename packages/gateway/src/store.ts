@@ -1,5 +1,6 @@
 import { blankRecord, type Kind } from '@quorum/core'
 import type { AssessmentState, GoldenQuestion, Question, RateState, Resolution, WorkerAnswer, WorkerRecord } from '@quorum/core'
+import { MediaStore } from './media.js'
 import { fileStore, type Persistence } from './persistence.js'
 import { legacySkills, standing, type Skills } from './skills.js'
 
@@ -148,8 +149,12 @@ export class Store {
   readonly live = new Map<string, LiveQuestion>()
   /** Resolutions kept briefly so a caller that lost its connection can re-read one. */
   readonly recent = new Map<string, Resolution>()
+  /** The question behind each of those, so its page still shows what was asked, and the evidence, beside the answer. */
+  readonly settledQuestions = new Map<string, { question: Question; startedAt: number; deadlineAt: number }>()
   /** Questions quoted but not yet paid for, awaiting a claim. */
   readonly pending = new Map<string, { question: Question; callbackUrl?: string; expiresAt: number }>()
+  /** Images callers sent inline, served to workers by link. */
+  readonly media = new MediaStore()
   /** Golden questions available for seeding, by kind. */
   readonly golden: GoldenQuestion[] = []
 

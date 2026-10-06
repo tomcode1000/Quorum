@@ -10,6 +10,7 @@ import {
   type ParsedAsk,
 } from './request.js'
 import { KINDS } from './types.js'
+import { readInlineImage, toDataUri } from './media.js'
 import type { Attachment, Kind, Resolution } from './types.js'
 
 /**
@@ -155,10 +156,11 @@ export function parseInputRequired(body: unknown): ParsedAsk & { taskId: string 
   // Extra text parts are context the agent chose to send with its question.
   for (const part of textParts.slice(1)) attachments.push({ type: 'text', body: part.text })
   for (const part of parts) {
-    if (part.kind === 'file' && part.file.uri)
+    // A file arrives as a link or as the bytes themselves; both reach the worker.
+    if (part.kind === 'file' && (part.file.uri || part.file.bytes))
       attachments.push({
         type: 'image',
-        url: part.file.uri,
+        url: part.file.bytes ? toDataUri(readInlineImage(part.file.bytes, part.file.mimeType)) : part.file.uri!,
         ...(part.file.name === undefined ? {} : { caption: part.file.name }),
       })
     if (part.kind === 'data') attachments.push({ type: 'json', body: part.data, caption: 'What the agent read' })

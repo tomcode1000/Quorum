@@ -12,6 +12,7 @@ import { GOLDEN_SEED } from './golden-seed.js'
 import { Router } from './router.js'
 import { createNotifier, mailerFromEnv } from './notifier.js'
 import { createServer } from './server.js'
+import { mediaRoutes } from './media.js'
 import { fileStore, upstashStore } from './persistence.js'
 import { Store } from './store.js'
 import { walletRoutes } from './wallet-routes.js'
@@ -83,6 +84,8 @@ async function main(): Promise<void> {
   app.use('/.well-known/*', cors({ origin: '*', allowMethods: ['GET', 'OPTIONS'] }))
 
   app.route('/', createServer({ config, store, router, paymaster, events, notifier }))
+  // Inline images, by unguessable link, for the worker app's <img> tags.
+  app.route('/v1/media', mediaRoutes(store.media))
   app.route(
     '/v1/worker',
     workerApi({

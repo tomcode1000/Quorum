@@ -20,6 +20,7 @@ import { agentCard, serviceManifest } from './agent-card.js'
 import type { Config } from './config.js'
 import type { Router } from './router.js'
 import type { Store } from './store.js'
+import { hostImages } from './media.js'
 import type { Notifier } from './notifier.js'
 
 /**
@@ -153,7 +154,7 @@ export function createServer(services: Services): Hono {
       )
     }
 
-    const question: Question = {
+    const question: Question = hostImages({
       id: `q_${randomUUID().replaceAll('-', '').slice(0, 20)}`,
       kind: parsed.kind,
       prompt: parsed.prompt,
@@ -163,7 +164,7 @@ export function createServer(services: Services): Hono {
       ...(parsed.attachments.length > 0 ? { attachments: parsed.attachments } : {}),
       ...(parsed.taskRef === undefined ? {} : { taskRef: parsed.taskRef }),
       ...(parsed.callerConfidence === undefined ? {} : { callerConfidence: parsed.callerConfidence }),
-    }
+    }, store.media, config.publicUrl)
 
     store.pending.set(question.id, {
       question,
@@ -385,6 +386,11 @@ the better bet it answers \`not_worth_asking\` and charges nothing.
       "deadline_ms": 30000,
       "task_ref": "a2a:task:01J8XQ.../input-required"
     }
+
+A screenshot does not need hosting: send the image itself as
+\`"context": { "image_base64": "<base64 or a data: URI>" }\` (PNG, JPEG, WebP or
+GIF, up to 5 MB), or over A2A as a file part with \`bytes\`. Quorum keeps it and
+shows it to the person answering.
 
 Returns \`402\` with a payment challenge and a \`claim_url\`. Pay, then:
 
