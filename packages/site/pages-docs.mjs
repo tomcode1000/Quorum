@@ -14,8 +14,8 @@ import { foot } from './pages-marketing.mjs'
 const proofSection = () => `<section class="section"><div class="shell split">
   <div>
     <p class="eyebrow">Proof</p>
-    <h1 class="h-xl">Real performance.<br/>Settlement you can check.</h1>
-    <p class="lede">Nothing here is projected. The latency is from the recorded demo run, and every wage is a transaction on a public ledger, so you can open any answer and see who was paid, how much, and when.</p>
+    <h1 class="h-xl">A fallback you can verify.<br/>Settlement you can check.</h1>
+    <p class="lede">Nothing here is projected. The latency comes from recorded runs, and every wage is settled onchain so you can verify who was paid, how much, and when.</p>
     <ul class="feats">
       ${[['bolt', 'Latency', 'Seconds, not a ticket queue'], ['money', 'Price', '50\u00a2\u2013$5 a question, set by the cost of error'], ['cube', 'On-chain', 'Every wage is inspectable']].map(([i, t, d]) => `<li class="feat"><span class="ico ico-sm">${ic(i)}</span><b>${t}</b><span>${d}</span></li>`).join('')}
     </ul>
@@ -45,7 +45,7 @@ const limitsSection = () => `<section class="section-tight" style="background:va
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin-top:30px">
     ${[
       ['globe', 'Approvals', 'It answers questions about data, never questions about what you are allowed to do.', 'By design'],
-      ['file', 'Free-text answers', 'Answers must fit a constrained space so agreement can be measured.', 'By design'],
+      ['file', 'Unstructured answers', 'Answers must fit a constrained space so agreement can be measured.', 'By design'],
       ['pin', 'Physical tasks', 'Someone going somewhere is declared but has no workforce behind it.', 'Planned'],
       ['clock', 'Long-running work', 'Built for seconds, not for multi-hour jobs.', 'Planned'],
       ['users', 'Sybil resistance', 'One identity per passkey is weak, and we say so.', 'In development'],
@@ -54,8 +54,8 @@ const limitsSection = () => `<section class="section-tight" style="background:va
 </div></section>`
 
 const ctaSection = () => `<section class="foot-cta"><div class="shell">
-  <h2 class="h-lg">Ready to build with Quorum?</h2>
-  <p class="lede" style="margin-inline:auto;text-align:center">Forward the input-required your agent already emits. The first question it cannot check for itself is the one to send.</p>
+  <h2 class="h-lg">Give your agents a way to escalate.</h2>
+  <p class="lede" style="margin-inline:auto;text-align:center">Forward the input-required your agent already emits. When it reaches a question it cannot reliably check for itself, send it to Quorum.</p>
   <a class="btn btn-primary btn-lg" style="margin-top:22px" href="docs/index.html">Get started ${ic('arrow')}</a>
 </div></section>`
 

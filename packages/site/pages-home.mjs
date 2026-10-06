@@ -1,5 +1,5 @@
 import { demote } from './build.mjs'
-import { capsGridSection, decidesSection, devSection, foot } from './pages-marketing.mjs'
+import { capsGridSection, decidesSection, devSection, fallbackSection, foot } from './pages-marketing.mjs'
 import { ctaSection, limitsSection, proofSection } from './pages-docs.mjs'
 
 /**
@@ -11,6 +11,7 @@ import { ctaSection, limitsSection, proofSection } from './pages-docs.mjs'
  *   1. the headline            (the hero, hand-written in index.html)
  *   2. the code sample         devSection
  *   3. the five capabilities   capsGridSection
+ *   3b. the fallback flow      fallbackSection
  *   4. how it decides          decidesSection
  *   5. proof                   proofSection
  *   6. limits                  limitsSection
@@ -19,7 +20,7 @@ import { ctaSection, limitsSection, proofSection } from './pages-docs.mjs'
  * heading level. Nothing is re-authored here, so a fix to a section shows up in
  * both places and the scroll cannot drift away from the page it summarises.
  */
-const HOME = [devSection, capsGridSection, decidesSection, proofSection, limitsSection, ctaSection]
+const HOME = [devSection, capsGridSection, fallbackSection, decidesSection, proofSection, limitsSection, ctaSection]
 
 const homeSections = () => `${HOME.map((section) => demote(section())).join('\n')}\n${foot()}`
 

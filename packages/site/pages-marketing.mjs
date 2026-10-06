@@ -34,8 +34,8 @@ const CAPS = [
 const decidesSection = () => `<section class="section"><div class="shell split">
   <div>
     <p class="eyebrow">How it decides</p>
-    <h1 class="h-xl">From question to answer.<br/>Built on real consensus.</h1>
-    <p class="lede">Quorum does not take the first answer it is given. It routes your question to independent people, weighs what they say against their record, and only returns an answer once it is trustworthy.</p>
+    <h1 class="h-xl">From uncertainty to answer.<br/>Built on real consensus.</h1>
+    <p class="lede">Quorum doesn&rsquo;t simply send an agent&rsquo;s question to the first available person. It routes the question to people with the relevant capability, collects independent answers when necessary, and only returns a result when the evidence is trustworthy.</p>
     <ol class="steps">
       ${[
         ['01', 'question', 'Parse & route', 'Your question is checked against the capability you asked for and routed to the workers with the best record on that kind of judgment.'],
@@ -64,7 +64,7 @@ const decidesSection = () => `<section class="section"><div class="shell split">
     </div></div>
 
     <div class="card card-lg">
-      <b class="h-md">Why it works</b>
+      <b class="h-md">Why agents need an independent check.</b>
       <div style="display:flex;flex-direction:column;gap:20px;margin-top:20px">
         ${[
           ['users', 'An uncorrelated check', 'Retries and bigger models share your agent&rsquo;s blind spot. A person looking at the evidence does not.'],
@@ -89,8 +89,8 @@ ${foot()}</main>`,
 const devSection = () => `<section class="section"><div class="shell split">
   <div>
     <p class="eyebrow">Developer experience</p>
-    <h1 class="h-xl">One tool call.<br/>Real people. Real answers.</h1>
-    <p class="lede">Call it at the moment your agent is about to act on something it cannot check: forward the <code>input-required</code> status it already emits, or send the question directly. Say what a mistake would cost, and the price follows.</p>
+    <h1 class="h-xl">One tool call<br/>when your agent gets stuck.</h1>
+    <p class="lede">Call Quorum at the moment your agent reaches something it cannot reliably check. Forward the <code>input-required</code> status it already emits, or send the question directly. Quorum handles the human escalation and returns a structured answer.</p>
     <ul class="feats">
       ${[['bolt', 'A2A, MCP or HTTP', 'Forward input-required, call a tool, or POST.'], ['clock', 'About six seconds', 'Blocking, like any other call your agent makes.'], ['money', 'From 50\u00a2 a question', 'Set by what being wrong would cost, up to $5.'], ['check', 'Confidence you can check', 'Who answered, how they agreed, and every payment on chain.']]
         .map(([i, t, d]) => `<li class="feat"><span class="ico ico-sm">${ic(i)}</span><b>${t}</b><span>${d}</span></li>`).join('')}
@@ -118,7 +118,7 @@ const devSection = () => `<section class="section"><div class="shell split">
     <div class="card card-lg" style="margin-top:18px">
       <p class="eyebrow" style="margin-bottom:8px">Real example</p>
       <div style="display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap">
-        <div><b class="h-md">Before a shopping agent pays a lookalike store</b><p class="dim" style="margin:6px 0 0;max-width:62ch">Every signal the agent can compute says the store is real, because that is what it was built to make them say. The question goes to people proven at spotting fakes, and the order is held on their answer.</p></div>
+        <div><b class="h-md">Before a shopping agent pays a lookalike store</b><p class="dim" style="margin:6px 0 0;max-width:62ch">Every machine check says the store is real. The agent has reached the limit of what it can verify itself. Instead of guessing, it escalates the question to Quorum. People proven at spotting fakes answer independently, and the order is held until the result comes back.</p></div>
         <a class="btn btn-ghost" href="docs/index.html">${ic('book')} View full API reference</a>
       </div>
     </div>
@@ -137,11 +137,22 @@ ${foot()}</main>`,
 const capsGridSection = () => `<section class="section-tight" style="background:var(--surface);border-block:1px solid var(--border)"><div class="shell">
   <p class="eyebrow">The five capabilities</p>
   <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap">
-    <div><h2 class="h-lg">What Quorum can do.</h2><p class="lede">Each one is a kind of mistake an agent cannot catch in itself, because every check it could run makes the same mistake. A person answers from what you send, in seconds, and nothing else leaves your system.</p></div>
+    <div><h2 class="h-lg">What agents shouldn&rsquo;t have to guess.</h2><p class="lede">Agents can check many things themselves. But some mistakes survive every check they can run, because the checks share the same blind spot. Quorum provides an independent human judgment when the agent needs one.</p></div>
   </div>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-top:34px">
     ${CAPS.map((c) => capCard(...c)).join('')}
   </div>
+</div></section>`
+
+/* The one picture of the thesis: where Quorum sits in an agent's run. */
+const fallbackSection = () => `<section class="section-tight"><div class="shell">
+  <div class="panel"><div class="panel-body">
+    <div class="flow" style="margin:6px 0 22px">
+      ${[['cube', 'Agent', 'Working on its own'], ['question', 'Uncertainty', 'A check it can&rsquo;t trust'], ['bolt', 'Quorum', 'One escalation call'], ['users', 'Human consensus', 'Independent answers'], ['spark', 'Agent continues', 'With a structured answer']]
+        .map(([i, t, s], x) => `${x ? '<span class="flow-arrow"><svg width="13" height="13" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.4 9h11.2M10.2 4.6 14.6 9l-4.4 4.4"/></svg></span>' : ''}<div class="flow-step"><span class="ico">${ic(i)}</span><b>${t}</b><span>${s}</span></div>`).join('')}
+    </div>
+    <h2 class="h-lg" style="text-align:center">The fallback layer for autonomous agents.</h2>
+  </div></div>
 </div></section>`
 
 const capabilities = () => page({
@@ -172,4 +183,4 @@ ${capsGridSection()}
 ${foot()}</main>`,
 })
 
-export { howItDecides, developers, capabilities, foot, CAPS, capCard, decidesSection, devSection, capsGridSection }
+export { howItDecides, developers, capabilities, foot, CAPS, capCard, decidesSection, devSection, capsGridSection, fallbackSection }
