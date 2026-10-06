@@ -1,4 +1,4 @@
-import { contextImageUrl, SERVABLE_KINDS, type Kind, type Question } from '@quorum/core'
+import { answerWindowMs, contextImageUrl, SERVABLE_KINDS, type Kind, type Question } from '@quorum/core'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { randomUUID } from 'node:crypto'
@@ -25,7 +25,7 @@ import { requireOperator } from './waitlist.js'
  */
 
 /** `image` names a PNG in packages/gateway/bank, drawn by scripts/bank-images.mjs and served at /v1/bank. */
-type BankQuestion = { kind: Kind; prompt: string; schema: Question['schema']; text?: string; image?: string }
+type BankQuestion = { kind: Kind; prompt: string; schema: Question['schema']; text?: string; image?: string; answerWindowMs?: number }
 
 /** Realistic questions, a few per skill, written the way an agent would ask them. */
 export const QUESTION_BANK: readonly BankQuestion[] = [
@@ -52,6 +52,10 @@ export const QUESTION_BANK: readonly BankQuestion[] = [
   { kind: 'categorise', prompt: 'Which department should this support message go to?', schema: { kind: 'choice', options: ['Billing', 'Technical', 'Delivery', 'Complaint'] }, text: '"I was charged twice for my order last week and I can\u2019t see a refund yet."' },
 
   // Comparing: an agent is the worst judge of its own two drafts.
+  // Harder ones, which take minutes rather than seconds, so each person is given longer.
+  { kind: 'match', answerWindowMs: 5 * 60_000, prompt: 'A research agent found this contract for the new token. Is it the address the team officially announced?', schema: { kind: 'boolean' }, text: 'Address the agent found: 0x3c1D9aF07b2e4C58d2F6a91B0e7C3d54A8f2E911\n\nThe team’s pinned announcement: "Our ONLY official contract is 0x3c1D9aF07b2e4C58d2F6a91B0e7C3d54A8f2E91l. Anything else is a scam."\n\n(Look closely at the last two characters.)' },
+  { kind: 'categorise', answerWindowMs: 6 * 60_000, prompt: 'A DAO agent is about to vote yes on this proposal. Is it a routine parameter change, or does it move treasury funds?', schema: { kind: 'choice', options: ['Routine parameter change', 'Moves treasury funds'] }, text: 'Proposal #142: "Parameter update: adjust the staking reward rate"\n\nActions:\n1. setRewardRate(4.5%)\n2. setTreasuryManager(0x8bE1...D02c)\n3. treasury.approve(0x8bE1...D02c, 2,000,000 USDC)\n\nAuthor joined the forum 3 days ago.' },
+  { kind: 'compare', answerWindowMs: 4 * 60_000, prompt: 'The user asked to move 1,000 USDC to Base. Which bridge route should the agent take?', schema: { kind: 'choice', options: ['Route A', 'Route B'] }, text: 'Route A: Ethereum to Base, fee 2.10 USDC, arrives in about 2 minutes, receive 997.90 USDC on Base.\nRoute B: Ethereum to Arbitrum, fee 0.40 USDC, arrives in about 1 minute, receive 999.60 USDC on Arbitrum.' },
   { kind: 'compare', image: 'tx-compare', prompt: 'Invoice INV-2291 is for 250 USDC. Which transaction should the agent send?', schema: { kind: 'choice', options: ['Transaction A', 'Transaction B'] } },
   { kind: 'compare', prompt: 'Which reply should go to the customer?', schema: { kind: 'choice', options: ['Draft A', 'Draft B'] }, text: 'Customer: "My parcel is a week late."\nDraft A: "Delays happen. Please wait."\nDraft B: "Sorry your parcel is late. I\u2019ve checked and it\u2019s at the local depot; it should reach you tomorrow. If not, reply and I\u2019ll refund the shipping."' },
   { kind: 'compare', prompt: 'Which summary is accurate to the original?', schema: { kind: 'choice', options: ['Summary A', 'Summary B'] }, text: 'Original: "Sales rose 4% in Q3, driven by Europe, while US sales fell 2%."\nA: "Sales grew 4% in Q3, led by Europe; US sales dipped."\nB: "Sales grew 4% in Q3 across all regions."' },
@@ -68,6 +72,7 @@ const askSchema = z.object({
   answer_schema: schemaInput,
   context: z.object({ text: z.string().max(4_000).optional(), image_url: z.string().optional(), image_base64: z.string().optional() }).optional(),
   deadline_ms: z.number().int().min(15_000).max(30 * 60_000).default(5 * 60_000),
+  answer_window_ms: z.number().int().min(15_000).max(30 * 60_000).optional(),
 })
 
 const sessionSchema = z.object({
@@ -94,7 +99,7 @@ export function operatorQuestionRoutes(services: { config: Config; store: Store;
   const sent: Sent[] = []
   let session: { startedAt: number; endsAt: number; everyMs: number; kinds: Kind[]; count: number; timer: NodeJS.Timeout } | null = null
 
-  const send = (input: { kind: Kind; prompt: string; schema: Question['schema']; attachments: NonNullable<Question['attachments']>[number][]; timeoutMs: number; source: Sent['source'] }) => {
+  const send = (input: { kind: Kind; prompt: string; schema: Question['schema']; attachments: NonNullable<Question['attachments']>[number][]; timeoutMs: number; source: Sent['source']; answerWindowMs?: number }) => {
     const question = hostImages(
       {
         id: `q_op_${randomUUID().replaceAll('-', '').slice(0, 16)}`,
@@ -103,6 +108,7 @@ export function operatorQuestionRoutes(services: { config: Config; store: Store;
         schema: input.schema,
         priceCents: NOMINAL_PRICE_CENTS,
         timeoutMs: input.timeoutMs,
+        ...(input.answerWindowMs ? { answerWindowMs: input.answerWindowMs } : {}),
         ...(input.attachments.length ? { attachments: input.attachments } : {}),
       },
       store.media,
@@ -134,16 +140,20 @@ export function operatorQuestionRoutes(services: { config: Config; store: Store;
     const from = servable.length ? servable : pool
     const pick = from[Math.floor(Math.random() * from.length)]
     if (!pick) return null
+    const attachments = [
+      ...(pick.image ? [{ type: 'image' as const, url: `${config.publicUrl}/v1/bank/${pick.image}.png` }] : []),
+      ...(pick.text ? [{ type: 'text' as const, body: pick.text }] : []),
+    ]
+    // Long enough for two people to each take their full window.
+    const window = answerWindowMs({ prompt: pick.prompt, schema: pick.schema, attachments, ...(pick.answerWindowMs ? { answerWindowMs: pick.answerWindowMs } : {}) })
     return send({
       kind: pick.kind,
       prompt: pick.prompt,
       schema: pick.schema,
-      attachments: [
-        ...(pick.image ? [{ type: 'image' as const, url: `${config.publicUrl}/v1/bank/${pick.image}.png` }] : []),
-        ...(pick.text ? [{ type: 'text' as const, body: pick.text }] : []),
-      ],
-      timeoutMs,
+      attachments,
+      timeoutMs: Math.max(timeoutMs, window * 2),
       source,
+      ...(pick.answerWindowMs ? { answerWindowMs: pick.answerWindowMs } : {}),
     })
   }
 
@@ -192,6 +202,7 @@ export function operatorQuestionRoutes(services: { config: Config; store: Store;
       attachments,
       timeoutMs: input.deadline_ms,
       source: 'manual',
+      ...(input.answer_window_ms ? { answerWindowMs: input.answer_window_ms } : {}),
     })
     return c.json({ sent: entry, workersOnline: store.availableWorkers(input.kind).length })
   })

@@ -1,4 +1,5 @@
 import {
+  answerWindowMs,
   WAGE_CENTS,
   agreementShape,
   believe,
@@ -85,6 +86,7 @@ export class Router {
   readonly #paymaster: Paymaster
   readonly #wageCents: number
   readonly #assignmentTtlMs: number
+  readonly #fixedTtl: boolean
   readonly #onEvent: (event: RouterEvent) => void
   readonly #random: () => number
 
@@ -99,6 +101,7 @@ export class Router {
     // just arrived from an email to read carefully; a worker who has wandered off
     // still frees the question for someone else well within most deadlines.
     this.#assignmentTtlMs = options.assignmentTtlMs ?? 60_000
+    this.#fixedTtl = options.assignmentTtlMs !== undefined
     this.#onEvent = options.onEvent ?? (() => {})
     this.#random = options.random ?? Math.random
   }
@@ -218,7 +221,8 @@ export class Router {
       workerId,
       offeredAt: Date.now(),
       // Never hold a worker past the caller's own deadline.
-      expiresAt: Math.min(Date.now() + this.#assignmentTtlMs, live.deadlineAt),
+      // The question's own window, unless the router was given a fixed one (tests do).
+      expiresAt: Math.min(Date.now() + (this.#fixedTtl ? this.#assignmentTtlMs : answerWindowMs(live.question)), live.deadlineAt),
       ...(golden === undefined ? {} : { golden }),
     }
     live.assignments.push(assignment)

@@ -64,6 +64,8 @@ export const askSchema = z.object({
    * worth asking at all. See `adviseFromCost`.
    */
   cost_of_error: z.union([z.string(), z.number()]).optional(),
+  /** How long each person has to answer, for a question that takes more than a minute. */
+  answer_window_ms: z.number().int().min(15_000).max(30 * 60_000).optional(),
   deadline_ms: z.number().int(),
   /** Opaque A2A task reference. Accepted as a string and never parsed. */
   task_ref: z.string().max(500).optional(),
@@ -84,6 +86,7 @@ export type ParsedAsk = {
   /** Set when the caller priced the question by what being wrong would cost. */
   costOfErrorCents?: number
   timeoutMs: number
+  answerWindowMs?: number
   taskRef?: string
   callerConfidence?: number
   mode: 'blocking' | 'callback'
@@ -139,6 +142,7 @@ export function parseAsk(body: unknown): ParsedAsk {
     maxPriceCents,
     ...(costOfErrorCents === undefined ? {} : { costOfErrorCents }),
     timeoutMs: ask.deadline_ms,
+    ...(ask.answer_window_ms === undefined ? {} : { answerWindowMs: ask.answer_window_ms }),
     mode: ask.mode,
     ...(ask.task_ref === undefined ? {} : { taskRef: ask.task_ref }),
     ...(ask.caller_confidence === undefined ? {} : { callerConfidence: ask.caller_confidence }),

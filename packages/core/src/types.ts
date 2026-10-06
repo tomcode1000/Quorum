@@ -93,6 +93,11 @@ export type Question = {
   readonly priceCents: number
   /** How long the caller is willing to wait, in milliseconds. */
   readonly timeoutMs: number
+  /**
+   * How long each person offered it has to answer, in milliseconds. Unset, it
+   * follows from how much there is to read; see `answerWindowMs` in quorum.ts.
+   */
+  readonly answerWindowMs?: number
   /** Opaque A2A task reference, carried through to the receipt. Never parsed. */
   readonly taskRef?: string
   /** The calling agent's confidence in the guess it would otherwise have used. */

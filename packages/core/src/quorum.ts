@@ -62,6 +62,32 @@ export const WAGE_CENTS = 20
 /** An ask is not worth starting if the worker cannot plausibly answer in time. */
 export const MIN_ASK_WINDOW_MS = 1_500
 
+/** The least and most time one person is given to answer one question. */
+export const MIN_ANSWER_WINDOW_MS = 60_000
+export const MAX_ANSWER_WINDOW_MS = 30 * 60_000
+
+/**
+ * How long each person offered a question has to answer it.
+ *
+ * Not one figure for every question: a smudged digit takes seconds, while checking
+ * a contract against an announcement, or reading a proposal to see where its money
+ * goes, takes minutes. Unless the caller says, it is three times a careful read of
+ * everything shown (the question, its options, any text, a little per image), and
+ * never under a minute. The caller's own deadline still caps it.
+ */
+export function answerWindowMs(question: Pick<Question, 'prompt' | 'schema' | 'attachments' | 'answerWindowMs'>): number {
+  if (question.answerWindowMs !== undefined) return clamp(question.answerWindowMs, 15_000, MAX_ANSWER_WINDOW_MS)
+  const words = (text: string) => text.trim().split(/\s+/).filter(Boolean).length
+  let readingMs = 2_000 + words(question.prompt) * 300
+  if (question.schema.kind === 'choice') readingMs += question.schema.options.reduce((sum, o) => sum + words(o) * 300, 0)
+  for (const attachment of question.attachments ?? []) {
+    if (attachment.type === 'image') readingMs += 20_000
+    else if (attachment.type === 'text') readingMs += words(attachment.body) * 300
+    else readingMs += words(JSON.stringify(attachment.body)) * 300
+  }
+  return clamp(readingMs * 3, MIN_ANSWER_WINDOW_MS, MAX_ANSWER_WINDOW_MS)
+}
+
 /**
  * The share of assignments given to workers who are not the best available choice,
  * so that a new worker can build the history they need to be chosen on merit.

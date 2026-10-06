@@ -208,6 +208,7 @@ const schemas = () => docsPage({
       [c('question'), 'string', badge('Yes', 'good'), '3 to 500 characters, phrased for someone with no context on your system.'],
       [c('answer_schema'), 'object', badge('Yes', 'good'), 'See Answer schema below.'],
       [c('deadline_ms'), 'number', badge('Yes', 'good'), 'Up to 5 minutes held; up to 24 hours in callback mode.'],
+      [c('answer_window_ms'), 'number', 'No', 'How long each person has to answer, from 15 seconds to 30 minutes. Unset, it follows from how much there is to read, and is never under a minute.'],
       [c('context'), 'object', 'No', 'See Context below.'],
       [c('cost_of_error'), 'string', 'One of', 'What a wrong answer would cost you, in dollars.'],
       [c('max_price'), 'string', 'these two', 'Your ceiling in dollars, up to 5.00.'],
