@@ -2103,6 +2103,39 @@ button.search:hover {
 }
 
 /* The waitlist: one centered card, the form beside what happens next. */
+.wl-banner {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  max-width: 1080px;
+  margin: 0 auto 40px;
+}
+
+.wl-banner span {
+  height: 220px;
+  border-radius: var(--r-xl);
+  background: center 25% / cover no-repeat;
+  box-shadow: var(--sh-lg);
+}
+
+@media (max-width: 860px) {
+  .wl-banner {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .wl-banner span:nth-child(n + 3) {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .wl-banner span {
+    height: 160px;
+  }
+  .wl-banner {
+    margin-bottom: 28px;
+  }
+}
+
 .wl-head {
   max-width: 720px;
   margin: 0 auto 44px;

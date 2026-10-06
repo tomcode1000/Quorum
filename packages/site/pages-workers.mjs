@@ -291,6 +291,7 @@ const workerWaitlist = () => page({
   script: true,
   body: `${waitlistNav()}<main>
 <section class="w-band wl"><div class="shell">
+  <div class="wl-banner" role="img" aria-label="People answering Quorum questions">${['hero', 'why', 'signin', 'join'].map((p) => `<span style="background-image:url(assets/worker-${p}.webp)"></span>`).join('')}</div>
   <div class="wl-head">
     <p class="w-eyebrow">Early access &middot; Testnet</p>
     <h1 class="w-h">Be one of the first<em>people answering.</em></h1>
