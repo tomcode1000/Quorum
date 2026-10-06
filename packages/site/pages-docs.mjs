@@ -104,12 +104,12 @@ ${foot()}</main>`,
 
 const SIDE = [
   ['Docs', [['index.html', 'home', 'Getting started'], ['quickstart.html', 'bolt', 'Quickstart'], ['first-request.html', 'code', 'Make your first request'], ['response.html', 'file', 'Understand the response']]],
-  ['Core concepts', [['capability-reference.html', 'layers', 'Capability reference'], ['#', 'users', 'Workers'], ['#', 'shield', 'Confidence'], ['#', 'money', 'Pricing & refunds']]],
-  ['Reference', [['#', 'code', 'Endpoints'], ['#', 'db', 'Schemas'], ['#', 'warn', 'Errors']]],
+  ['Core concepts', [['capability-reference.html', 'layers', 'Capability reference'], ['workers.html', 'users', 'Workers'], ['confidence.html', 'shield', 'Confidence'], ['pricing.html', 'money', 'Pricing & refunds']]],
+  ['Reference', [['endpoints.html', 'code', 'Endpoints'], ['schemas.html', 'db', 'Schemas'], ['errors.html', 'warn', 'Errors']]],
 ]
 
 const docsSide = (current) => `<aside class="docs-side">${SIDE.map(([h, items]) => `<h4>${h}</h4>${items.map(([href, i, t]) => `<a href="${href}"${href === current ? ' aria-current="page"' : ''}>${ic(i === 'home' ? 'book' : i)}${t}</a>`).join('')}`).join('')}
-<div class="help"><div style="display:flex;gap:9px;align-items:center"><span class="ico ico-sm">${ic('chat')}</span><div><b style="font-size:12.5px;display:block">Need help?</b><span class="dim" style="font-size:11px">Join the developer community.</span></div></div><a href="#" style="display:inline-flex;gap:6px;align-items:center;color:var(--accent);font-size:12px;font-weight:600;margin-top:10px">Get support ${ic('arrow')}</a></div></aside>`
+<div class="help"><div style="display:flex;gap:9px;align-items:center"><span class="ico ico-sm">${ic('chat')}</span><div><b style="font-size:12.5px;display:block">Need help?</b><span class="dim" style="font-size:11px">Ask on GitHub, or read the source.</span></div></div><a href="help.html" style="display:inline-flex;gap:6px;align-items:center;color:var(--accent);font-size:12px;font-weight:600;margin-top:10px">Get support ${ic('arrow')}</a></div></aside>`
 
 /*
   "On this page", read off the page itself.
@@ -133,12 +133,12 @@ const docsToc = (body) => {
   return `<aside class="docs-toc"><h4>On this page</h4>${items
     .map(([id, text], x) => `<a href="#${id}"${x === 0 ? ' aria-current="true"' : ''}>${text}</a>`)
     .join('')}
-<h4 style="margin-top:26px">Related</h4>${['API reference', 'Authentication', 'Examples'].map((t) => `<a href="#">${t}</a>`).join('')}</aside>`
+<h4 style="margin-top:26px">Related</h4>${[['endpoints.html', 'Endpoints'], ['schemas.html', 'Schemas'], ['errors.html', 'Errors']].map(([href, t]) => `<a href="${href}">${t}</a>`).join('')}</aside>`
 }
 
 const docsNav = () => `<header class="docs-nav"><div class="docs-nav-in">
   <a class="brand" href="../index.html"><span class="mark">${MARK}</span>Quorum</a>
-  <nav class="docs-tabs"><a href="index.html" aria-current="page">Docs</a><a href="#">API Reference</a><a href="#">Guides</a><a href="#">Examples</a><a href="#">Changelog</a></nav>
+  <nav class="docs-tabs"><a href="index.html" aria-current="page">Docs</a><a href="endpoints.html">API Reference</a><a href="capability-reference.html">Guides</a><a href="first-request.html">Examples</a><a href="help.html">Help</a></nav>
   <span class="search">${ic('search')} Search docs… <kbd>⌘K</kbd></span>
 </div></header>`
 
@@ -150,7 +150,7 @@ const docsHome = () => docsPage({
   body: `<p class="eyebrow">Getting started</p>
     <h1 class="h-lg" id="s0">Welcome to Quorum Docs</h1>
     <p class="lede">Quorum is for the mistakes your agent cannot catch in itself: a misread, a lookalike, a near-match, a boundary case, a choice between its own drafts. It puts that one question to a person and returns one of your options with its confidence, in about six seconds.</p>
-    <div style="display:flex;gap:12px;margin:24px 0 34px"><a class="btn btn-primary" href="quickstart.html">Quickstart ${ic('arrow')}</a><a class="btn btn-ghost" href="#">View API reference</a></div>
+    <div style="display:flex;gap:12px;margin:24px 0 34px"><a class="btn btn-primary" href="quickstart.html">Quickstart ${ic('arrow')}</a><a class="btn btn-ghost" href="endpoints.html">View API reference</a></div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px">
       ${[['bolt', 'A2A, MCP or HTTP', 'Forward input-required, call ask_human, or POST.'], ['target', 'Priced by the mistake', 'Send cost_of_error; the price follows from it.'], ['shield', 'Refunded on failure', 'You never pay for an answer you did not get.'], ['users', 'Five capabilities', 'Each answered by people assessed in it.']]
         .map(([i, t, d]) => `<div class="card"><span class="ico ico-sm">${ic(i)}</span><b class="h-sm" style="display:block;margin:11px 0 4px">${t}</b><span class="feat"><span>${d}</span></span></div>`).join('')}
@@ -252,15 +252,15 @@ const nextSteps = () => docsPage({
     <h1 class="h-lg" id="s0">Next steps</h1>
     <p class="lede">You have made a request, read the response and handled the failure cases. Here is where to go deeper.</p>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:30px">
-      ${[['code', 'Explore the API reference', 'Every endpoint, parameter and response schema.'], ['book', 'Read capability guides', 'How each of the five behaves and what it costs.'], ['shield', 'Understand confidence', 'Why one answer sometimes suffices and sometimes does not.'], ['layers', 'Check out examples', 'Real use cases with complete code.']]
-        .map(([i, t, d]) => `<a class="card" href="#" style="display:block"><span class="ico ico-sm">${ic(i)}</span><b class="h-sm" style="display:block;margin:12px 0 5px">${t}</b><span class="feat"><span>${d}</span></span><span style="display:inline-flex;gap:6px;align-items:center;color:var(--accent);font-size:12.5px;font-weight:600;margin-top:12px">Open ${ic('arrow')}</span></a>`).join('')}
+      ${[['code', 'Explore the API reference', 'Every endpoint, parameter and response schema.', 'endpoints.html'], ['book', 'Read capability guides', 'How each of the five behaves and what it costs.', 'capability-reference.html'], ['shield', 'Understand confidence', 'Why one answer sometimes suffices and sometimes does not.', 'confidence.html'], ['layers', 'Check out examples', 'Real use cases with complete code.', 'first-request.html']]
+        .map(([i, t, d, href]) => `<a class="card" href="${href}" style="display:block"><span class="ico ico-sm">${ic(i)}</span><b class="h-sm" style="display:block;margin:12px 0 5px">${t}</b><span class="feat"><span>${d}</span></span><span style="display:inline-flex;gap:6px;align-items:center;color:var(--accent);font-size:12.5px;font-weight:600;margin-top:12px">Open ${ic('arrow')}</span></a>`).join('')}
     </div>
     <h2 class="h-md" id="s1" style="margin-top:40px">Everything you need to build</h2>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-top:16px">
-      ${[['file', 'API reference', 'Full endpoint documentation and error codes.'], ['book', 'Developer guides', 'In-depth guides for common use cases.'], ['layers', 'Examples', 'Copy and adapt real examples.'], ['users', 'Community & support', 'Get help from the team.']]
-        .map(([i, t, d]) => `<a class="card" href="#" style="display:flex;gap:11px;align-items:flex-start"><span class="ico ico-sm">${ic(i)}</span><div><b style="font-size:13px;display:block">${t}</b><span class="dim" style="font-size:11.5px">${d}</span></div><span style="margin-left:auto;color:var(--ink-5)">${ic('arrow')}</span></a>`).join('')}
+      ${[['file', 'API reference', 'Full endpoint documentation and error codes.', 'endpoints.html'], ['book', 'Developer guides', 'In-depth guides for common use cases.', 'capability-reference.html'], ['layers', 'Examples', 'Copy and adapt real examples.', 'first-request.html'], ['users', 'Community & support', 'Get help from the team.', 'help.html']]
+        .map(([i, t, d, href]) => `<a class="card" href="${href}" style="display:flex;gap:11px;align-items:flex-start"><span class="ico ico-sm">${ic(i)}</span><div><b style="font-size:13px;display:block">${t}</b><span class="dim" style="font-size:11.5px">${d}</span></div><span style="margin-left:auto;color:var(--ink-5)">${ic('arrow')}</span></a>`).join('')}
     </div>
-    <div class="note-box" style="margin-top:26px">${ic('spark')}<span><b>Ready to build?</b> Head to the API reference and start integrating Quorum today.</span></div>`,
+    <div class="note-box" style="margin-top:26px">${ic('spark')}<span><b>Ready to build?</b> Head to the <a href="endpoints.html" style="color:var(--accent)">API reference</a> and start integrating Quorum today.</span></div>`,
 })
 
 const capabilityReference = () => docsPage({
@@ -291,4 +291,4 @@ const capabilityReference = () => docsPage({
     </div>`,
 })
 
-export { proofSection, limitsSection, ctaSection, proof, integration, docsHome, quickstart, firstRequest, response, nextSteps, capabilityReference }
+export { docsPage, proofSection, limitsSection, ctaSection, proof, integration, docsHome, quickstart, firstRequest, response, nextSteps, capabilityReference }

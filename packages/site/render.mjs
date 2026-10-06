@@ -6,6 +6,7 @@ import { forWorkers, workerSignIn } from './pages-workers.mjs'
 import { howItDecides, developers, capabilities } from './pages-marketing.mjs'
 import { readings, real, matching, categorising, comparing } from './pages-capabilities.mjs'
 import { proof, integration, docsHome, quickstart, firstRequest, response, nextSteps, capabilityReference } from './pages-docs.mjs'
+import { workers, confidence, pricing, endpoints, schemas, errors, help } from './pages-docs-ref.mjs'
 import {
   home as appHome,
   question as appQuestion,
@@ -59,6 +60,13 @@ const PAGES = {
   'docs/response.html': response,
   'docs/next-steps.html': nextSteps,
   'docs/capability-reference.html': capabilityReference,
+  'docs/workers.html': workers,
+  'docs/confidence.html': confidence,
+  'docs/pricing.html': pricing,
+  'docs/endpoints.html': endpoints,
+  'docs/schemas.html': schemas,
+  'docs/errors.html': errors,
+  'docs/help.html': help,
 
   /*
     The worker app — surface A.
