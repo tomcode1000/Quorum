@@ -130,6 +130,7 @@ const CONSOLE_NAV = [
   ['clipboard', 'Questions', 'console-questions.html'],
   ['users', 'Workers', 'console-workers.html'],
   ['mail', 'Waitlist', 'console-waitlist.html'],
+  ['bolt', 'Send questions', 'console-send.html'],
   ['wallet', 'Payments', 'console-payments.html'],
   ['route', 'Escalations', 'console-escalations.html'],
   ['layers', 'Capabilities', 'console-capabilities.html'],

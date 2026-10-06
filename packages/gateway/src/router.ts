@@ -107,7 +107,7 @@ export class Router {
    * Resolves one question, settling when an answer clears the bar or the deadline
    * or responder cap is reached. This is what a caller's request awaits.
    */
-  async resolve(question: Question, options: { payer?: `0x${string}`; callbackUrl?: string } = {}): Promise<Resolution> {
+  async resolve(question: Question, options: { payer?: `0x${string}`; callbackUrl?: string; hold?: boolean } = {}): Promise<Resolution> {
     const startedAt = Date.now()
     let finish: (resolution: Resolution) => void = () => {}
     const settled = new Promise<Resolution>((settle) => {
@@ -120,7 +120,7 @@ export class Router {
       deadlineAt: startedAt + question.timeoutMs,
       payer: options.payer ?? null,
       // A caller that is not holding a connection can wait for people to come back.
-      hold: options.callbackUrl !== undefined,
+      hold: options.hold ?? options.callbackUrl !== undefined,
       answers: [],
       calibrations: [],
       assignments: [],

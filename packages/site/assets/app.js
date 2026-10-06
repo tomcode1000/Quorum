@@ -2385,6 +2385,133 @@ const initWaitlistConsole = () => {
   if (token) void load()
 }
 
+/* --------------------------------------------------------- send questions -- */
+
+const STATUS_PILL = { 'in flight': ['In flight', 'accent'], resolved: ['Resolved', 'good'], no_consensus: ['No consensus', 'warn'], timeout: ['Nobody answered', 'warn'], refused: ['Refused', 'warn'], failed: ['Failed', 'warn'] }
+
+const initSendConsole = () => {
+  const start = $('ss-start')
+  if (!start) return
+  const stop = $('ss-stop')
+  const result = $('q-result')
+
+  const call = async (method, path, body) => {
+    const response = await fetch(`${gateway}/v1/admin/questions${path}`, {
+      method,
+      headers: { authorization: `Bearer ${operatorToken()}`, 'content-type': 'application/json' },
+      ...(body ? { body: JSON.stringify(body) } : {}),
+    })
+    const parsed = await response.json().catch(() => ({}))
+    if (response.status === 401) showOperatorGate()
+    if (!response.ok) throw new Error(parsed.issues?.join('; ') ?? parsed.error ?? String(response.status))
+    return parsed
+  }
+
+  for (const chip of document.querySelectorAll('[data-ss-kind]'))
+    chip.addEventListener('click', () => chip.setAttribute('aria-pressed', String(chip.getAttribute('aria-pressed') !== 'true')))
+
+  const type = $('q-type')
+  type.addEventListener('change', () => {
+    $('q-options-row').hidden = type.value !== 'enum'
+  })
+
+  const refresh = async () => {
+    let body
+    try {
+      body = await call('GET', '')
+    } catch {
+      return
+    }
+    const s = body.session
+    start.hidden = s.running
+    stop.hidden = !s.running
+    $('ss-state').innerHTML = s.running ? pill(`Running · ${s.sent} sent · ends ${new Date(s.endsAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`, 'good') : pill('Not running')
+    $('ss-online').innerHTML = body.online
+      .map((o) => `<div class="ap-row"><div><b>${esc(KIND_NAMES[o.kind] ?? o.kind)}</b><span>${o.workers ? `${o.workers} online who passed it` : 'Nobody online who passed it'}</span></div><span class="ap-row-val">${o.workers}</span></div>`)
+      .join('')
+    $('ss-sent').innerHTML = body.sent.length
+      ? `<table class="ap-tbl"><thead><tr><th>Question</th><th>Status</th><th>Answer</th><th>Sent</th></tr></thead><tbody>${body.sent
+          .slice(0, 30)
+          .map((q) => {
+            const [label, tone] = STATUS_PILL[q.status] ?? [q.status, '']
+            return `<tr><td><a href="console-question.html?id=${encodeURIComponent(q.id)}"><b>${esc(q.prompt.slice(0, 60))}${q.prompt.length > 60 ? '…' : ''}</b></a><small>${esc(KIND_NAMES[q.kind] ?? q.kind)} · ${q.source === 'session' ? 'session' : 'written'}</small></td><td>${pill(label, tone)}</td><td>${q.answer === null ? '' : esc(String(q.answer))}</td><td>${esc(ago(q.at))}</td></tr>`
+          })
+          .join('')}</tbody></table>`
+      : empty('Nothing sent yet.')
+  }
+
+  start.addEventListener('click', async () => {
+    const kinds = [...document.querySelectorAll('[data-ss-kind][aria-pressed="true"]')].map((c) => c.dataset.ssKind)
+    start.disabled = true
+    try {
+      await call('POST', '/session', { minutes: Number($('ss-minutes').value), every_seconds: Number($('ss-every').value), kinds })
+    } catch (error) {
+      alert(`The session did not start: ${error.message}`)
+    }
+    start.disabled = false
+    void refresh()
+  })
+  stop.addEventListener('click', async () => {
+    await call('POST', '/session/stop').catch(() => {})
+    void refresh()
+  })
+
+  const readImage = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(String(reader.result))
+      reader.onerror = () => reject(new Error('could not read that image'))
+      reader.readAsDataURL(file)
+    })
+
+  $('q-send').addEventListener('click', async () => {
+    const send = $('q-send')
+    result.hidden = false
+    result.className = 'ap-info'
+    const question = $('q-text').value.trim()
+    if (question.length < 3) {
+      result.className = 'ap-info ap-info-bad'
+      result.textContent = 'Write the question first.'
+      return
+    }
+    const options = $('q-options').value.split(',').map((o) => o.trim()).filter(Boolean)
+    if (type.value === 'enum' && options.length < 2) {
+      result.className = 'ap-info ap-info-bad'
+      result.textContent = 'Give at least two options, separated by commas.'
+      return
+    }
+    send.disabled = true
+    try {
+      const file = $('q-image').files?.[0]
+      const context = {
+        ...($('q-context').value.trim() ? { text: $('q-context').value.trim() } : {}),
+        ...(file ? { image_base64: await readImage(file) } : {}),
+      }
+      const body = await call('POST', '/ask', {
+        kind: $('q-kind').value,
+        question,
+        answer_schema: type.value === 'enum' ? { type: 'enum', options } : { type: 'boolean' },
+        ...(Object.keys(context).length ? { context } : {}),
+        deadline_ms: Math.round(Number($('q-deadline').value) * 60_000),
+      })
+      result.textContent = body.workersOnline
+        ? `Sent. ${body.workersOnline} ${body.workersOnline === 1 ? 'person' : 'people'} who passed this skill ${body.workersOnline === 1 ? 'is' : 'are'} online.`
+        : 'Sent. Nobody who passed this skill is online right now, so it will wait for someone until the time runs out.'
+      $('q-text').value = ''
+      $('q-context').value = ''
+      $('q-image').value = ''
+    } catch (error) {
+      result.className = 'ap-info ap-info-bad'
+      result.textContent = `Not sent: ${error.message}`
+    }
+    send.disabled = false
+    void refresh()
+  })
+
+  void refresh()
+  setInterval(refresh, 5000)
+}
+
 /* ----------------------------------------------------------------- invite -- */
 
 /*
@@ -2490,6 +2617,7 @@ initReturnToWork()
 initRail()
 initInvite()
 initWaitlistConsole()
+initSendConsole()
 
 void (async () => {
   await Promise.allSettled([

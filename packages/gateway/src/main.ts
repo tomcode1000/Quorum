@@ -13,6 +13,7 @@ import { Router } from './router.js'
 import { createNotifier, mailerFromEnv } from './notifier.js'
 import { createServer } from './server.js'
 import { mediaRoutes } from './media.js'
+import { operatorQuestionRoutes } from './operator-questions.js'
 import { operatorWaitlistRoutes, redeemRoute, requireOperator, waitlistRoutes } from './waitlist.js'
 import { fileStore, upstashStore } from './persistence.js'
 import { Store } from './store.js'
@@ -116,6 +117,9 @@ async function main(): Promise<void> {
         origins: config.workerAppOrigins,
       }),
     )
+  // Questions the operator sends from the console, to run test sessions.
+  if (config.operatorToken)
+    app.route('/v1/admin/questions', operatorQuestionRoutes({ config, store, router, token: config.operatorToken }))
   if (config.inviteOnly) console.log('[quorum] sign-up is invite-only: new workers redeem a waitlist invite first')
 
   // Tempo Wallet sign-in and the fee relay for workers moving their own wages. Each

@@ -1027,12 +1027,12 @@ const signIn = () =>
   <div class="ap-stack">
     ${card(`<div class="ap-pad" style="text-align:center">
       <span class="brand" style="display:inline-flex;align-items:center;gap:10px;font-size:19px;font-weight:700;letter-spacing:-0.035em"><span class="mark" style="width:28px;height:28px;color:var(--accent)">${MARK}</span>Quorum</span>
-      <h2 class="ap-h3" style="margin:20px 0 6px">Sign in</h2>
-      <p style="margin:0 0 20px;font-size:13px;line-height:1.6;color:var(--ink-3)">With a passkey on this device, or with your Tempo Wallet.</p>
-      <button class="ap-primary" type="button" data-app="passkey">${ic('faceid')} Use this device</button>
-      <p style="margin:14px 0 0;font-size:12px;line-height:1.6;color:var(--ink-4)">First time here? The same button makes your passkey, so there is no separate sign-up.</p>
-      <button class="ap-second" type="button" data-app="tempo-wallet" style="width:100%;justify-content:center;margin-top:18px">${ic('wallet')} Use Tempo Wallet instead</button>
-      <p style="margin:10px 0 0;font-size:12px;line-height:1.6;color:var(--ink-4)">Already have a Tempo Wallet? Be paid straight into it, with nothing to move afterwards.</p>
+      <h2 class="ap-h3" style="margin:20px 0 6px">Create account or sign in</h2>
+      <p style="margin:0 0 20px;font-size:13px;line-height:1.6;color:var(--ink-3)">No wallet needed. The first time, this sets up an account on this device that you are paid into.</p>
+      <button class="ap-primary" type="button" data-app="passkey">${ic('faceid')} Continue with this device</button>
+      <p style="margin:14px 0 0;font-size:12px;line-height:1.6;color:var(--ink-4)">New here? This creates your account with your face, fingerprint or device PIN. Been here before? The same button signs you back in.</p>
+      <button class="ap-second" type="button" data-app="tempo-wallet" style="width:100%;justify-content:center;margin-top:18px">${ic('wallet')} I already have a Tempo Wallet</button>
+      <p style="margin:10px 0 0;font-size:12px;line-height:1.6;color:var(--ink-4)">Only if you already use Tempo Wallet and want to be paid straight into it.</p>
       <p data-app="signin-error" class="ap-info ap-info-bad" style="margin-top:14px;text-align:left" hidden></p>
     </div>`)}
 

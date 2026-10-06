@@ -241,14 +241,14 @@ const workerSignIn = () => page({
 
   <div class="w-signin">
     <span class="brand" style="display:inline-flex;align-items:center;gap:10px"><span class="mark">${MARK}</span>Quorum</span>
-    <h2>Sign in</h2>
-    <p class="w-signin-lede">With a passkey on this device, or with the Tempo Wallet you already have.</p>
+    <h2>Create account or sign in</h2>
+    <p class="w-signin-lede">No wallet needed. The first time, this sets up an account on this device that you are paid into.</p>
     <a class="w-passkey" href="${WORKER_APP}">
       <span class="w-tile" style="width:42px;height:42px;border-radius:12px;background:var(--surface)">${ic('faceid')}</span>
-      <span><b>Use this device</b><span>Face, fingerprint or device PIN</span></span>
+      <span><b>Continue with this device</b><span>Creates your account, or signs you back in</span></span>
     </a>
     <div class="w-or">OR</div>
-    <a class="btn btn-ghost" style="width:100%;height:50px" href="${WORKER_APP}#tempo-wallet">${ic('wallet')} Use Tempo Wallet</a>
+    <a class="btn btn-ghost" style="width:100%;height:50px" href="${WORKER_APP}#tempo-wallet">${ic('wallet')} I already have a Tempo Wallet</a>
     <p class="dim" style="margin:22px 0 0;font-size:12.5px;line-height:1.6">First time here? The same button makes your passkey, so there is no separate sign-up.</p>
   </div>
 </div></section>

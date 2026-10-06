@@ -638,7 +638,76 @@ const waitlist = () =>
 </div>`,
   })
 
+/* ---------------------------------------------------------- send questions -- */
+
+/*
+  Test sessions.
+
+  On the testnet there is no agent traffic, so the operator supplies it: one
+  question written here, or a session that sends questions from the gateway's
+  bank on a timer. They reach only people who passed that skill and are paid
+  like any other, in test tokens. The gateway runs the session, so closing this
+  page does not stop it.
+*/
+const KIND_OPTIONS = [['disambiguate', 'Telling readings apart'], ['verify', 'Checking something is real'], ['match', 'Matching records'], ['categorise', 'Categorising'], ['compare', 'Comparing']]
+
+const sendQuestions = () =>
+  appPage({
+    title: 'Send questions',
+    body: ' data-console="send"',
+    side: consoleSide('send questions'),
+    main: `${consoleTop(`<div>${chip('Operator console')}<h1 class="ap-h1">Send questions</h1><p class="ap-sub" style="margin-bottom:0">Run a test session, or write one question yourself. Questions reach only people who passed that skill, and every answer is paid in test tokens.</p></div>`)}
+
+<div class="ap-cols">
+  <div class="ap-stack">
+    ${card(`
+      ${cardHead(`${tile('clock', '', 'sm')} Run a session`, '<span data-app="ss-state"></span>')}
+      <div class="ap-pad" style="padding-top:0">
+        <p style="margin:0 0 16px;font-size:13px;line-height:1.6;color:var(--ink-3)">Sends questions from the built-in bank on a timer. The gateway runs it, so you can close this page.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <label class="ap-label-sm">Minutes<div class="ap-field"><input type="number" min="1" max="180" value="60" data-app="ss-minutes"/></div></label>
+          <label class="ap-label-sm">One question every (seconds)<div class="ap-field"><input type="number" min="5" max="600" value="30" data-app="ss-every"/></div></label>
+        </div>
+        <p class="ap-label-sm" style="margin:14px 0 8px">Skills <span style="color:var(--ink-4);font-weight:500">(none picked means all)</span></p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">${KIND_OPTIONS.map(([k, t]) => `<button class="ap-chip-btn" type="button" aria-pressed="false" data-ss-kind="${k}">${t}</button>`).join('')}</div>
+        <div style="display:flex;gap:10px;margin-top:18px">
+          <button class="ap-primary" type="button" data-app="ss-start" style="flex:1">Start session ${ic('arrow')}</button>
+          <button class="ap-second" type="button" data-app="ss-stop" hidden>Stop</button>
+        </div>
+      </div>
+    `)}
+
+    ${card(`
+      ${cardHead(`${tile('question', '', 'sm')} Write a question`)}
+      <div class="ap-pad" style="padding-top:0;display:flex;flex-direction:column;gap:12px">
+        <label class="ap-label-sm">Skill<div class="ap-field"><select data-app="q-kind" style="border:0;background:transparent;width:100%;font:inherit;color:inherit;outline:none">${KIND_OPTIONS.map(([k, t]) => `<option value="${k}">${t}</option>`).join('')}</select></div></label>
+        <label class="ap-label-sm">Question<div class="ap-field"><input type="text" maxlength="500" placeholder="Is the total 45.00 or 4.50?" data-app="q-text"/></div></label>
+        <label class="ap-label-sm">Answers<div class="ap-field"><select data-app="q-type" style="border:0;background:transparent;width:100%;font:inherit;color:inherit;outline:none"><option value="boolean">Yes or no</option><option value="enum">Pick from options</option></select></div></label>
+        <label class="ap-label-sm" data-app="q-options-row" hidden>Options, separated by commas<div class="ap-field"><input type="text" placeholder="45.00, 4.50" data-app="q-options"/></div></label>
+        <label class="ap-label-sm">What the person needs to see <span style="color:var(--ink-4);font-weight:500">(optional)</span><div class="ap-field" style="height:auto;padding-block:10px"><textarea rows="3" maxlength="4000" placeholder="Paste the text, record or details here" data-app="q-context" style="border:0;background:transparent;width:100%;font:inherit;color:inherit;outline:none;resize:vertical"></textarea></div></label>
+        <label class="ap-label-sm">Image <span style="color:var(--ink-4);font-weight:500">(optional, up to 5 MB)</span><input type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-app="q-image" style="display:block;margin-top:6px;font-size:13px"/></label>
+        <label class="ap-label-sm">Wait up to (minutes)<div class="ap-field"><input type="number" min="1" max="30" value="5" data-app="q-deadline"/></div></label>
+        <button class="ap-primary" type="button" data-app="q-send">Send question ${ic('arrow')}</button>
+        <p data-app="q-result" class="ap-info" style="margin:0" hidden></p>
+      </div>
+    `)}
+  </div>
+
+  <div class="ap-stack">
+    ${card(`
+      ${cardHead('Online now')}
+      <div class="ap-rows ap-rows-inset" data-app="ss-online">${emptyCell('Reading…')}</div>
+    `)}
+    ${card(`
+      ${cardHead('Sent')}
+      <div class="ap-tbl-wrap" data-app="ss-sent">${emptyCell('Nothing sent yet.')}</div>
+    `)}
+  </div>
+</div>`,
+  })
+
 export {
+  sendQuestions,
   waitlist,
   liveActivity,
   escalations,
