@@ -1,6 +1,7 @@
 import { blankRecord, type Kind } from '@quorum/core'
 import type { AssessmentState, GoldenQuestion, Question, RateState, Resolution, WorkerAnswer, WorkerRecord } from '@quorum/core'
 import { MediaStore } from './media.js'
+import type { WaitlistEntry } from './waitlist.js'
 import { fileStore, type Persistence } from './persistence.js'
 import { legacySkills, standing, type Skills } from './skills.js'
 
@@ -79,6 +80,8 @@ export type Worker = {
   email: string | null
   /** When they were last emailed, so they are emailed at most once in a quiet period. */
   notifiedAt: number | null
+  /** Whether they may work. False only for a new account while sign-up is invite-only; see waitlist.ts. */
+  admitted: boolean
 }
 
 /** One question offered to one worker. */
@@ -141,7 +144,9 @@ type Snapshot = {
     signer?: Worker['signer']
     email?: string | null
     notifiedAt?: number | null
+    admitted?: boolean
   }[]
+  waitlist?: WaitlistEntry[]
 }
 
 export class Store {
@@ -153,6 +158,10 @@ export class Store {
   readonly settledQuestions = new Map<string, { question: Question; startedAt: number; deadlineAt: number }>()
   /** Questions quoted but not yet paid for, awaiting a claim. */
   readonly pending = new Map<string, { question: Question; callbackUrl?: string; expiresAt: number }>()
+  /** Whether a new account needs an invite before it can work. Set from config at startup. */
+  inviteOnly = false
+  /** People waiting to be let in, by email. */
+  readonly waitlist = new Map<string, WaitlistEntry>()
   /** Images callers sent inline, served to workers by link. */
   readonly media = new MediaStore()
   /** Golden questions available for seeding, by kind. */
@@ -202,7 +211,10 @@ export class Store {
           signer: entry.signer ?? null,
           email: entry.email ?? null,
           notifiedAt: entry.notifiedAt ?? null,
+          // Anyone on the roster before invites existed was already let in.
+          admitted: entry.admitted ?? true,
         })
+      for (const entry of snapshot.waitlist ?? []) this.waitlist.set(entry.email, entry)
     } catch (error) {
       // Start clean rather than not at all, but say so: an empty roster from a
       // storage fault looks exactly like a fresh install otherwise.
@@ -227,7 +239,9 @@ export class Store {
         signer: w.signer,
         email: w.email,
         notifiedAt: w.notifiedAt,
+        admitted: w.admitted,
       })),
+      waitlist: [...this.waitlist.values()],
     }
     // A failed write is logged rather than left to reject the chain, which would
     // stop every later save from running at all.
@@ -263,6 +277,7 @@ export class Store {
       signer,
       email: null,
       notifiedAt: null,
+      admitted: !this.inviteOnly,
     }
     this.workers.set(workerId, worker)
     return worker

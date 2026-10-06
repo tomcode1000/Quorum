@@ -30,6 +30,8 @@ const gateway = (() => {
 
 const get = async (path, timeout = 8000) => {
   const response = await fetch(`${gateway}${path}`, { signal: AbortSignal.timeout(timeout) })
+  // An account that has not redeemed an invite can do nothing yet; see initInvite.
+  if (response.status === 403 && path.startsWith('/v1/worker') && !location.pathname.includes('app-invite')) location.href = 'app-invite.html'
   if (!response.ok) throw new Error(`${response.status} ${await response.text()}`)
   return response.json()
 }
@@ -48,6 +50,7 @@ const post = async (path, body) => {
   } catch {
     parsed = null
   }
+  if (parsed?.blocked === 'invite-required') location.href = 'app-invite.html'
   if (!response.ok) throw new Error(parsed?.error ?? text ?? `${response.status}`)
   return parsed
 }
@@ -405,7 +408,9 @@ const signInWithTempoWallet = async () => {
 
 /** Where a worker goes next, by where they stand. See the gateway's skills.ts. */
 const landingFor = (standing) =>
-  standing === 'passed'
+  standing === 'invite'
+    ? 'app-invite.html'
+    : standing === 'passed'
     ? 'app-home.html'
     : standing === 'choose'
       ? 'app-skills.html'
@@ -794,8 +799,9 @@ const initSignIn = () => {
 
   if (session()) {
     button.textContent = 'Continue'
-    button.addEventListener('click', () => {
-      location.href = landingFor(session()?.assessment)
+    button.addEventListener('click', async () => {
+      const current = session()
+      location.href = landingFor(await redeemInvite(current).catch(() => current?.assessment))
     })
     return
   }
@@ -811,7 +817,7 @@ const initSignIn = () => {
       tempoButton.textContent = 'Waiting for Tempo Wallet…'
       try {
         const signed = await signInWithTempoWallet()
-        location.href = landingFor(signed.assessment)
+        location.href = landingFor(await redeemInvite(signed).catch(() => signed.assessment))
       } catch (error) {
         tempoButton.disabled = false
         tempoButton.innerHTML = was
@@ -829,7 +835,7 @@ const initSignIn = () => {
     button.textContent = 'Waiting for your device…'
     try {
       const signed = await signIn()
-      const next = landingFor(signed.assessment)
+      const next = landingFor(await redeemInvite(signed).catch(() => signed.assessment))
       const box = $('signin-error')
       if (legacyReplaced && box) {
         // Said before moving on, because it explains why their account looks new.
@@ -2223,6 +2229,211 @@ const initReturnToWork = () => {
   }, 4000)
 }
 
+/* ------------------------------------------------------- console waitlist -- */
+
+const TOKEN_KEY = 'quorum-operator-token'
+const KIND_NAMES = { disambiguate: 'Readings', verify: 'Real or fake', match: 'Matching', categorise: 'Categorising', compare: 'Comparing' }
+
+const initWaitlistConsole = () => {
+  const table = $('c-waitlist')
+  if (!table) return
+  const tokenInput = $('wl-token')
+  const tokenError = $('wl-token-error')
+  const admit = $('wl-admit')
+  const result = $('wl-admit-result')
+  let token = ''
+  try {
+    token = localStorage.getItem(TOKEN_KEY) ?? ''
+  } catch {}
+  tokenInput.value = token
+
+  const call = async (method, path, body) => {
+    const response = await fetch(`${gateway}/v1/admin/waitlist${path}`, {
+      method,
+      headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+      ...(body ? { body: JSON.stringify(body) } : {}),
+    })
+    const parsed = await response.json().catch(() => ({}))
+    if (!response.ok) throw new Error(response.status === 401 ? 'That token was not accepted.' : response.status === 404 ? 'The gateway has no operator token set, so the waitlist is switched off.' : parsed.error ?? String(response.status))
+    return parsed
+  }
+
+  const status = (e) => {
+    if (e.worker) {
+      if (e.worker.passed.length) return pill(`Passed ${e.worker.passed.map((k) => KIND_NAMES[k] ?? k).join(', ')}`, 'good')
+      if (e.worker.failed.length) return pill('Did not pass', 'warn')
+      return pill('Signed in', 'accent')
+    }
+    return e.invitedAt ? pill('Invited') : pill('Waiting')
+  }
+
+  const selected = () => [...table.querySelectorAll('input[data-wl-email]:checked')].map((box) => box.dataset.wlEmail)
+  const sync = () => {
+    admit.disabled = selected().length === 0
+    admit.textContent = selected().length ? `Admit ${selected().length}` : 'Admit selected'
+  }
+
+  const load = async () => {
+    tokenError.hidden = true
+    let body
+    try {
+      body = await call('GET', '')
+    } catch (error) {
+      tokenError.hidden = false
+      tokenError.textContent = String(error.message ?? error)
+      return
+    }
+    const waiting = body.entries.filter((e) => !e.invitedAt).length
+    table.innerHTML = body.entries.length
+      ? `<p class="ap-sub" style="margin:0 20px 12px;font-size:12.5px">${body.entries.length} on the list, ${waiting} waiting. Sign-up is ${body.inviteOnly ? '<b>invite-only</b>' : '<b>open to anyone</b> (set QUORUM_INVITE_ONLY=true to require invites)'}.</p>
+      <table class="ap-tbl"><thead><tr><th><input type="checkbox" data-wl-all aria-label="Select everyone waiting"/></th><th>Email</th><th>Wants</th><th>Joined</th><th>Status</th></tr></thead><tbody>${body.entries
+          .map(
+            (e) => `<tr>
+      <td><input type="checkbox" data-wl-email="${esc(e.email)}" aria-label="Select ${esc(e.email)}"/></td>
+      <td><b>${esc(e.email)}</b>${e.note ? `<small>${esc(e.note)}</small>` : ''}</td>
+      <td>${e.kinds.length ? esc(e.kinds.map((k) => KIND_NAMES[k] ?? k).join(', ')) : '<small>Anything</small>'}</td>
+      <td>${esc(ago(e.joinedAt))}</td>
+      <td>${status(e)}</td>
+    </tr>`,
+          )
+          .join('')}</tbody></table>`
+      : empty('Nobody on the waitlist yet.<br/>The For workers page and the worker app both point to the sign-up.')
+    table.querySelector('[data-wl-all]')?.addEventListener('change', (event) => {
+      for (const box of table.querySelectorAll('input[data-wl-email]')) {
+        const entry = body.entries.find((e) => e.email === box.dataset.wlEmail)
+        box.checked = event.target.checked && !entry?.invitedAt
+      }
+      sync()
+    })
+    table.addEventListener('change', sync)
+    sync()
+  }
+
+  $('wl-token-save').addEventListener('click', () => {
+    token = tokenInput.value.trim()
+    try {
+      localStorage.setItem(TOKEN_KEY, token)
+    } catch {}
+    void load()
+  })
+
+  admit.addEventListener('click', async () => {
+    const emails = selected()
+    if (!emails.length) return
+    admit.disabled = true
+    result.hidden = false
+    result.className = 'ap-info'
+    result.textContent = `Sending ${emails.length} invite${emails.length === 1 ? '' : 's'}…`
+    try {
+      const { results } = await call('POST', '/admit', { emails })
+      const failed = results.filter((r) => !r.sent)
+      result.className = failed.length ? 'ap-info ap-info-bad' : 'ap-info'
+      result.textContent = failed.length
+        ? `${results.length - failed.length} sent. Not sent: ${failed.map((f) => `${f.email} (${f.error})`).join('; ')}`
+        : `${results.length} invite${results.length === 1 ? '' : 's'} sent.`
+    } catch (error) {
+      result.className = 'ap-info ap-info-bad'
+      result.textContent = String(error.message ?? error)
+    }
+    await load()
+  })
+
+  if (token) void load()
+}
+
+/* ----------------------------------------------------------------- invite -- */
+
+/*
+  Invite codes and the waitlist.
+
+  An invite link is the sign-in page with ?invite=CODE. The code is kept here
+  until there is a signed-in worker to redeem it for, so it survives the passkey
+  ceremony and a Tempo Wallet pop-up alike.
+*/
+const INVITE_KEY = 'quorum-invite'
+const pendingInvite = () => {
+  try {
+    return localStorage.getItem(INVITE_KEY)
+  } catch {
+    return null
+  }
+}
+const keepInvite = (code) => {
+  try {
+    if (code) localStorage.setItem(INVITE_KEY, code.trim().toUpperCase())
+    else localStorage.removeItem(INVITE_KEY)
+  } catch {
+    /* Kept for this page only. */
+  }
+}
+const fromLink = new URL(location.href).searchParams.get('invite')
+if (fromLink) keepInvite(fromLink)
+
+/** Redeems a kept invite for a signed-in worker. Returns their standing afterwards. */
+const redeemInvite = async (signed, code = pendingInvite()) => {
+  if (signed.assessment !== 'invite' || !code) return signed.assessment
+  await post('/v1/worker/redeem', { workerId: signed.workerId, code })
+  keepInvite(null)
+  const me = await get(`/v1/worker/me?workerId=${encodeURIComponent(signed.workerId)}`)
+  remember({ ...signed, assessment: me.assessment })
+  return me.assessment
+}
+
+const initInvite = () => {
+  const join = $('wl-join')
+  if (!join) return
+
+  for (const toggle of document.querySelectorAll('[data-wl-kind]'))
+    toggle.addEventListener('click', () => toggle.setAttribute('aria-checked', String(toggle.getAttribute('aria-checked') !== 'true')))
+
+  const result = $('wl-result')
+  join.addEventListener('click', async () => {
+    const email = $('wl-email').value.trim()
+    const kinds = [...document.querySelectorAll('[data-wl-kind][aria-checked="true"]')].map((t) => t.dataset.wlKind)
+    result.hidden = false
+    if (!email) {
+      result.className = 'ap-info ap-info-bad'
+      result.textContent = 'Enter your email so we can send your invite.'
+      return
+    }
+    join.disabled = true
+    try {
+      await post('/v1/waitlist', { email, kinds })
+      result.className = 'ap-info'
+      result.textContent = `You are on the list. We will email ${email} when your group is admitted.`
+      join.textContent = 'On the waitlist'
+    } catch (error) {
+      join.disabled = false
+      result.className = 'ap-info ap-info-bad'
+      result.textContent = `That did not go through: ${String(error.message ?? error)}`
+    }
+  })
+
+  const input = $('invite-code')
+  const redeem = $('invite-redeem')
+  const error = $('invite-error')
+  if (pendingInvite()) input.value = pendingInvite()
+  redeem.addEventListener('click', async () => {
+    const code = input.value.trim().toUpperCase()
+    if (!code) return
+    keepInvite(code)
+    const current = session()
+    // Not signed in yet: sign in first, and the kept code is redeemed on the way back.
+    if (!current) {
+      location.href = 'app-signin.html'
+      return
+    }
+    redeem.disabled = true
+    try {
+      location.href = landingFor(await redeemInvite({ ...current, assessment: 'invite' }, code))
+    } catch (e) {
+      redeem.disabled = false
+      error.hidden = false
+      error.textContent = String(e.message ?? e)
+    }
+  })
+}
+
 /* ------------------------------------------------------------------- boot -- */
 
 initTheme()
@@ -2232,6 +2443,8 @@ initSignIn()
 initExport()
 initReturnToWork()
 initRail()
+initInvite()
+initWaitlistConsole()
 
 void (async () => {
   await Promise.allSettled([

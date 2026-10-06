@@ -22,11 +22,13 @@ import {
   assessmentPassed as appAssessmentPassed,
   assessmentFailed as appAssessmentFailed,
   signIn as appSignIn,
+  invite as appInvite,
   skills as appSkills,
 } from './pages-app.mjs'
 import {
   liveActivity,
   escalations as consoleEscalations,
+  waitlist as consoleWaitlist,
   questions as consoleQuestions,
   questionDetail,
   workers as consoleWorkers,
@@ -76,6 +78,7 @@ const PAGES = {
     nothing to hydrate on a phone that is already struggling.
   */
   'app-signin.html': appSignIn,
+  'app-invite.html': appInvite,
   'app-skills.html': appSkills,
   'app-home.html': appHome,
   'app-question.html': appQuestion,
@@ -99,6 +102,7 @@ const PAGES = {
   'console-worker.html': workerDetail,
   'console-payments.html': consolePayments,
   'console-escalations.html': consoleEscalations,
+  'console-waitlist.html': consoleWaitlist,
   'console-capabilities.html': consoleCapabilities,
   'console-analytics.html': consoleAnalytics,
   'console-settings.html': consoleSettings,

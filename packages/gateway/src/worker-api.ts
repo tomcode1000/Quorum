@@ -81,8 +81,8 @@ const answerSchema = z.object({
  * their skills, `required` to an assessment, `passed` to work, `failed` to the page
  * that says plainly no work will reach them. See `skills.ts`.
  */
-export function assessmentStatus(worker: Pick<Worker, 'skills'>): Standing {
-  return standing(worker.skills)
+export function assessmentStatus(worker: Pick<Worker, 'skills' | 'admitted'>): Standing | 'invite' {
+  return worker.admitted ? standing(worker.skills) : 'invite'
 }
 
 const notifySchema = z.object({
@@ -129,6 +129,20 @@ export function workerApi(services: {
 }): Hono {
   const { store, router, paymaster } = services
   const app = new Hono()
+
+  /*
+    Nothing past sign-in for an account that has not redeemed an invite: no
+    skills, no assessment, no work. The app sends them to the invite page.
+  */
+  app.use('*', async (c, next) => {
+    const path = new URL(c.req.url).pathname
+    if (!/\/(skills|assessment|next|answer)$/.test(path)) return next()
+    const body = c.req.method === 'POST' ? ((await c.req.raw.clone().json().catch(() => ({}))) as { workerId?: unknown }) : {}
+    const workerId = c.req.query('workerId') ?? (typeof body.workerId === 'string' ? body.workerId : undefined)
+    const worker = workerId === undefined ? undefined : store.workers.get(workerId)
+    if (worker && !worker.admitted) return c.json({ error: 'redeem an invite first', blocked: 'invite-required' }, 403)
+    return next()
+  })
 
   /** Skills with enough known answers to be assessed. Read live: the pool can grow. */
   const assessable = () => new Set(assessableKinds(store.golden, SERVABLE_KINDS))
@@ -461,7 +475,7 @@ export function workerApi(services: {
         Neither was true, and both are exactly the kind of flattering falsehood
         this product is built to avoid telling. The state is now read from here.
       */
-      assessment: standing(worker.skills),
+      assessment: assessmentStatus(worker),
       /** Each skill they picked and where it stands. Unpicked skills are absent. */
       skills: worker.skills,
       /** Where they are told that work is waiting, if anywhere. */

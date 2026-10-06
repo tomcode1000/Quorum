@@ -13,6 +13,7 @@ import { Router } from './router.js'
 import { createNotifier, mailerFromEnv } from './notifier.js'
 import { createServer } from './server.js'
 import { mediaRoutes } from './media.js'
+import { operatorWaitlistRoutes, redeemRoute, waitlistRoutes } from './waitlist.js'
 import { fileStore, upstashStore } from './persistence.js'
 import { Store } from './store.js'
 import { walletRoutes } from './wallet-routes.js'
@@ -36,6 +37,7 @@ async function main(): Promise<void> {
     upstashUrl && upstashToken ? upstashStore({ url: upstashUrl, token: upstashToken }) : fileStore(config.statePath)
   const store = new Store({ persistence, migrateFrom: fileStore(config.statePath) })
   await store.load()
+  store.inviteOnly = config.inviteOnly
   store.golden.push(...GOLDEN_SEED)
 
   const client = createQuorumClient({
@@ -98,6 +100,23 @@ async function main(): Promise<void> {
     }),
   )
   app.route('/v1/capabilities', escalationRoutes({ config, escalations, store }))
+
+  // The waitlist: joined from the public site, redeemed from the worker app, and
+  // admitted by the operator, behind a token, a cohort at a time.
+  app.route('/v1/waitlist', waitlistRoutes({ store }))
+  app.route('/v1/worker', redeemRoute({ store }))
+  if (config.operatorToken)
+    app.route(
+      '/v1/admin/waitlist',
+      operatorWaitlistRoutes({
+        store,
+        token: config.operatorToken,
+        mail: mailerFromEnv(process.env),
+        signInUrl: (process.env.QUORUM_WORKER_APP_URL ?? 'http://localhost:4173/app-home').replace(/[^/]*$/, 'app-signin'),
+        origins: config.workerAppOrigins,
+      }),
+    )
+  if (config.inviteOnly) console.log('[quorum] sign-up is invite-only: new workers redeem a waitlist invite first')
 
   // Tempo Wallet sign-in and the fee relay for workers moving their own wages. Each
   // carries its own allowlisted CORS, credentialed because the SDK sends cookies.

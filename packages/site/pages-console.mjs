@@ -600,7 +600,54 @@ const escalations = () =>
 </div>`,
   })
 
+/* --------------------------------------------------------------- waitlist -- */
+
+/*
+  Admitting the next group.
+
+  The only console screen that changes anything, so the only one behind a token:
+  it lists people's email addresses and sends them invites. The token is the
+  gateway's QUORUM_OPERATOR_TOKEN, typed once and kept in this browser.
+*/
+const waitlist = () =>
+  appPage({
+    title: 'Waitlist',
+    body: ' data-console="waitlist"',
+    side: consoleSide('waitlist'),
+    main: `${consoleTop(`<div>${chip('Operator console')}<h1 class="ap-h1">Waitlist</h1><p class="ap-sub" style="margin-bottom:0">Who is waiting, and who you have let in. Admit a group and each person is emailed their own invite link.</p></div>`)}
+
+<div class="ap-cols">
+  <div class="ap-stack">
+    ${card(`
+      ${cardHead('People', '<button class="ap-primary" type="button" data-app="wl-admit" style="width:auto;padding-inline:18px" disabled>Admit selected</button>')}
+      <div class="ap-tbl-wrap" data-app="c-waitlist">${emptyCell('Enter the operator token to see the waitlist.')}</div>
+    `)}
+    <p data-app="wl-admit-result" class="ap-info" style="margin:0" hidden></p>
+  </div>
+
+  <div class="ap-stack">
+    ${card(`<div class="ap-pad">
+      <h2 class="ap-h3" style="margin:0 0 6px">Operator token</h2>
+      <p style="margin:0 0 14px;font-size:13px;line-height:1.6;color:var(--ink-3)">The gateway&rsquo;s <span class="ap-mono">QUORUM_OPERATOR_TOKEN</span>. Kept in this browser only.</p>
+      <div class="ap-field">${ic('key')}<input type="password" autocomplete="off" placeholder="Token" data-app="wl-token" aria-label="Operator token"/></div>
+      <button class="ap-second" type="button" data-app="wl-token-save" style="width:100%;justify-content:center;margin-top:12px">Load the waitlist</button>
+      <p data-app="wl-token-error" class="ap-info ap-info-bad" style="margin-top:12px" hidden></p>
+    </div>`)}
+
+    ${card(`
+      ${cardHead('Running a group')}
+      <div class="ap-rows ap-rows-inset">
+        ${row({ icon: 'users', title: 'Admit 20 to 50 at a time', note: 'Enough to agree with each other, few enough to watch' })}
+        ${row({ icon: 'clipboard', title: 'Wait for the assessments', note: 'The status column shows who has passed what' })}
+        ${row({ icon: 'clock', title: 'Then run a session', note: 'Questions reach only people who passed' })}
+      </div>
+    `)}
+  </div>
+</div>`,
+  })
+
 export {
+  waitlist,
   liveActivity,
   escalations,
   questions,

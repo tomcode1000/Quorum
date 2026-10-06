@@ -36,6 +36,10 @@ export type Config = {
   workerAppOrigins: string[]
   /** Whether to mount the unpaid question injector. Testnet inspection only. */
   devEndpoints: boolean
+  /** Whether a new worker needs an invite from the waitlist before working. */
+  inviteOnly: boolean
+  /** Bearer token for the operator's waitlist routes. Unset, they are not mounted. */
+  operatorToken?: string
   rpcUrl?: string
 }
 
@@ -71,6 +75,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       .map((origin) => origin.trim())
       .filter(Boolean),
     devEndpoints: env.QUORUM_DEV_ENDPOINTS === 'true' && network === 'testnet',
+    inviteOnly: env.QUORUM_INVITE_ONLY === 'true',
+    ...(env.QUORUM_OPERATOR_TOKEN ? { operatorToken: env.QUORUM_OPERATOR_TOKEN } : {}),
     ...(env.QUORUM_RPC_URL === undefined ? {} : { rpcUrl: env.QUORUM_RPC_URL }),
   }
 }

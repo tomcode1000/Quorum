@@ -23,6 +23,7 @@ const config: Config = {
   wageCents: 20,
   workerAppOrigins: ['http://localhost:5173'],
   devEndpoints: false,
+  inviteOnly: false,
 }
 
 /** The routes the gateway actually serves. Kept next to the assertions on purpose. */

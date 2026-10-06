@@ -30,6 +30,12 @@ services:
       # Never on a public deployment: these routes fabricate work and reputation.
       - key: QUORUM_DEV_ENDPOINTS
         value: "false"
+      # New workers need a waitlist invite before they can work; see waitlist.ts.
+      - key: QUORUM_INVITE_ONLY
+        value: "true"
+      # Unlocks the console's Waitlist page. Unset, the admin routes are not mounted.
+      - key: QUORUM_OPERATOR_TOKEN
+        sync: false
       - key: QUORUM_EMAIL_FROM
         value: Quorum <tolulopetns@gmail.com>
       - key: QUORUM_TREASURY_KEY

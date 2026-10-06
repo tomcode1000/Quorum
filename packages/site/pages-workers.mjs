@@ -77,7 +77,7 @@ const heroSection = () => `<section class="w-band"><div class="shell w-grid">
     <h1 class="w-h">Turn your time into<em>real earnings.</em></h1>
     <p class="w-lede">Quorum connects people like you with short questions from software that has got stuck. Answer from your phone or computer, get paid $0.20 per answer, and help the things you already use make fewer mistakes.</p>
     <div class="w-cta">
-      <a class="w-btn" href="${WORKER_APP}">${CTA} ${ic('arrow')}</a>
+      <a class="w-btn" href="app-invite.html">Join the waitlist ${ic('arrow')}</a>
       <a class="w-play" href="for-workers.html#how"><span>${ic('play')}</span>See how it works</a>
     </div>
   </div>
@@ -183,7 +183,7 @@ const joinSection = () => `<section class="w-band"><div class="shell w-grid">
       ${JOIN.map(([i, t, d]) => `<li class="w-feat"><span class="w-tile" style="width:46px;height:46px;border-radius:13px">${ic(i)}</span><b style="font-size:15.5px">${t}</b><p style="font-size:13.5px">${d}</p></li>`).join('')}
     </ul>
     <div class="w-cta">
-      <a class="w-btn" href="${WORKER_APP}">${CTA} ${ic('arrow')}</a>
+      <a class="w-btn" href="app-invite.html">Join the waitlist ${ic('arrow')}</a>
       <a class="w-play" href="for-workers.html#how"><span>${ic('play')}</span>See how it works</a>
     </div>
   </div>
