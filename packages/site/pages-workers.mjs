@@ -280,49 +280,55 @@ const WAITLIST_SKILLS = [
   ['compare', 'list', 'Comparing'],
 ]
 
+/* The waitlist's own header: the brand, and a way in for anyone already invited. */
+const waitlistNav = () => `<header class="w-nav"><div class="shell w-nav-in" style="justify-content:space-between">
+  <a class="brand" href="for-workers.html"><span class="mark">${MARK}</span>Quorum</a>
+  <a class="btn btn-ghost" style="height:42px" href="${WORKER_APP}">Have an invite? Sign in</a>
+</div></header>`
+
 const workerWaitlist = () => page({
   title: 'Join the waitlist',
   script: true,
-  body: `${wNav('workers')}<main>
-<section class="w-band"><div class="shell w-grid w-grid-3">
-  <div class="w-copy">
+  body: `${waitlistNav()}<main>
+<section class="w-band wl"><div class="shell">
+  <div class="wl-head">
     <p class="w-eyebrow">Early access &middot; Testnet</p>
     <h1 class="w-h">Be one of the first<em>people answering.</em></h1>
     <p class="w-lede">We are opening Quorum a group at a time, so everyone admitted together has real questions to answer and people to agree with. Join the list and we will email you when your place opens.</p>
-    <div class="w-stack">
-      ${WAITLIST_STEPS.map(([i, t, d], x) => `<div class="w-stack-row"><span class="w-tile" style="width:42px;height:42px;border-radius:12px">${ic(i)}</span><div><b><span class="w-step-n">${x + 1}</span>${t}</b><p>${d}</p></div></div>`).join('')}
-    </div>
   </div>
 
-  ${mediaSlot('', 'w-media-leaf', `<div class="w-float w-float-bl">
-    <span class="w-tile" style="width:38px;height:38px;border-radius:11px">${ic('users')}</span>
-    <div><b style="font-size:14px">Admitted in groups</b><span>So nobody waits alone for work.</span></div>
-  </div>`, 'worker-join.webp', 'A person answering a Quorum question on a laptop')}
+  <div class="wl-card" data-app="wl-card">
+    <div class="wl-form">
+      <h2>Join the waitlist</h2>
+      <p class="w-signin-lede">No password, no deposit, no fee. We only use your email to send your invite.</p>
 
-  <div class="w-signin" data-app="wl-card">
-    <span class="brand" style="display:inline-flex;align-items:center;gap:10px"><span class="mark">${MARK}</span>Quorum</span>
-    <h2>Join the waitlist</h2>
-    <p class="w-signin-lede">No password, no deposit, no fee. We only use your email to send your invite.</p>
+      <label class="w-label" for="wl-email">Email</label>
+      <input class="w-input" id="wl-email" type="email" autocomplete="email" placeholder="you@example.com" data-app="wl-email"/>
 
-    <label class="w-label" for="wl-email">Email</label>
-    <input class="w-input" id="wl-email" type="email" autocomplete="email" placeholder="you@example.com" data-app="wl-email"/>
+      <p class="w-label" style="margin-top:22px">What would you like to answer? <span class="dim" style="font-weight:500">Optional</span></p>
+      <div class="w-chips">
+        ${WAITLIST_SKILLS.map(([kind, icon, title]) => `<button class="w-chip" type="button" role="switch" aria-checked="false" data-wl-kind="${kind}">${ic(icon)}${title}</button>`).join('')}
+      </div>
 
-    <p class="w-label" style="margin-top:20px">What would you like to answer? <span class="dim" style="font-weight:500">Optional</span></p>
-    <div class="w-chips">
-      ${WAITLIST_SKILLS.map(([kind, icon, title]) => `<button class="w-chip" type="button" role="switch" aria-checked="false" data-wl-kind="${kind}">${ic(icon)}${title}</button>`).join('')}
+      <button class="w-btn" type="button" data-app="wl-join" style="width:100%;height:54px;margin-top:26px">Join the waitlist ${ic('arrow')}</button>
+      <p data-app="wl-result" class="w-note" hidden></p>
+
+      <details class="w-invite">
+        <summary>${ic('key')} I already have an invite code</summary>
+        <div style="display:flex;gap:10px;margin-top:14px">
+          <input class="w-input" type="text" autocomplete="off" spellcheck="false" placeholder="Invite code" aria-label="Invite code" data-app="invite-code" style="text-transform:uppercase;flex:1;min-width:0"/>
+          <button class="btn btn-ghost" type="button" data-app="invite-redeem" style="height:48px">Continue</button>
+        </div>
+        <p data-app="invite-error" class="w-note w-note-bad" hidden></p>
+      </details>
     </div>
 
-    <button class="w-btn" type="button" data-app="wl-join" style="width:100%;height:52px;margin-top:24px">Join the waitlist ${ic('arrow')}</button>
-    <p data-app="wl-result" class="w-note" hidden></p>
-
-    <details class="w-invite">
-      <summary>${ic('key')} I already have an invite</summary>
-      <div style="display:flex;gap:10px;margin-top:14px">
-        <input class="w-input" type="text" autocomplete="off" spellcheck="false" placeholder="Invite code" aria-label="Invite code" data-app="invite-code" style="text-transform:uppercase;flex:1;min-width:0"/>
-        <button class="btn btn-ghost" type="button" data-app="invite-redeem" style="height:48px">Continue</button>
+    <aside class="wl-side">
+      <p class="w-eyebrow" style="margin-bottom:22px">What happens next</p>
+      <div class="w-stack">
+        ${WAITLIST_STEPS.map(([i, t, d], x) => `<div class="w-stack-row"><span class="w-tile" style="width:42px;height:42px;border-radius:12px">${ic(i)}</span><div><b><span class="w-step-n">${x + 1}</span>${t}</b><p>${d}</p></div></div>`).join('')}
       </div>
-      <p data-app="invite-error" class="w-note w-note-bad" hidden></p>
-    </details>
+    </aside>
   </div>
 </div></section>
 </main>

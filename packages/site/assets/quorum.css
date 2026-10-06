@@ -2102,9 +2102,65 @@ button.search:hover {
   }
 }
 
-/* On the waitlist, a phone reaches the form before the photograph. */
-@media (max-width: 900px) {
-  .w-grid:has([data-app='wl-card']) .w-frame {
-    order: 3;
+/* The waitlist: one centered card, the form beside what happens next. */
+.wl-head {
+  max-width: 720px;
+  margin: 0 auto 44px;
+  text-align: center;
+}
+
+.wl-head .w-lede {
+  margin-inline: auto;
+}
+
+.wl-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  max-width: 1080px;
+  margin: 0 auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  box-shadow: var(--sh-lg);
+  overflow: hidden;
+}
+
+.wl-form {
+  padding: 44px 44px 40px;
+}
+
+.wl-form h2 {
+  margin: 0 0 10px;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.028em;
+}
+
+.wl-side {
+  padding: 44px 40px;
+  background: var(--surface-2);
+  border-left: 1px solid var(--border);
+}
+
+@media (max-width: 860px) {
+  .wl-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .wl-side {
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+  .wl-head {
+    margin-bottom: 30px;
+  }
+}
+
+@media (max-width: 560px) {
+  .wl-form,
+  .wl-side {
+    padding: 28px 20px;
+  }
+  .wl-head {
+    text-align: left;
   }
 }
