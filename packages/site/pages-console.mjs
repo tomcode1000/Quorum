@@ -605,9 +605,9 @@ const escalations = () =>
 /*
   Admitting the next group.
 
-  The only console screen that changes anything, so the only one behind a token:
-  it lists people's email addresses and sends them invites. The token is the
-  gateway's QUORUM_OPERATOR_TOKEN, typed once and kept in this browser.
+  The one console screen that changes anything: it lists people's email
+  addresses and sends them invites. Behind the same operator token as the rest
+  of the console, entered once at the gate.
 */
 const waitlist = () =>
   appPage({
@@ -620,20 +620,12 @@ const waitlist = () =>
   <div class="ap-stack">
     ${card(`
       ${cardHead('People', '<button class="ap-primary" type="button" data-app="wl-admit" style="width:auto;padding-inline:18px" disabled>Admit selected</button>')}
-      <div class="ap-tbl-wrap" data-app="c-waitlist">${emptyCell('Enter the operator token to see the waitlist.')}</div>
+      <div class="ap-tbl-wrap" data-app="c-waitlist">${emptyCell('Reading the waitlist…')}</div>
     `)}
     <p data-app="wl-admit-result" class="ap-info" style="margin:0" hidden></p>
   </div>
 
   <div class="ap-stack">
-    ${card(`<div class="ap-pad">
-      <h2 class="ap-h3" style="margin:0 0 6px">Operator token</h2>
-      <p style="margin:0 0 14px;font-size:13px;line-height:1.6;color:var(--ink-3)">The gateway&rsquo;s <span class="ap-mono">QUORUM_OPERATOR_TOKEN</span>. Kept in this browser only.</p>
-      <div class="ap-field">${ic('key')}<input type="password" autocomplete="off" placeholder="Token" data-app="wl-token" aria-label="Operator token"/></div>
-      <button class="ap-second" type="button" data-app="wl-token-save" style="width:100%;justify-content:center;margin-top:12px">Load the waitlist</button>
-      <p data-app="wl-token-error" class="ap-info ap-info-bad" style="margin-top:12px" hidden></p>
-    </div>`)}
-
     ${card(`
       ${cardHead('Running a group')}
       <div class="ap-rows ap-rows-inset">

@@ -2276,27 +2276,28 @@ const showOperatorGate = () => {
   input.focus()
 }
 
-const initOperatorGate = () => {
-  if (document.querySelector('.ap-side .ap-side-label') && !operatorToken()) showOperatorGate()
+const initOperatorGate = async () => {
+  if (!document.querySelector('.ap-side .ap-side-label')) return
+  if (!operatorToken()) return showOperatorGate()
+  try {
+    const response = await fetch(`${gateway}/v1/operator/overview`, { headers: { authorization: `Bearer ${operatorToken()}` } })
+    if (response.status === 401) return showOperatorGate()
+  } catch {
+    /* Gateway unreachable: the console says so itself, and shows no data. */
+  }
+  document.documentElement.setAttribute('data-operator', 'ok')
 }
 
 /* ------------------------------------------------------- console waitlist -- */
 
-const TOKEN_KEY = 'quorum-operator-token'
 const KIND_NAMES = { disambiguate: 'Readings', verify: 'Real or fake', match: 'Matching', categorise: 'Categorising', compare: 'Comparing' }
 
 const initWaitlistConsole = () => {
   const table = $('c-waitlist')
   if (!table) return
-  const tokenInput = $('wl-token')
-  const tokenError = $('wl-token-error')
   const admit = $('wl-admit')
   const result = $('wl-admit-result')
-  let token = ''
-  try {
-    token = localStorage.getItem(TOKEN_KEY) ?? ''
-  } catch {}
-  tokenInput.value = token
+  const token = operatorToken()
 
   const call = async (method, path, body) => {
     const response = await fetch(`${gateway}/v1/admin/waitlist${path}`, {
@@ -2305,6 +2306,7 @@ const initWaitlistConsole = () => {
       ...(body ? { body: JSON.stringify(body) } : {}),
     })
     const parsed = await response.json().catch(() => ({}))
+    if (response.status === 401) showOperatorGate()
     if (!response.ok) throw new Error(response.status === 401 ? 'That token was not accepted.' : response.status === 404 ? 'The gateway has no operator token set, so the waitlist is switched off.' : parsed.error ?? String(response.status))
     return parsed
   }
@@ -2325,13 +2327,11 @@ const initWaitlistConsole = () => {
   }
 
   const load = async () => {
-    tokenError.hidden = true
     let body
     try {
       body = await call('GET', '')
     } catch (error) {
-      tokenError.hidden = false
-      tokenError.textContent = String(error.message ?? error)
+      table.innerHTML = empty(esc(String(error.message ?? error)))
       return
     }
     const waiting = body.entries.filter((e) => !e.invitedAt).length
@@ -2360,13 +2360,6 @@ const initWaitlistConsole = () => {
     sync()
   }
 
-  $('wl-token-save').addEventListener('click', () => {
-    token = tokenInput.value.trim()
-    try {
-      localStorage.setItem(TOKEN_KEY, token)
-    } catch {}
-    void load()
-  })
 
   admit.addEventListener('click', async () => {
     const emails = selected()
@@ -2492,7 +2485,7 @@ initCopy()
 initClock()
 initSignIn()
 initExport()
-initOperatorGate()
+void initOperatorGate()
 initReturnToWork()
 initRail()
 initInvite()

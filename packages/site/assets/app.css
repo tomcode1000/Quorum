@@ -2395,3 +2395,12 @@ button.ap-row {
     transition: none;
   }
 }
+
+/* The console shows nothing, not even its layout, until the operator token checks out. */
+.ap:has(.ap-side-label) {
+  visibility: hidden;
+}
+
+[data-operator='ok'] .ap:has(.ap-side-label) {
+  visibility: visible;
+}
