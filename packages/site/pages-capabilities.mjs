@@ -11,7 +11,7 @@ import { foot } from './pages-marketing.mjs'
 
 const arrow = `<span class="flow-arrow" style="align-self:center;padding:0">${ic('arrow')}</span>`
 
-const capabilityPage = ({ n, slug, tag, title, lede, feats, input, analysis, result, steps, example }) =>
+const capabilityPage = ({ n, slug, tag, title, lede, feats, input, analysis, result, steps, example, crypto }) =>
   page({
     title,
     body: `${nav('product')}<main>
@@ -53,8 +53,28 @@ const capabilityPage = ({ n, slug, tag, title, lede, feats, input, analysis, res
     <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">${example.tags.map((t) => `<span class="chip">${t}</span>`).join('')}</div>
   </div>
 </div></section>
+${crypto ? cryptoSection(crypto) : ''}
 ${foot()}</main>`,
   })
+
+/*
+  For crypto agents.
+
+  Each capability with the crypto cases that fall under it. An agent that moves
+  money on chain cannot take a payment back, so this is where asking first is
+  worth the most. The images are the question bank's own (drawn by
+  scripts/bank-images.mjs), so what a reader sees here is what a worker sees.
+*/
+const cryptoSection = (cases) => `<section class="section-tight"><div class="shell">
+  <p class="eyebrow">For crypto agents</p>
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap">
+    <div><h2 class="h-lg">Where this saves a transaction.</h2><p class="lede">An on-chain payment cannot be taken back, so the moment before the agent signs is the moment to ask.</p></div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:28px">
+    ${cases.map(({ title, body, image, agent }) => `<div class="card" style="padding:0;overflow:hidden">${image ? `<div style="height:170px;background:#e9edf3 url(assets/bank/${image}.png) center / cover no-repeat;border-bottom:1px solid var(--border)" role="img" aria-label="${title}"></div>` : ''}<div style="padding:18px 20px"><span class="chip">${agent}</span><b class="h-sm" style="display:block;margin:12px 0 6px">${title}</b><span class="feat"><span>${body}</span></span></div></div>`).join('')}
+  </div>
+  <div class="note-box" style="margin-top:20px">${ic('clock')}<span><b>The agent holds the transaction, not the market.</b> It asks before it signs and waits about six seconds for the answer. Set <code>deadline_ms</code> to the window you actually have: if nobody answers in time you are refunded, and the agent takes its safe path, which is not to sign.</span></div>
+</div></section>`
 
 const row = (label, value, state) =>
   `<div style="display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--border)"><span class="ico ico-sm ${state === 'bad' ? 'ico-bad' : state === 'good' ? 'ico-good' : 'ico-plain'}" style="width:19px;height:19px;border-radius:50%">${ic(state === 'bad' ? 'x' : 'check')}</span><span style="font-size:12.5px;color:var(--ink-2)">${label}</span><span class="badge ${state === 'bad' ? 'badge-bad' : 'badge-good'}" style="margin-left:auto">${value}</span></div>`
@@ -109,6 +129,10 @@ const readings = () => capabilityPage({
   ]),
   result: verdict('45.00, at 0.990.', 'Two people who had not seen each other&rsquo;s answer read the same total. About five seconds.'),
   steps: [['Send', 'The image and both readings.'], ['Ask', 'Someone proven at reading documents.'], ['Weigh', 'A second look if one is not enough.'], ['Answer', 'One reading, with its confidence.']],
+  crypto: [
+    { agent: 'Payments agent', image: 'receipt-total', title: 'An invoice amount before a payout', body: 'The agent reads the total off a scanned invoice and is about to send stablecoin. A smudge makes 45.00 read as 4.50, or the other way round. A person reads the original before anything is sent.' },
+    { agent: 'Treasury agent', title: 'A figure in a screenshot', body: 'A counterparty sends a screenshot of the amount owed. Before paying, a person reads which of the agent&rsquo;s two readings is on the screen.' },
+  ],
   example: {
     intro: 'The question is the one your extraction could not settle, with the evidence it was looking at. Nothing else from your system leaves it.',
     title: 'An expense recorded at a tenth of its value.',
@@ -136,6 +160,11 @@ const real = () => capabilityPage({
   ]),
   result: verdict('No. Not the brand&rsquo;s store.', 'Two people agreed independently, 0.990 confidence. The agent does not place the order.'),
   steps: [['Send', 'What the agent is about to trust.'], ['Look', 'A person proven at spotting fakes.'], ['Weigh', 'A second look if one is not enough.'], ['Answer', 'Yes or no, with its confidence.']],
+  crypto: [
+    { agent: 'Wallet agent', image: 'phishing-dapp', title: 'A fake airdrop site', body: 'The agent is sent a &ldquo;claim your airdrop&rdquo; link that copies Uniswap to the pixel. Connecting would hand over approvals. A person sees it is not the real app.' },
+    { agent: 'Trading agent', image: 'token-lookalike', title: 'A lookalike token', body: 'Two tokens are both called USDC. The agent picked the one with almost no liquidity and a different contract. A person checks it against the official one.' },
+    { agent: 'Shopping agent', image: 'fake-store', title: 'A store that only takes crypto', body: 'A lookalike shop, registered last week, accepts card or crypto only. A person says it is not the brand, before the agent pays.' },
+  ],
   example: {
     intro: 'The agent asks at the moment it is about to act on something it cannot verify, and not before.',
     title: 'A shopping agent about to pay a lookalike store.',
@@ -165,6 +194,10 @@ const matching = () => capabilityPage({
   ]),
   result: verdict('No. Two people.', 'A shared family email, not one customer. The records stay apart, and neither sees the other&rsquo;s history.'),
   steps: [['Send', 'The records in question.'], ['Read', 'Someone proven at matching.'], ['Weigh', 'A second look if one is not enough.'], ['Answer', 'Same or not, with its confidence.']],
+  crypto: [
+    { agent: 'Payments agent', image: 'address-poison', title: 'Address poisoning', body: 'A scammer sends a zero-value transfer from an address that starts and ends like the real one, hoping the agent copies it from its history. Its check passes. A person sees the middle is different.' },
+    { agent: 'Research agent', title: 'Is this the announced contract?', body: 'The agent finds a contract address for a new token. A person matches it against the one in the team&rsquo;s official announcement before the agent buys.' },
+  ],
   example: {
     intro: 'Send only the pairs your matcher could not settle. Quorum takes the uncertain middle, not the whole table.',
     title: 'A father and son, one inbox.',
@@ -193,6 +226,10 @@ const categorising = () => capabilityPage({
   ]),
   result: verdict('Counterfeit, at 0.990.', 'The listing comes down under your counterfeit policy, and the decision carries its confidence.'),
   steps: [['Send', 'The item and your categories.'], ['Read', 'Someone proven at your kind of item.'], ['Weigh', 'A second look if one is not enough.'], ['Answer', 'One category, with its confidence.']],
+  crypto: [
+    { agent: 'Wallet agent', image: 'approval-unlimited', title: 'An unlimited approval', body: 'To swap 20 USDC, the agent is asked to sign unlimited spending to an unverified contract. A person puts it under &ldquo;risky, reject&rdquo;, and the agent does not sign.' },
+    { agent: 'DAO agent', title: 'Routine proposal, or a treasury drain?', body: 'A governance proposal is labelled a parameter update but moves funds to a new address. A person decides which category it really falls in before the agent votes.' },
+  ],
   example: {
     intro: 'The boundary cases are where a model is least sure and where the policy matters most.',
     title: 'A replica sold in plain sight.',
@@ -222,6 +259,10 @@ const comparing = () => capabilityPage({
   ]),
   result: verdict('Draft B, at 0.990.', 'Two readers who wrote neither chose the same reply, and that is the one sent.'),
   steps: [['Send', 'Both candidates and the question.'], ['Read', 'Someone proven at comparing.'], ['Weigh', 'A second reader if one is not enough.'], ['Answer', 'One candidate, with its confidence.']],
+  crypto: [
+    { agent: 'Payments agent', image: 'tx-compare', title: 'Which transaction matches the invoice?', body: 'The agent built two transactions for a 250 USDC invoice, and one says 2,500. A person picks the one that matches, before either is signed.' },
+    { agent: 'Bridge agent', title: 'Which route did the user ask for?', body: 'Two bridge routes, one cheaper but landing on a different chain than the user named. A person picks the one that does what was asked.' },
+  ],
   example: {
     intro: 'The question is the one your agent could not answer about its own work: which of these is better.',
     title: 'The reply that keeps the customer.',
