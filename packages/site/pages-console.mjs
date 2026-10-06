@@ -663,7 +663,7 @@ const sendQuestions = () =>
     ${card(`
       ${cardHead(`${tile('clock', '', 'sm')} Run a session`, '<span data-app="ss-state"></span>')}
       <div class="ap-pad" style="padding-top:0">
-        <p style="margin:0 0 16px;font-size:13px;line-height:1.6;color:var(--ink-3)">Sends questions from the built-in bank on a timer. The gateway runs it, so you can close this page.</p>
+        <p style="margin:0 0 16px;font-size:13px;line-height:1.6;color:var(--ink-3)">Sends questions from the ready-made set, most with an image: receipts, labels, lookalike stores, wallet screens. The gateway runs it, so you can close this page.</p>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <label class="ap-label-sm">Minutes<div class="ap-field"><input type="number" min="1" max="180" value="60" data-app="ss-minutes"/></div></label>
           <label class="ap-label-sm">One question every (seconds)<div class="ap-field"><input type="number" min="5" max="600" value="30" data-app="ss-every"/></div></label>
@@ -673,12 +673,15 @@ const sendQuestions = () =>
         <div style="display:flex;gap:10px;margin-top:18px">
           <button class="ap-primary" type="button" data-app="ss-start" style="flex:1">Start session ${ic('arrow')}</button>
           <button class="ap-second" type="button" data-app="ss-stop" hidden>Stop</button>
+          <button class="ap-second" type="button" data-app="ss-one">Send one now</button>
         </div>
+        <p data-app="ss-result" class="ap-info" style="margin:14px 0 0" hidden></p>
       </div>
     `)}
 
     ${card(`
-      ${cardHead(`${tile('question', '', 'sm')} Write a question`)}
+      <details class="ap-details">
+      <summary class="ap-card-head" style="cursor:pointer">${tile('question', '', 'sm')}<h2 class="ap-h2" style="flex:1">Write your own question <span style="font-weight:500;color:var(--ink-4);font-size:12.5px">(optional)</span></h2></summary>
       <div class="ap-pad" style="padding-top:0;display:flex;flex-direction:column;gap:12px">
         <label class="ap-label-sm">Skill<div class="ap-field"><select data-app="q-kind" style="border:0;background:transparent;width:100%;font:inherit;color:inherit;outline:none">${KIND_OPTIONS.map(([k, t]) => `<option value="${k}">${t}</option>`).join('')}</select></div></label>
         <label class="ap-label-sm">Question<div class="ap-field"><input type="text" maxlength="500" placeholder="Is the total 45.00 or 4.50?" data-app="q-text"/></div></label>
@@ -690,6 +693,7 @@ const sendQuestions = () =>
         <button class="ap-primary" type="button" data-app="q-send">Send question ${ic('arrow')}</button>
         <p data-app="q-result" class="ap-info" style="margin:0" hidden></p>
       </div>
+      </details>
     `)}
   </div>
 

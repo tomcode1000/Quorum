@@ -2434,3 +2434,11 @@ button.ap-row {
   background: var(--accent-wash);
   color: var(--accent);
 }
+
+.ap-details > summary {
+  list-style: none;
+}
+
+.ap-details > summary::-webkit-details-marker {
+  display: none;
+}

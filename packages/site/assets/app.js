@@ -2456,6 +2456,23 @@ const initSendConsole = () => {
     void refresh()
   })
 
+  $('ss-one').addEventListener('click', async () => {
+    const box = $('ss-result')
+    const kinds = [...document.querySelectorAll('[data-ss-kind][aria-pressed="true"]')].map((c) => c.dataset.ssKind)
+    box.hidden = false
+    try {
+      const body = await call('POST', '/one', { kinds })
+      box.className = 'ap-info'
+      box.textContent = body.workersOnline
+        ? `Sent: "${body.sent.prompt}"`
+        : `Sent: "${body.sent.prompt}" Nobody who passed this skill is online, so it will wait for someone for 5 minutes.`
+    } catch (error) {
+      box.className = 'ap-info ap-info-bad'
+      box.textContent = `Not sent: ${error.message}`
+    }
+    void refresh()
+  })
+
   const readImage = (file) =>
     new Promise((resolve, reject) => {
       const reader = new FileReader()
