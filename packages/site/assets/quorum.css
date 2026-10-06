@@ -2103,47 +2103,34 @@ button.search:hover {
 }
 
 /* The waitlist: one centered card, the form beside what happens next. */
-.wl-banner {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
+.wl-head {
   max-width: 1080px;
-  margin: 0 auto 40px;
-}
-
-.wl-banner span {
-  height: 220px;
+  margin: 0 auto 36px;
+  padding: 72px 32px;
+  text-align: center;
   border-radius: var(--r-xl);
-  background: center 25% / cover no-repeat;
+  background:
+    linear-gradient(180deg, rgba(10, 20, 42, 0.62), rgba(10, 20, 42, 0.78)),
+    url(worker-hero.webp) center 22% / cover no-repeat;
   box-shadow: var(--sh-lg);
 }
 
-@media (max-width: 860px) {
-  .wl-banner {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .wl-banner span:nth-child(n + 3) {
-    display: none;
-  }
+.wl-head .w-eyebrow {
+  color: rgba(255, 255, 255, 0.82);
 }
 
-@media (max-width: 560px) {
-  .wl-banner span {
-    height: 160px;
-  }
-  .wl-banner {
-    margin-bottom: 28px;
-  }
+.wl-head .w-h {
+  color: #fff;
 }
 
-.wl-head {
-  max-width: 720px;
-  margin: 0 auto 44px;
-  text-align: center;
+.wl-head .w-h em {
+  color: #fff;
 }
 
 .wl-head .w-lede {
+  max-width: 620px;
   margin-inline: auto;
+  color: rgba(255, 255, 255, 0.86);
 }
 
 .wl-card {
@@ -2184,7 +2171,8 @@ button.search:hover {
     border-top: 1px solid var(--border);
   }
   .wl-head {
-    margin-bottom: 30px;
+    margin-bottom: 24px;
+    padding: 52px 24px;
   }
 }
 
