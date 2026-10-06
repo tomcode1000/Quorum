@@ -290,13 +290,14 @@ const workerWaitlist = () => page({
   title: 'Join the waitlist',
   script: true,
   body: `${waitlistNav()}<main>
-<section class="w-band wl"><div class="shell">
+<section class="w-band wl">
   <div class="wl-head" role="img" aria-label="A person answering a Quorum question on their phone">
     <p class="w-eyebrow">Early access &middot; Testnet</p>
     <h1 class="w-h">Be one of the first<em>people answering.</em></h1>
     <p class="w-lede">We are opening Quorum a group at a time, so everyone admitted together has real questions to answer and people to agree with. Join the list and we will email you when your place opens.</p>
   </div>
 
+  <div class="shell">
   <div class="wl-card" data-app="wl-card">
     <div class="wl-form">
       <h2>Join the waitlist</h2>
