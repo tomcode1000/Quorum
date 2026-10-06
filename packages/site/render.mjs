@@ -2,7 +2,7 @@ import { mkdir, writeFile, copyFile, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { WORKER_APP } from './build.mjs'
 import { homeSections } from './pages-home.mjs'
-import { forWorkers, workerSignIn } from './pages-workers.mjs'
+import { forWorkers, workerSignIn, workerWaitlist } from './pages-workers.mjs'
 import { howItDecides, developers, capabilities } from './pages-marketing.mjs'
 import { readings, real, matching, categorising, comparing } from './pages-capabilities.mjs'
 import { proof, integration, docsHome, quickstart, firstRequest, response, nextSteps, capabilityReference } from './pages-docs.mjs'
@@ -22,7 +22,6 @@ import {
   assessmentPassed as appAssessmentPassed,
   assessmentFailed as appAssessmentFailed,
   signIn as appSignIn,
-  invite as appInvite,
   skills as appSkills,
 } from './pages-app.mjs'
 import {
@@ -78,7 +77,7 @@ const PAGES = {
     nothing to hydrate on a phone that is already struggling.
   */
   'app-signin.html': appSignIn,
-  'app-invite.html': appInvite,
+  'app-invite.html': workerWaitlist,
   'app-skills.html': appSkills,
   'app-home.html': appHome,
   'app-question.html': appQuestion,

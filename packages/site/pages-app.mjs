@@ -1043,66 +1043,7 @@ const signIn = () =>
 </div>`,
   })
 
-/* ----------------------------------------------------------------- invite -- */
-
-/*
-  The waitlist and the invite.
-
-  While the testnet is invite-only this is where a new account lands, and where
-  the site's "Join the waitlist" points. One page does both jobs: someone with an
-  invite code redeems it, and someone without one leaves their email. The toggles
-  are the skills page's, so a capability looks the same wherever it is chosen.
-*/
-const invite = () =>
-  appPage({
-    title: 'Join the waitlist',
-    script: true,
-    side: `<aside class="ap-side ap-side-worker">
-  <a class="brand" href="index.html"><span class="mark">${MARK}</span>Quorum</a>
-  <div class="ap-side-foot">
-    <div class="ap-note">${ic('users')}<div><b>A group at a time</b><p>Everyone admitted together answers together, so the first questions have people to agree with.</p></div></div>
-    ${themeToggle()}
-  </div>
-</aside>`,
-    main: `<div class="ap-cols">
-  <div class="ap-stack">
-    <div>
-      ${chip('Testnet')}
-      <h1 class="ap-h1 ap-h1-lg">We&rsquo;re letting people in<em>a group at a time.</em></h1>
-      <p class="ap-sub">Leave your email and pick what you would like to answer. When your group is admitted we email you an invite link; then you sign in, take the short assessment, and questions start reaching you in scheduled test sessions.</p>
-    </div>
-
-    ${card(`
-      <div class="ap-card-head">${tile('mail')}<div style="flex:1;min-width:0"><h2 class="ap-h2">Join the waitlist</h2><span style="display:block;font-size:12.5px;color:var(--ink-3);margin-top:2px">Only your email. No password, no deposit.</span></div></div>
-      <div class="ap-pad" style="padding-top:0"><div class="ap-field">${ic('mail')}<input type="email" autocomplete="email" placeholder="you@example.com" data-app="wl-email" aria-label="Your email"/></div></div>
-      <div class="ap-rows">${SKILLS.map(([kind, icon, title, note]) => `<div class="ap-row">${tile(icon, '', 'sm')}<div><b>${title}</b><span>${note}</span></div><button class="ap-toggle" type="button" role="switch" aria-checked="false" aria-label="${title}" data-wl-kind="${kind}"></button></div>`).join('')}</div>
-    `)}
-
-    <p data-app="wl-result" class="ap-info" style="margin:0" hidden></p>
-    <button class="ap-primary" type="button" data-app="wl-join">Join the waitlist ${ic('arrow')}</button>
-  </div>
-
-  <div class="ap-stack">
-    ${card(`<div class="ap-pad">
-      <h2 class="ap-h3" style="margin:0 0 6px">Have an invite?</h2>
-      <p style="margin:0 0 16px;font-size:13px;line-height:1.6;color:var(--ink-3)">The link in your email fills this in. Sign in first if you have not, and the code is kept for you.</p>
-      <div class="ap-field">${ic('key')}<input type="text" autocomplete="off" spellcheck="false" placeholder="Invite code" data-app="invite-code" aria-label="Invite code" style="text-transform:uppercase"/></div>
-      <button class="ap-primary" type="button" data-app="invite-redeem" style="margin-top:14px">Continue ${ic('arrow')}</button>
-      <p data-app="invite-error" class="ap-info ap-info-bad" style="margin-top:14px;text-align:left" hidden></p>
-    </div>`)}
-
-    ${card(`
-      ${cardHead(`${tile('shield', '', 'sm')} What happens`)}
-      <div class="ap-rows ap-rows-inset">
-        ${[['Join the waitlist', 'Your email and the capabilities you want.'], ['Get your invite', 'We email a link when your group is admitted.'], ['Pass the assessment', 'Five questions per capability; four right to pass.'], ['Answer in test sessions', 'We email you before each one. Testnet wages are test tokens.']].map(([t, d], i) => `<div class="ap-row"><span class="ap-av ap-av-sm">${i + 1}</span><div><b>${t}</b><span>${d}</span></div></div>`).join('')}
-      </div>
-    `)}
-  </div>
-</div>`,
-  })
-
 export {
-  invite,
   skills,
   home,
   question,

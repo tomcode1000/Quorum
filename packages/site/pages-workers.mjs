@@ -255,4 +255,78 @@ const workerSignIn = () => page({
 </main>`,
 })
 
-export { forWorkers, workerSignIn, wNav, CTA }
+/*
+  The waitlist.
+
+  While the testnet is invite-only, this is where "Join the waitlist" goes and
+  where a signed-in account without an invite is sent. It is the sign-in page's
+  layout: the case on the left, a photograph, and the form in the same card.
+  Someone with an invite redeems it in the same card, so there is one page to
+  link to whatever state a person is in. The behaviour is the worker app's
+  (initInvite in app.js), keyed by the same data-app names.
+*/
+const WAITLIST_STEPS = [
+  ['mail', 'Join the waitlist', 'Your email and what you would like to answer. Nothing else.'],
+  ['key', 'Get your invite', 'We admit people a group at a time and email you a personal link.'],
+  ['check', 'Pass a short assessment', 'Five questions per skill. Four right opens that skill.'],
+  ['money', 'Answer in test sessions', 'We email you before each one. Testnet wages are test tokens.'],
+]
+
+const WAITLIST_SKILLS = [
+  ['disambiguate', 'swap', 'Telling readings apart'],
+  ['verify', 'shield', 'Checking something is real'],
+  ['match', 'link', 'Matching records'],
+  ['categorise', 'tag', 'Categorising'],
+  ['compare', 'list', 'Comparing'],
+]
+
+const workerWaitlist = () => page({
+  title: 'Join the waitlist',
+  script: true,
+  body: `${wNav('workers')}<main>
+<section class="w-band"><div class="shell w-grid w-grid-3">
+  <div class="w-copy">
+    <p class="w-eyebrow">Early access &middot; Testnet</p>
+    <h1 class="w-h">Be one of the first<em>people answering.</em></h1>
+    <p class="w-lede">We are opening Quorum a group at a time, so everyone admitted together has real questions to answer and people to agree with. Join the list and we will email you when your place opens.</p>
+    <div class="w-stack">
+      ${WAITLIST_STEPS.map(([i, t, d], x) => `<div class="w-stack-row"><span class="w-tile" style="width:42px;height:42px;border-radius:12px">${ic(i)}</span><div><b><span class="w-step-n">${x + 1}</span>${t}</b><p>${d}</p></div></div>`).join('')}
+    </div>
+  </div>
+
+  ${mediaSlot('', 'w-media-leaf', `<div class="w-float w-float-bl">
+    <span class="w-tile" style="width:38px;height:38px;border-radius:11px">${ic('users')}</span>
+    <div><b style="font-size:14px">Admitted in groups</b><span>So nobody waits alone for work.</span></div>
+  </div>`, 'worker-join.webp', 'A person answering a Quorum question on a laptop')}
+
+  <div class="w-signin" data-app="wl-card">
+    <span class="brand" style="display:inline-flex;align-items:center;gap:10px"><span class="mark">${MARK}</span>Quorum</span>
+    <h2>Join the waitlist</h2>
+    <p class="w-signin-lede">No password, no deposit, no fee. We only use your email to send your invite.</p>
+
+    <label class="w-label" for="wl-email">Email</label>
+    <input class="w-input" id="wl-email" type="email" autocomplete="email" placeholder="you@example.com" data-app="wl-email"/>
+
+    <p class="w-label" style="margin-top:20px">What would you like to answer? <span class="dim" style="font-weight:500">Optional</span></p>
+    <div class="w-chips">
+      ${WAITLIST_SKILLS.map(([kind, icon, title]) => `<button class="w-chip" type="button" role="switch" aria-checked="false" data-wl-kind="${kind}">${ic(icon)}${title}</button>`).join('')}
+    </div>
+
+    <button class="w-btn" type="button" data-app="wl-join" style="width:100%;height:52px;margin-top:24px">Join the waitlist ${ic('arrow')}</button>
+    <p data-app="wl-result" class="w-note" hidden></p>
+
+    <details class="w-invite">
+      <summary>${ic('key')} I already have an invite</summary>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <input class="w-input" type="text" autocomplete="off" spellcheck="false" placeholder="Invite code" aria-label="Invite code" data-app="invite-code" style="text-transform:uppercase;flex:1;min-width:0"/>
+        <button class="btn btn-ghost" type="button" data-app="invite-redeem" style="height:48px">Continue</button>
+      </div>
+      <p data-app="invite-error" class="w-note w-note-bad" hidden></p>
+    </details>
+  </div>
+</div></section>
+</main>
+<script src="assets/app.js"></script>`,
+})
+
+export { forWorkers, workerSignIn, workerWaitlist, wNav, CTA }

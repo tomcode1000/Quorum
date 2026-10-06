@@ -1950,3 +1950,161 @@ button.search:hover {
   font-size: 13px;
   color: var(--ink-4);
 }
+
+/* --------------------------------------------------------------- waitlist -- */
+
+.w-step-n {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--accent-wash);
+  color: var(--accent);
+  font-size: 10.5px;
+  font-weight: 700;
+  vertical-align: 1px;
+}
+
+.w-label {
+  display: block;
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.w-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14.5px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.w-input::placeholder {
+  color: var(--ink-5);
+}
+
+.w-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-wash);
+}
+
+.w-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.w-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-2);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.w-chip svg {
+  width: 13px;
+  height: 13px;
+  color: var(--ink-4);
+}
+
+.w-chip:hover {
+  border-color: var(--accent);
+}
+
+.w-chip[aria-checked='true'] {
+  border-color: var(--accent);
+  background: var(--accent-wash);
+  color: var(--accent);
+}
+
+.w-chip[aria-checked='true'] svg {
+  color: var(--accent);
+}
+
+.w-note {
+  margin: 14px 0 0;
+  padding: 11px 14px;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+
+.w-note-good {
+  background: var(--good-wash, #e8f7ef);
+  color: var(--good, #13854e);
+}
+
+.w-note-bad {
+  background: var(--bad-wash, #fdecec);
+  color: var(--bad, #c23b3b);
+}
+
+.w-invite {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.w-invite summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.w-invite summary::-webkit-details-marker {
+  display: none;
+}
+
+.w-invite summary svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* The worker header on a phone: the brand and the one button. The tabs and the
+   language switch did not fit, and pushed every worker page wider than the screen. */
+@media (max-width: 640px) {
+  .w-tabs,
+  .w-lang {
+    display: none;
+  }
+  .w-nav-in {
+    justify-content: space-between;
+  }
+  .w-signin {
+    padding: 28px 22px;
+  }
+}
+
+/* On the waitlist, a phone reaches the form before the photograph. */
+@media (max-width: 900px) {
+  .w-grid:has([data-app='wl-card']) .w-frame {
+    order: 3;
+  }
+}

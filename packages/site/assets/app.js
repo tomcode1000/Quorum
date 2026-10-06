@@ -2436,19 +2436,19 @@ const initInvite = () => {
     const kinds = [...document.querySelectorAll('[data-wl-kind][aria-checked="true"]')].map((t) => t.dataset.wlKind)
     result.hidden = false
     if (!email) {
-      result.className = 'ap-info ap-info-bad'
+      result.className = 'w-note w-note-bad'
       result.textContent = 'Enter your email so we can send your invite.'
       return
     }
     join.disabled = true
     try {
       await post('/v1/waitlist', { email, kinds })
-      result.className = 'ap-info'
+      result.className = 'w-note w-note-good'
       result.textContent = `You are on the list. We will email ${email} when your group is admitted.`
-      join.textContent = 'On the waitlist'
+      join.textContent = 'You are on the list'
     } catch (error) {
       join.disabled = false
-      result.className = 'ap-info ap-info-bad'
+      result.className = 'w-note w-note-bad'
       result.textContent = `That did not go through: ${String(error.message ?? error)}`
     }
   })
