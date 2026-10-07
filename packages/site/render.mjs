@@ -139,7 +139,7 @@ await copyFile(join(root, '../../brand/favicon.svg'), join(out, 'assets/favicon.
 
 // The question bank's drawn evidence, shown on the capability pages too.
 await mkdir(join(out, 'assets/bank'), { recursive: true })
-for (const name of ['receipt-total', 'phishing-dapp', 'token-lookalike', 'fake-store', 'address-poison', 'approval-unlimited', 'tx-compare'])
+for (const name of ['invoice-smudge', 'invoice-pair', 'phishing-dapp', 'fake-store'])
   await copyFile(join(root, `../gateway/bank/${name}.png`), join(out, `assets/bank/${name}.png`))
 
 // The worker photographs, cropped from the comps.

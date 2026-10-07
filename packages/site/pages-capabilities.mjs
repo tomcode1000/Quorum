@@ -130,7 +130,7 @@ const readings = () => capabilityPage({
   result: verdict('45.00, at 0.990.', 'Two people who had not seen each other&rsquo;s answer read the same total. About five seconds.'),
   steps: [['Send', 'The image and both readings.'], ['Ask', 'Someone proven at reading documents.'], ['Weigh', 'A second look if one is not enough.'], ['Answer', 'One reading, with its confidence.']],
   crypto: [
-    { agent: 'Payments agent', image: 'receipt-total', title: 'An invoice amount before a payout', body: 'The agent reads the total off a scanned invoice and is about to send stablecoin. A smudge makes 45.00 read as 4.50, or the other way round. A person reads the original before anything is sent.' },
+    { agent: 'Payments agent', image: 'invoice-smudge', title: 'A smudged total on a scanned invoice', body: 'The agent reads $20,500 at 62% confidence. Or is it $2,500? Every reread, and every bigger model, sees the same smudge. A person sees a comma under the ink before $18,000 goes out that can&rsquo;t be taken back.' },
     { agent: 'Treasury agent', title: 'A figure in a screenshot', body: 'A counterparty sends a screenshot of the amount owed. Before paying, a person reads which of the agent&rsquo;s two readings is on the screen.' },
   ],
   example: {
@@ -162,7 +162,6 @@ const real = () => capabilityPage({
   steps: [['Send', 'What the agent is about to trust.'], ['Look', 'A person proven at spotting fakes.'], ['Weigh', 'A second look if one is not enough.'], ['Answer', 'Yes or no, with its confidence.']],
   crypto: [
     { agent: 'Wallet agent', image: 'phishing-dapp', title: 'A fake airdrop site', body: 'The agent is sent a &ldquo;claim your airdrop&rdquo; link that copies Uniswap to the pixel. Connecting would hand over approvals. A person sees it is not the real app.' },
-    { agent: 'Trading agent', image: 'token-lookalike', title: 'A lookalike token', body: 'Two tokens are both called USDC. The agent picked the one with almost no liquidity and a different contract. A person checks it against the official one.' },
     { agent: 'Shopping agent', image: 'fake-store', title: 'A store that only takes crypto', body: 'A lookalike shop, registered last week, accepts card or crypto only. A person says it is not the brand, before the agent pays.' },
   ],
   example: {
@@ -195,8 +194,8 @@ const matching = () => capabilityPage({
   result: verdict('No. Two people.', 'A shared family email, not one customer. The records stay apart, and neither sees the other&rsquo;s history.'),
   steps: [['Send', 'The records in question.'], ['Read', 'Someone proven at matching.'], ['Weigh', 'A second look if one is not enough.'], ['Answer', 'Same or not, with its confidence.']],
   crypto: [
-    { agent: 'Payments agent', image: 'address-poison', title: 'Address poisoning', body: 'A scammer sends a zero-value transfer from an address that starts and ends like the real one, hoping the agent copies it from its history. Its check passes. A person sees the middle is different.' },
-    { agent: 'Research agent', title: 'Is this the announced contract?', body: 'The agent finds a contract address for a new token. A person matches it against the one in the team&rsquo;s official announcement before the agent buys.' },
+    { agent: 'Payments agent', image: 'invoice-pair', title: 'The same bill, sent twice?', body: 'A contractor&rsquo;s invoice was paid last week. Now one arrives with a new layout, a new reference and the word &ldquo;balance&rdquo;. A new bill, or the same one again? Paying twice in USDC can&rsquo;t be reversed.' },
+    { agent: 'Treasury agent', title: 'The same counterparty?', body: '&ldquo;Northwind Security&rdquo; has been paid for a year. &ldquo;NW Sec Audits LLC&rdquo; now sends a bill from a new wallet, citing the same audit. The same firm, or someone borrowing its name? A person reads both records and decides.' },
   ],
   example: {
     intro: 'Send only the pairs your matcher could not settle. Quorum takes the uncertain middle, not the whole table.',
@@ -227,7 +226,7 @@ const categorising = () => capabilityPage({
   result: verdict('Counterfeit, at 0.990.', 'The listing comes down under your counterfeit policy, and the decision carries its confidence.'),
   steps: [['Send', 'The item and your categories.'], ['Read', 'Someone proven at your kind of item.'], ['Weigh', 'A second look if one is not enough.'], ['Answer', 'One category, with its confidence.']],
   crypto: [
-    { agent: 'Wallet agent', image: 'approval-unlimited', title: 'An unlimited approval', body: 'To swap 20 USDC, the agent is asked to sign unlimited spending to an unverified contract. A person puts it under &ldquo;risky, reject&rdquo;, and the agent does not sign.' },
+    { agent: 'Payments agent', title: '&ldquo;Our wallet has changed&rdquo;', body: 'A long-standing vendor emails: pay our new address from now on. Fluent, polite, the right names and invoice numbers. A routine update, or the classic payment-redirection scam? A person puts it in the right category before the next payment goes out.' },
     { agent: 'DAO agent', title: 'Routine proposal, or a treasury drain?', body: 'A governance proposal is labelled a parameter update but moves funds to a new address. A person decides which category it really falls in before the agent votes.' },
   ],
   example: {
@@ -260,8 +259,8 @@ const comparing = () => capabilityPage({
   result: verdict('Draft B, at 0.990.', 'Two readers who wrote neither chose the same reply, and that is the one sent.'),
   steps: [['Send', 'Both candidates and the question.'], ['Read', 'Someone proven at comparing.'], ['Weigh', 'A second reader if one is not enough.'], ['Answer', 'One candidate, with its confidence.']],
   crypto: [
-    { agent: 'Payments agent', image: 'tx-compare', title: 'Which transaction matches the invoice?', body: 'The agent built two transactions for a 250 USDC invoice, and one says 2,500. A person picks the one that matches, before either is signed.' },
-    { agent: 'Bridge agent', title: 'Which route did the user ask for?', body: 'Two bridge routes, one cheaper but landing on a different chain than the user named. A person picks the one that does what was asked.' },
+    { agent: 'DAO agent', title: 'Which summary is accurate?', body: 'The agent wrote two summaries of a treasury proposal for voters. One leaves out that it moves 2,000,000 USDC to a new manager. The agent is the worst judge of its own drafts; a person reads both and picks the faithful one.' },
+    { agent: 'Treasury agent', title: 'Which audit finding matters?', body: 'Two auditors&rsquo; reports on the same vault, each written up by the agent. Which write-up reflects the critical finding? A person compares them before the vault takes deposits.' },
   ],
   example: {
     intro: 'The question is the one your agent could not answer about its own work: which of these is better.',

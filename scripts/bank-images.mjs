@@ -35,6 +35,44 @@ const browserFrame = (url, body, { bad = false } = {}) => `<div style="width:760
   </div>${body}</div>`
 
 const SCENES = {
+  // A scanned paper invoice: one fixed-fee line, so nothing to add up, and a
+  // smudge exactly where the thousands comma sits. It reads 2,500.00 or 20,500.00.
+  // Two bills from the same contractor in different layouts: the one already
+  // paid, and one that just arrived. Same bill sent twice, or new work?
+  'invoice-pair': `<div style="display:flex;gap:26px;align-items:flex-start">
+    <div style="width:330px;background:#fbfaf6;padding:26px 26px;font-family:Georgia,serif;color:#222;box-shadow:0 10px 30px rgba(0,0,0,.18);transform:rotate(-1.5deg)">
+      <div style="font-size:11px;letter-spacing:.12em;color:#16a34a;font-weight:700;font-family:Arial">PAID 28 SEP</div>
+      <div style="font-size:19px;font-weight:700;margin-top:8px">NORTHWIND SECURITY</div>
+      <div style="font-size:12px;color:#555;margin-top:2px">Invoice No. 2291 &middot; 24 Sep 2026</div>
+      <div style="border-top:1.5px solid #333;margin:14px 0 10px"></div>
+      <div style="font-size:13px">Vault contract audit, fixed fee</div>
+      <div style="display:flex;justify-content:space-between;margin-top:16px;font-weight:700;font-size:15px"><span>TOTAL (USDC)</span><span style="font-family:'Courier New',monospace">2,500.00</span></div>
+    </div>
+    <div style="width:330px;background:#fff;padding:26px 26px;font-family:Arial,sans-serif;color:#1d2433;box-shadow:0 10px 30px rgba(0,0,0,.18);transform:rotate(1deg);border-top:6px solid #1d4ed8">
+      <div style="font-size:11px;letter-spacing:.12em;color:#b45309;font-weight:700">ARRIVED TODAY</div>
+      <div style="font-size:18px;font-weight:800;margin-top:8px">Northwind Sec. Ltd</div>
+      <div style="font-size:12px;color:#555;margin-top:2px">Ref NW-2291-R &middot; 03/10/2026</div>
+      <div style="border-top:1px solid #ccd;margin:14px 0 10px"></div>
+      <div style="font-size:13px">Audit: vault contracts (balance)</div>
+      <div style="display:flex;justify-content:space-between;margin-top:16px;font-weight:800;font-size:15px"><span>Amount due</span><span>USDC 2,500</span></div>
+    </div>
+  </div>`,
+
+  'invoice-smudge': `<div style="width:560px;background:#fbfaf6;padding:40px 44px;font-family:Georgia,serif;color:#222;box-shadow:0 10px 30px rgba(0,0,0,.18);transform:rotate(-1.2deg);filter:contrast(1.05) blur(.25px);background-image:radial-gradient(rgba(0,0,0,.035) 1px,transparent 1px);background-size:5px 5px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div><div style="font-size:26px;font-weight:700;letter-spacing:.02em">NORTHWIND SECURITY</div><div style="font-size:13px;color:#555;margin-top:4px">Smart contract audits</div></div>
+      <div style="text-align:right;font-size:14px;line-height:1.6"><b style="font-size:20px">INVOICE</b><br/>No. 2291<br/>Due on receipt</div>
+    </div>
+    <div style="border-top:2px solid #333;margin:26px 0 18px"></div>
+    <div style="font-size:14px;color:#555">Bill to: Harbor DAO Treasury</div>
+    <div style="display:flex;justify-content:space-between;font-size:17px;margin-top:26px;padding-bottom:14px;border-bottom:1px solid #bbb"><span>Vault contract audit, fixed fee</span><span>1</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:22px">
+      <span style="font-size:18px;font-weight:700">TOTAL DUE (USDC)</span>
+      <span style="font-size:36px;font-weight:700;font-family:'Courier New',monospace;letter-spacing:1px">2<span style="position:relative;display:inline-block;width:20px;height:30px;vertical-align:-4px;margin:0 1px"><span style="position:absolute;left:5px;bottom:-9px;font-size:30px;line-height:1;color:#222">,</span><span style="position:absolute;left:1px;top:-2px;width:18px;height:24px;border-radius:45%;background:radial-gradient(ellipse at 50% 55%,rgba(45,45,45,.85) 0 26%,rgba(60,60,60,.55) 42%,rgba(90,90,90,.22) 62%,transparent 72%)"></span></span>500.00</span>
+    </div>
+    <div style="font-size:12px;color:#777;margin-top:30px">Pay to the wallet on file. Thank you for your business.</div>
+  </div>`,
+
   'receipt-total': `<div style="width:340px;background:#fffdf7;padding:26px 24px;${mono};font-size:15px;color:#222;box-shadow:0 8px 24px rgba(0,0,0,.15)">
     <div style="text-align:center;font-weight:700;font-size:18px">HARBOUR CAFE &amp; CATERING</div>
     <div style="text-align:center;font-size:12px;margin-bottom:14px">12 Quay Road &middot; 14/10/2026 13:42</div>
