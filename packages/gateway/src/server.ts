@@ -1,5 +1,7 @@
 import {
   AskError,
+  PRICE_CEILING_CENTS,
+  PRICE_FLOOR_CENTS,
   centsToDollars,
   looksLikeInputRequired,
   inputRequiredResponse,
@@ -13,10 +15,13 @@ import {
 import type { Paymaster } from '@quorum/core'
 import { CHAIN_IDS } from '@quorum/paymaster'
 import { Hono } from 'hono'
-import { Credential } from 'mppx'
+import { Challenge, Credential } from 'mppx'
 import { Mppx, tempo } from 'mppx/server'
 import { randomUUID } from 'node:crypto'
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { agentCard, serviceManifest } from './agent-card.js'
+import { openApi } from './openapi.js'
 import type { Config } from './config.js'
 import type { Router } from './router.js'
 import type { Store } from './store.js'
@@ -85,6 +90,13 @@ export function createServer(services: Services): Hono {
 
   app.get('/.well-known/agent-card.json', (c) => c.json(agentCard(config)))
   app.get('/.well-known/mpp-service.json', (c) => c.json(serviceManifest(config)))
+  app.get('/openapi.json', (c) => c.json(openApi(config)))
+
+  // Directories show it beside the listing. The site's own mark, read from the repo.
+  const favicon = readFavicon()
+  app.get('/favicon.ico', (c) =>
+    favicon ? c.body(favicon, 200, { 'content-type': 'image/svg+xml', 'cache-control': 'public, max-age=86400' }) : c.notFound(),
+  )
 
   app.get('/health', (c) =>
     c.json({
@@ -106,9 +118,34 @@ export function createServer(services: Services): Hono {
    * they can decide whether to raise it instead of paying for a disappointment.
    */
   app.post('/v1/questions', async (c) => {
+    const text = await c.req.text()
+
+    // A POST with no body is a directory probing what this costs, not a question.
+    // It gets the price list as a 402, because a 400 reads to a directory as "not a
+    // paid service". No question is created, so there is nothing a payment here
+    // could buy; the error says so, and that a real ask carries a body.
+    if (text.trim() === '') {
+      const floorCents = Math.min(...Object.values(PRICE_FLOOR_CENTS))
+      const challenge = await mppx.challenge.tempo.charge({
+        amount: centsToDollars(floorCents),
+        description: 'Quorum: a question resolved by a person, from the floor price',
+      })
+      return c.json(
+        {
+          error: 'send the question as a JSON body to get a quote; this challenge is the price list, not a question',
+          price: { min: centsToDollars(floorCents), max: centsToDollars(PRICE_CEILING_CENTS), currency: 'USD' },
+          docs: `${config.publicUrl}/docs`,
+          openapi: `${config.publicUrl}/openapi.json`,
+          payment: challenge,
+        },
+        402,
+        { 'WWW-Authenticate': Challenge.serialize(challenge) },
+      )
+    }
+
     let body: unknown
     try {
-      body = await c.req.json()
+      body = JSON.parse(text)
     } catch {
       return c.json({ error: 'body must be JSON' }, 400)
     }
@@ -190,7 +227,7 @@ export function createServer(services: Services): Hono {
         payment: challenge,
       },
       402,
-      { 'WWW-Authenticate': challengeHeader(challenge, priced.priceCents, config) },
+      { 'WWW-Authenticate': Challenge.serialize(challenge) },
     )
   })
 
@@ -292,6 +329,15 @@ export function adviceBody(advice: CostAdvice) {
   }
 }
 
+/** The brand mark the site also uses, or null when the gateway runs without the repo beside it. */
+function readFavicon(): string | null {
+  try {
+    return readFileSync(fileURLToPath(new URL('../../../brand/favicon.svg', import.meta.url)), 'utf8')
+  } catch {
+    return null
+  }
+}
+
 /** Whether this question came in as a forwarded A2A task, so it should go back as one. */
 function looksLikeTask(question: Question): boolean {
   return question.taskRef !== undefined
@@ -339,20 +385,6 @@ export function present(resolution: Resolution, paymaster: Paymaster): Record<st
           },
         }),
   }
-}
-
-/** The `WWW-Authenticate: Payment` header for the challenge. */
-function challengeHeader(challenge: unknown, priceCents: number, config: Config): string {
-  const nonce = typeof challenge === 'object' && challenge !== null && 'id' in challenge ? String(challenge.id) : ''
-  return [
-    `Payment realm="${new URL(config.publicUrl).hostname}"`,
-    `amount="${centsToDollars(priceCents)}"`,
-    'currency="USD"',
-    `recipient="${config.recipient}"`,
-    nonce ? `nonce="${nonce}"` : '',
-  ]
-    .filter(Boolean)
-    .join(', ')
 }
 
 function docs(config: Config): string {
