@@ -1,6 +1,9 @@
 import { ic, MARK, nav, page } from './build.mjs'
 import { foot } from './pages-marketing.mjs'
 
+/** The hosted MCP server, on the gateway the deployed site talks to. */
+const MCP_URL = `${process.env.QUORUM_GATEWAY_URL || 'https://quorum-2gup.onrender.com'}/mcp`
+
 /* ------------------------------------------------------------------ proof -- */
 
 /*
@@ -88,7 +91,7 @@ const integration = () => page({
         .map(([i, t, d]) => `<div class="card" style="padding:14px"><div style="display:flex;gap:10px;align-items:flex-start"><span class="ico ico-sm">${ic(i)}</span><div><b style="font-size:13px;display:block">${t}</b><span class="dim" style="font-size:11.5px">${d}</span></div></div></div>`).join('')}
     </div>
     <div class="panel"><div class="panel-head">${ic('code')} Quickstart <span class="badge badge-accent" style="margin-left:auto">MCP</span></div><div class="panel-body">
-      <div class="code code-light"><pre><span class="ln">{</span><span class="ln"> <span class="k">"mcpServers"</span>: {</span><span class="ln">   <span class="k">"quorum"</span>: {</span><span class="ln">     <span class="k">"command"</span>: <span class="s">"node"</span>,</span><span class="ln">     <span class="k">"args"</span>: [<span class="s">"packages/gateway/dist/mcp.js"</span>]</span><span class="ln">   }</span><span class="ln"> }</span><span class="ln">}</span></pre></div>
+      <div class="code code-light"><pre><span class="ln">{</span><span class="ln"> <span class="k">"mcpServers"</span>: {</span><span class="ln">   <span class="k">"quorum"</span>: {</span><span class="ln">     <span class="k">"url"</span>: <span class="s">"${MCP_URL}"</span></span><span class="ln">   }</span><span class="ln"> }</span><span class="ln">}</span></pre></div>
       <p class="dim" style="margin:14px 0 8px">Your agent now has <code style="font-family:var(--mono);font-size:11.5px">ask_human</code> alongside its own tools.</p>
       <div class="code code-light"><pre><span class="ln">{</span><span class="ln"> <span class="k">"answer"</span>: <span class="s">"45.00"</span>,</span><span class="ln"> <span class="k">"confidence"</span>: <span class="n">0.99</span>,</span><span class="ln"> <span class="k">"responders"</span>: <span class="n">2</span></span><span class="ln">}</span></pre></div>
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">
@@ -179,9 +182,9 @@ const quickstart = () => docsPage({
         .map(([i, t, d]) => `<div class="card"><span class="ico ico-sm">${ic(i)}</span><b class="h-sm" style="display:block;margin:11px 0 4px">${t}</b><span class="feat"><span>${d}</span></span></div>`).join('')}
     </div>
     <h2 class="h-md" id="s1">1. Add the server</h2>
-    <p class="muted" style="margin:8px 0 16px;font-size:14px">The MCP server runs beside your agent over stdio, from a built checkout. There is no signup and no key to paste.</p>
+    <p class="muted" style="margin:8px 0 16px;font-size:14px">The MCP server is hosted, so this is one URL in your agent’s MCP config: nothing to install or build, no signup and no key to paste. In Claude Code: <code style="font-family:var(--mono);font-size:12.5px">claude mcp add --transport http quorum ${MCP_URL}</code></p>
     <div class="code"><div class="code-tabs"><button role="tab" aria-selected="true">JSON</button><button class="code-copy">Copy</button></div>
-    <pre><span class="ln">{</span><span class="ln">  <span class="k">"mcpServers"</span>: {</span><span class="ln">    <span class="k">"quorum"</span>: { <span class="k">"command"</span>: <span class="s">"node"</span>, <span class="k">"args"</span>: [<span class="s">"packages/gateway/dist/mcp.js"</span>] }</span><span class="ln">  }</span><span class="ln">}</span></pre></div>
+    <pre><span class="ln">{</span><span class="ln">  <span class="k">"mcpServers"</span>: {</span><span class="ln">    <span class="k">"quorum"</span>: { <span class="k">"url"</span>: <span class="s">"${MCP_URL}"</span> }</span><span class="ln">  }</span><span class="ln">}</span></pre></div>
     <h2 class="h-md" id="s2" style="margin-top:36px">2. Make a request</h2>
     <p class="muted" style="margin:8px 0 16px;font-size:14px">Your agent now has <code style="font-family:var(--mono);font-size:12.5px">ask_human</code>. Over plain HTTP the same call looks like this.</p>
     <div class="code"><div class="code-tabs">${['cURL', 'Python', 'Node.js'].map((t, x) => `<button role="tab" aria-selected="${x === 0}">${t}</button>`).join('')}<button class="code-copy">Copy</button></div>

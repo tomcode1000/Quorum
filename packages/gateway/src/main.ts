@@ -13,6 +13,7 @@ import { Router } from './router.js'
 import { createNotifier, mailerFromEnv } from './notifier.js'
 import { createServer } from './server.js'
 import { mediaRoutes } from './media.js'
+import { mcpRoutes } from './mcp.js'
 import { bankImageRoutes, operatorQuestionRoutes } from './operator-questions.js'
 import { operatorWaitlistRoutes, redeemRoute, requireOperator, waitlistRoutes } from './waitlist.js'
 import { fileStore, upstashStore } from './persistence.js'
@@ -87,6 +88,20 @@ async function main(): Promise<void> {
   app.use('/.well-known/*', cors({ origin: '*', allowMethods: ['GET', 'OPTIONS'] }))
 
   app.route('/', createServer({ config, store, router, paymaster, events, notifier }))
+
+  // The MCP server, by URL: what an agent owner pastes into their client's config.
+  // Wildcard CORS because browser-based MCP clients and inspectors call it directly;
+  // it carries no identity, only the same questions /v1/questions takes.
+  app.use(
+    '/mcp',
+    cors({
+      origin: '*',
+      allowMethods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+      allowHeaders: ['content-type', 'accept', 'mcp-session-id', 'mcp-protocol-version', 'last-event-id'],
+      exposeHeaders: ['mcp-session-id'],
+    }),
+  )
+  app.route('/mcp', mcpRoutes({ store, router, publicUrl: config.publicUrl, escalations, wageCents: config.wageCents }))
   // Inline images, by unguessable link, for the worker app's <img> tags.
   app.route('/v1/media', mediaRoutes(store.media))
   app.route(

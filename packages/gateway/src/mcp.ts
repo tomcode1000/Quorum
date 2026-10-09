@@ -2,6 +2,8 @@ import { KINDS, centsToDollars, contextImageUrl, priceAsk, readPricing, type Que
 import { hostImages } from './media.js'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
+import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js'
+import { Hono } from 'hono'
 import { randomUUID } from 'node:crypto'
 import { z } from 'zod'
 import { registerCapabilityTools } from './mcp-capabilities.js'
@@ -244,4 +246,31 @@ function buildAttachments(
 /** Runs the MCP server over stdio, for agents that spawn it as a subprocess. */
 export async function serveStdio(server: McpServer): Promise<void> {
   await server.connect(new StdioServerTransport())
+}
+
+/**
+ * The MCP server over Streamable HTTP, mounted on the gateway at `/mcp`.
+ *
+ * This is the version an agent owner actually installs: one URL in their client's
+ * config, nothing to clone or build. Over stdio the server would run on their machine
+ * with an empty roster, so no question could ever reach a person; here it shares the
+ * gateway's store and router, and so its workers.
+ *
+ * Stateless: every request gets a fresh server and transport, so nothing is held
+ * between calls and a restart loses no sessions. `ask_human` still holds its own
+ * request open until the question resolves, exactly as the HTTP claim does.
+ */
+export function mcpRoutes(services: Parameters<typeof createMcpServer>[0]): Hono {
+  const app = new Hono()
+  app.all('/', async (c) => {
+    const server = createMcpServer(services)
+    const transport = new WebStandardStreamableHTTPServerTransport({ enableJsonResponse: true })
+    await server.connect(transport)
+    try {
+      return await transport.handleRequest(c.req.raw)
+    } finally {
+      await server.close()
+    }
+  })
+  return app
 }
