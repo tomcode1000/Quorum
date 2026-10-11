@@ -20,7 +20,8 @@ services:
         value: testnet
       - key: QUORUM_PUBLIC_URL
         value: https://api.quorumhq.xyz
-      # The site on Vercel, plus local development.
+      # The site on Vercel (www.quorumhq.xyz), the old address so workers whose passkey
+      # was made there can still sign in, plus local development.
       - key: QUORUM_WORKER_APP_ORIGINS
         value: https://quorumhq.xyz,https://www.quorumhq.xyz,https://askquorum.vercel.app,http://localhost:4173
       - key: QUORUM_WORKER_APP_URL
@@ -30,9 +31,10 @@ services:
       # Never on a public deployment: these routes fabricate work and reputation.
       - key: QUORUM_DEV_ENDPOINTS
         value: "false"
-      # New workers need a waitlist invite before they can work; see waitlist.ts.
+      # Open sign-up: anyone can register and take the assessments. Set "true" to
+      # require a waitlist invite again; see waitlist.ts.
       - key: QUORUM_INVITE_ONLY
-        value: "true"
+        value: "false"
       # Unlocks the console's Waitlist page. Unset, the admin routes are not mounted.
       - key: QUORUM_OPERATOR_TOKEN
         sync: false
