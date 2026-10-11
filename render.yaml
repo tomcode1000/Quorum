@@ -19,12 +19,12 @@ services:
       - key: QUORUM_NETWORK
         value: testnet
       - key: QUORUM_PUBLIC_URL
-        value: https://quorum-2gup.onrender.com
+        value: https://api.quorumhq.xyz
       # The site on Vercel, plus local development.
       - key: QUORUM_WORKER_APP_ORIGINS
-        value: https://askquorum.vercel.app,http://localhost:4173
+        value: https://quorumhq.xyz,https://www.quorumhq.xyz,https://askquorum.vercel.app,http://localhost:4173
       - key: QUORUM_WORKER_APP_URL
-        value: https://askquorum.vercel.app/app-home
+        value: https://www.quorumhq.xyz/app-home
       - key: QUORUM_WAGE_CENTS
         value: "20"
       # Never on a public deployment: these routes fabricate work and reputation.

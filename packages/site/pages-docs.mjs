@@ -2,7 +2,7 @@ import { ic, MARK, nav, page } from './build.mjs'
 import { foot } from './pages-marketing.mjs'
 
 /** The hosted MCP server, on the gateway the deployed site talks to. */
-const MCP_URL = `${process.env.QUORUM_GATEWAY_URL || 'https://quorum-2gup.onrender.com'}/mcp`
+const MCP_URL = `${process.env.QUORUM_GATEWAY_URL || 'https://api.quorumhq.xyz'}/mcp`
 
 /* ------------------------------------------------------------------ proof -- */
 
